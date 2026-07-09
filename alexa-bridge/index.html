@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<title>Fred na Alexa — como funciona</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Como o Fred funciona na Alexa: assistente de voz com a memória do Expert Brain, criação de tarefas e notas por voz, e fila de pedidos pro agente completo.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2338bdf8'/%3E%3Cstop offset='1' stop-color='%236366f1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='38' fill='none' stroke='url(%23g)' stroke-width='9'/%3E%3Ccircle cx='50' cy='50' r='14' fill='url(%23g)'/%3E%3C/svg%3E">
+
+<style>
+  :root{
+    --bg: #0a0e14;
+    --bg-raised: #0f1520;
+    --bg-card: #121927;
+    --line: #223047;
+    --line-soft: #1a2333;
+    --ink: #e8eef7;
+    --ink-dim: #a8b5c9;
+    --ink-faint: #75839b;
+    --accent: #38bdf8;
+    --accent-dim: #2494c9;
+    --accent-2: #818cf8;
+    --warn: #f2b866;
+    --ok: #4ade80;
+    --radius: 14px;
+    --maxw: 1080px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0; background: var(--bg); color: var(--ink);
+    font-family: var(--font); line-height:1.55; -webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(1200px 600px at 15% -10%, rgba(56,189,248,.08), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(129,140,248,.08), transparent 55%);
+    background-repeat:no-repeat;
+  }
+  ::selection{ background: rgba(56,189,248,.3); color:#fff; }
+  a{ color: var(--accent); text-decoration:none; }
+  a:hover{ text-decoration:underline; }
+  .wrap{ max-width: var(--maxw); margin:0 auto; padding:0 24px; }
+  section{ padding:88px 0; border-top:1px solid var(--line-soft); }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px; font-size:12.5px;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--accent);
+    font-weight:700; margin:0 0 14px;
+  }
+  .eyebrow::before{ content:""; width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 4px rgba(56,189,248,.15); }
+  h1,h2,h3{ font-weight:750; letter-spacing:-.02em; margin:0; }
+  h2{ font-size:clamp(1.7rem,3vw,2.35rem); }
+  .section-sub{ color:var(--ink-dim); max-width:680px; margin:14px 0 0; font-size:1.05rem; }
+  .section-head{ margin-bottom:44px; }
+  code,.mono{ font-family:var(--mono); }
+  code{ background:var(--bg-raised); border:1px solid var(--line-soft); border-radius:6px; padding:2px 7px; font-size:.9em; color:var(--accent); white-space:nowrap; }
+
+  .hero{ padding:104px 0 80px; border-top:none; }
+  .hero h1{ font-size:clamp(2.1rem,4.6vw,3.2rem); line-height:1.12; }
+  .hero h1 em{ font-style:normal; background:linear-gradient(90deg,var(--accent),var(--accent-2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .tagline{ color:var(--ink-dim); font-size:1.12rem; max-width:640px; margin:20px 0 0; }
+  .tagline strong{ color:var(--ink); font-weight:650; }
+  .hero-badges{ display:flex; gap:10px; flex-wrap:wrap; margin-top:26px; }
+  .badge{
+    display:inline-flex; align-items:center; gap:7px; padding:7px 14px;
+    border:1px solid var(--line); border-radius:999px; background:var(--bg-raised);
+    color:var(--ink-dim); font-size:.86rem;
+  }
+  .badge b{ color:var(--accent); font-weight:650; }
+
+  .card-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+  .card{
+    background:var(--bg-card); border:1px solid var(--line-soft); border-radius:var(--radius);
+    padding:24px 22px; transition:border-color .2s, transform .2s;
+  }
+  .card:hover{ border-color:var(--accent-dim); transform:translateY(-3px); }
+  .card h3{ font-size:1.05rem; margin-bottom:8px; }
+  .card p{ color:var(--ink-dim); font-size:.93rem; margin:0; }
+  .card .ex{ margin-top:12px; color:var(--ink-faint); font-size:.88rem; }
+  .card .ex code{ display:inline-block; margin:3px 0; white-space:normal; }
+
+  .chat{
+    background:var(--bg-card); border:1px solid var(--line-soft); border-radius:var(--radius);
+    padding:26px; max-width:560px;
+  }
+  .chat .msg{ display:flex; margin:10px 0; }
+  .chat .me{ justify-content:flex-end; }
+  .chat .bubble{
+    padding:10px 16px; border-radius:16px; font-size:.95rem; max-width:82%;
+  }
+  .chat .me .bubble{ background:rgba(56,189,248,.14); border:1px solid rgba(56,189,248,.3); border-bottom-right-radius:4px; }
+  .chat .fred .bubble{ background:var(--bg-raised); border:1px solid var(--line-soft); border-bottom-left-radius:4px; color:var(--ink-dim); }
+  .chat .label{ font-size:.75rem; color:var(--ink-faint); letter-spacing:.08em; text-transform:uppercase; margin:18px 0 4px; }
+
+  table{ width:100%; border-collapse:collapse; background:var(--bg-card); border:1px solid var(--line-soft); border-radius:var(--radius); overflow:hidden; }
+  th,td{ text-align:left; padding:13px 16px; font-size:.93rem; border-bottom:1px solid var(--line-soft); vertical-align:top; }
+  th{ color:var(--ink-faint); font-weight:650; text-transform:uppercase; font-size:.76rem; letter-spacing:.1em; background:var(--bg-raised); }
+  td:first-child{ white-space:nowrap; }
+  tr:last-child td{ border-bottom:none; }
+  td .r{ color:var(--ink-dim); }
+
+  .steps{ list-style:none; margin:0; padding:0; counter-reset:s; display:grid; gap:14px; }
+  .steps li{
+    background:var(--bg-card); border:1px solid var(--line-soft); border-radius:var(--radius);
+    padding:18px 20px 18px 62px; position:relative; counter-increment:s;
+  }
+  .steps li::before{
+    content:counter(s); position:absolute; left:18px; top:16px; width:28px; height:28px;
+    display:flex; align-items:center; justify-content:center; border-radius:50%;
+    background:rgba(56,189,248,.12); border:1px solid rgba(56,189,248,.35);
+    color:var(--accent); font-weight:700; font-size:.9rem;
+  }
+  .steps b{ color:var(--ink); }
+  .steps span{ color:var(--ink-dim); font-size:.94rem; }
+
+  .callout{
+    border-left:3px solid var(--warn); background:rgba(242,184,102,.06);
+    border-radius:0 var(--radius) var(--radius) 0; padding:16px 20px; margin-top:22px;
+    color:var(--ink-dim); font-size:.95rem;
+  }
+  .callout b{ color:var(--warn); }
+  .callout.blue{ border-left-color:var(--accent); background:rgba(56,189,248,.06); }
+  .callout.blue b{ color:var(--accent); }
+
+  .arch{ background:var(--bg-card); border:1px solid var(--line-soft); border-radius:var(--radius); padding:28px; }
+  .arch svg{ width:100%; height:auto; display:block; }
+
+  footer{ border-top:1px solid var(--line-soft); padding:40px 0 60px; color:var(--ink-faint); font-size:.88rem; }
+
+  @media (max-width:820px){
+    .card-grid{ grid-template-columns:1fr; }
+    section{ padding:64px 0; }
+    td:first-child{ white-space:normal; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Assistente de voz pessoal</p>
+    <h1>Fred na <em>Alexa</em></h1>
+    <p class="tagline">
+      Um assistente de voz que <strong>conhece o dono</strong>: responde com a memória do
+      <strong>Expert Brain</strong> (agenda, decisões, insights salvos), cria tarefas e notas
+      por voz, e encaminha pedidos pesados pro agente completo no Telegram.
+    </p>
+    <div class="hero-badges">
+      <span class="badge">Resposta em <b>2 a 5s</b></span>
+      <span class="badge">Memória via <b>Expert Brain</b></span>
+      <span class="badge">Fala com <b>gpt-4.1-mini</b></span>
+      <span class="badge">Backend próprio em <b>VPS</b></span>
+    </div>
+  </div>
+</header>
+
+<section id="falar">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Manual de uso</p>
+      <h2>Como falar com ele</h2>
+      <p class="section-sub">A skill abre com uma frase e depois vira conversa: enquanto a sessão está aberta, é só falar — sem repetir "Alexa" nem "abra fred".</p>
+    </div>
+
+    <ol class="steps">
+      <li><b>"Alexa, abra fred"</b><br><span>A skill abre e responde "Estou às ordens". A partir daqui a sessão está ABERTA.</span></li>
+      <li><b>Fale direto, sem wake word</b><br><span>Com a sessão aberta (anel/barra de luz azul aceso), qualquer fala vai direto pro Fred: "qual a agenda de hoje", "cria uma tarefa...", "anota...".</span></li>
+      <li><b>A resposta reabre o microfone</b><br><span>Depois de cada resposta o microfone fica ouvindo por ~8 segundos. Emendou a próxima pergunta, a conversa continua indefinidamente.</span></li>
+      <li><b>Silêncio encerra a sessão</b><br><span>Ficou ~8s sem falar (ou disse "para"), a luz apaga e a sessão FECHA. Pra voltar a falar com o Fred, é "Alexa, abra fred" de novo.</span></li>
+    </ol>
+
+    <div class="callout blue">
+      <b>A tela não indica sessão aberta.</b> Em Echo com tela, o card com a resposta continua
+      exposto depois que a sessão fecha — ele é só histórico. O que vale é a <b>luz azul</b>:
+      acesa = fala direto; apagada = começa com "Alexa, abra fred".
+    </div>
+    <div class="callout">
+      <b>Use o imperativo pra abrir.</b> "Alexa, <b>abra</b> fred" funciona. No modo texto do
+      simulador, o infinitivo ("abrir fred") não dispara a skill.
+    </div>
+  </div>
+</section>
+
+<section id="responde">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Caminho rápido</p>
+      <h2>O que ele sabe responder</h2>
+      <p class="section-sub">Toda pergunta consulta a memória pessoal em paralelo e responde em 2 a 5 segundos, em formato de voz (1-2 frases).</p>
+    </div>
+    <div class="card-grid">
+      <div class="card">
+        <h3>Agenda e tarefas</h3>
+        <p>Puxa as tarefas do dia direto do Expert Brain e resume por voz.</p>
+        <div class="ex"><code>qual a agenda de hoje</code> <code>o que vence hoje</code></div>
+      </div>
+      <div class="card">
+        <h3>Memória pessoal</h3>
+        <p>Decisões, insights, padrões e fatos salvos no Brain. Se não achou nada salvo, ele diz — não inventa.</p>
+        <div class="ex"><code>o que eu decidi sobre...</code> <code>me fala sobre...</code></div>
+      </div>
+      <div class="card">
+        <h3>Conhecimento geral</h3>
+        <p>Perguntas comuns de assistente, contas rápidas, data e hora de Brasília.</p>
+        <div class="ex"><code>quanto é 15% de 3 mil</code> <code>o que é...</code></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="acoes">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Ações por voz</p>
+      <h2>O que ele executa na hora</h2>
+      <p class="section-sub">Duas ações rodam direto no Expert Brain, sem intermediário. O resto vira requisição pro Fred completo.</p>
+    </div>
+    <table>
+      <thead><tr><th>Você fala</th><th>O que acontece</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>cria uma tarefa ...</code><br><code>me lembra de ...</code></td>
+          <td class="r">Cria a task no Expert Brain com prazo interpretado da fala ("amanhã", "na sexta"). Confirma por voz.</td>
+        </tr>
+        <tr>
+          <td><code>anota ...</code><br><code>salva uma ideia ...</code></td>
+          <td class="r">Salva a nota/insight no Expert Brain. Confirma por voz.</td>
+        </tr>
+        <tr>
+          <td><code>manda ...</code> <code>agenda ...</code><br><code>faz um site ...</code> <code>liga para ...</code></td>
+          <td class="r">Ação externa: registra o pedido na fila do Fred e responde <em>"Mandei a requisição pro Fred. Ele te responde pelo Telegram."</em></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout blue">
+      <b>Pedido ambíguo é decidido pelo modelo.</b> "Faz um resumo da agenda" começa com verbo de
+      ação, mas é consulta — responde na hora. "Manda mensagem pro fulano" é ação externa — vai
+      pra fila. A classificação é do LLM com regra explícita: pergunta nunca escala.
+    </div>
+  </div>
+</section>
+
+<section id="conversa">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Exemplo real</p>
+      <h2>Uma conversa típica</h2>
+    </div>
+    <div class="chat">
+      <div class="msg me"><div class="bubble">Alexa, abra fred</div></div>
+      <div class="msg fred"><div class="bubble">Estou às ordens.</div></div>
+      <div class="msg me"><div class="bubble">qual a agenda de hoje</div></div>
+      <div class="msg fred"><div class="bubble">Hoje você tem decisão do modelo de contas, campanha com o time e reuniões pra marcar. Tudo com prazo curto.</div></div>
+      <div class="msg me"><div class="bubble">cria uma tarefa revisar a proposta do cliente na sexta</div></div>
+      <div class="msg fred"><div class="bubble">Tarefa criada para revisar a proposta do cliente na sexta-feira.</div></div>
+      <div class="msg me"><div class="bubble">manda um whatsapp pro time pedindo o relatório</div></div>
+      <div class="msg fred"><div class="bubble">Mandei a requisição pro Fred. Ele te responde pelo Telegram.</div></div>
+      <p class="label">Se uma resposta demorar demais</p>
+      <div class="msg fred"><div class="bubble">Essa demorou mais que o normal. Espere uns segundos e pergunte: e aí?</div></div>
+      <div class="msg me"><div class="bubble">e aí?</div></div>
+      <div class="msg fred"><div class="bubble">(entrega a resposta que ficou pronta no cache)</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="arquitetura">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Por dentro</p>
+      <h2>Arquitetura</h2>
+      <p class="section-sub">A Alexa exige resposta em ~8 segundos. O truque é um caminho rápido que busca memória e fala em paralelo, com orçamento de tempo e fallback de cache.</p>
+    </div>
+    <div class="arch">
+      <svg viewBox="0 0 960 300" role="img" aria-label="Diagrama da arquitetura">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#38bdf8"/>
+          </marker>
+        </defs>
+        <g font-family="system-ui, sans-serif">
+          <rect x="20" y="110" width="150" height="80" rx="12" fill="#121927" stroke="#223047"/>
+          <text x="95" y="145" fill="#e8eef7" font-size="15" font-weight="700" text-anchor="middle">Echo / Alexa</text>
+          <text x="95" y="168" fill="#75839b" font-size="12" text-anchor="middle">skill "fred" (pt-BR)</text>
+
+          <rect x="250" y="110" width="180" height="80" rx="12" fill="#121927" stroke="#38bdf8"/>
+          <text x="340" y="140" fill="#e8eef7" font-size="15" font-weight="700" text-anchor="middle">alexa-bridge</text>
+          <text x="340" y="160" fill="#75839b" font-size="12" text-anchor="middle">Flask na VPS</text>
+          <text x="340" y="177" fill="#75839b" font-size="12" text-anchor="middle">orçamento 6,5s + cache</text>
+
+          <rect x="530" y="20" width="180" height="72" rx="12" fill="#121927" stroke="#223047"/>
+          <text x="620" y="50" fill="#e8eef7" font-size="14" font-weight="700" text-anchor="middle">Expert Brain</text>
+          <text x="620" y="70" fill="#75839b" font-size="12" text-anchor="middle">memórias + tasks (MCP)</text>
+
+          <rect x="530" y="114" width="180" height="72" rx="12" fill="#121927" stroke="#223047"/>
+          <text x="620" y="144" fill="#e8eef7" font-size="14" font-weight="700" text-anchor="middle">gpt-4.1-mini</text>
+          <text x="620" y="164" fill="#75839b" font-size="12" text-anchor="middle">resposta falada + tools</text>
+
+          <rect x="530" y="208" width="180" height="72" rx="12" fill="#121927" stroke="#f2b866"/>
+          <text x="620" y="238" fill="#e8eef7" font-size="14" font-weight="700" text-anchor="middle">Fila do Fred</text>
+          <text x="620" y="258" fill="#75839b" font-size="12" text-anchor="middle">ação externa vira task</text>
+
+          <rect x="790" y="208" width="150" height="72" rx="12" fill="#121927" stroke="#223047"/>
+          <text x="865" y="238" fill="#e8eef7" font-size="14" font-weight="700" text-anchor="middle">Telegram</text>
+          <text x="865" y="258" fill="#75839b" font-size="12" text-anchor="middle">resposta do Fred</text>
+
+          <line x1="170" y1="150" x2="243" y2="150" stroke="#38bdf8" stroke-width="2" marker-end="url(#arr)"/>
+          <line x1="430" y1="130" x2="523" y2="62" stroke="#38bdf8" stroke-width="2" marker-end="url(#arr)"/>
+          <line x1="430" y1="150" x2="523" y2="150" stroke="#38bdf8" stroke-width="2" marker-end="url(#arr)"/>
+          <line x1="430" y1="170" x2="523" y2="240" stroke="#f2b866" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arr)"/>
+          <line x1="710" y1="244" x2="783" y2="244" stroke="#f2b866" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arr)"/>
+          <text x="475" y="105" fill="#75839b" font-size="11" text-anchor="middle">em paralelo</text>
+          <text x="475" y="200" fill="#f2b866" font-size="11" text-anchor="middle">só ação externa</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="card-grid" style="margin-top:22px">
+      <div class="card">
+        <h3>Busca paralela</h3>
+        <p>Recall de memórias e tarefas do dia rodam em threads simultâneas enquanto a pergunta é preparada — o modelo já recebe o contexto pronto.</p>
+      </div>
+      <div class="card">
+        <h3>Orçamento de tempo</h3>
+        <p>O caminho rápido tem 6,5s de orçamento. Estourou, a resposta vira pendência: "pergunte: e aí?" entrega do cache logo depois.</p>
+      </div>
+      <div class="card">
+        <h3>Sem alucinação</h3>
+        <p>Regra dura no prompt: fato pessoal só vindo da memória. Não achou, diz "não achei nada salvo sobre isso".</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Fred na Alexa · projeto pessoal de Eric Luciano · página gerada em 09/07/2026
+  </div>
+</footer>
+
+</body>
+</html>
