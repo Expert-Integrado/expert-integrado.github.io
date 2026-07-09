@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<title>Instagram Agent — como funciona</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Como o Instagram Agent funciona: o Direct do Instagram como ferramenta do Claude, com memória completa, guardrails de voz e ponte para o WhatsApp.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f472b6'/%3E%3Cstop offset='1' stop-color='%23a78bfa'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='12' y='12' width='76' height='76' rx='22' fill='none' stroke='url(%23g)' stroke-width='9'/%3E%3Ccircle cx='50' cy='50' r='17' fill='none' stroke='url(%23g)' stroke-width='9'/%3E%3Ccircle cx='71' cy='29' r='6' fill='%23f472b6'/%3E%3C/svg%3E">
+
+<style>
+  :root{
+    --bg: #0d0b12;
+    --bg-raised: #141019;
+    --bg-card: #17121f;
+    --line: #2a2233;
+    --line-soft: #211a2a;
+    --ink: #ede7f3;
+    --ink-dim: #b0a7bd;
+    --ink-faint: #7d7389;
+    --accent: #f472b6;
+    --accent-dim: #c2528f;
+    --accent-2: #a78bfa;
+    --accent-2-dim: #7c62c9;
+    --warn: #f2b866;
+    --radius: 14px;
+    --maxw: 1080px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    background-image:
+      radial-gradient(1200px 600px at 15% -10%, rgba(244,114,182,.08), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(167,139,250,.08), transparent 55%);
+    background-repeat: no-repeat;
+  }
+
+  ::selection{ background: rgba(244,114,182,.3); color:#fff; }
+
+  a{ color: var(--accent); text-decoration: none; }
+  a:hover{ text-decoration: underline; }
+
+  .wrap{ max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+  section{ padding: 96px 0; border-top: 1px solid var(--line-soft); }
+  section:first-of-type{ border-top: none; }
+
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size: 12.5px; letter-spacing:.14em; text-transform: uppercase;
+    color: var(--accent); font-weight: 700; margin: 0 0 14px;
+  }
+  .eyebrow::before{ content:""; width:7px; height:7px; border-radius:50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(244,114,182,.15); }
+
+  h1,h2,h3{ font-weight: 750; letter-spacing: -0.02em; margin: 0; }
+  h2{ font-size: clamp(1.7rem, 3vw, 2.35rem); color: var(--ink); }
+  .section-sub{ color: var(--ink-dim); max-width: 640px; margin: 14px 0 0; font-size: 1.05rem; }
+  .section-head{ margin-bottom: 48px; }
+
+  code, .mono{ font-family: var(--mono); }
+  code{
+    background: rgba(244,114,182,.1);
+    color: var(--accent);
+    padding: .12em .42em;
+    border-radius: 5px;
+    font-size: .88em;
+    border: 1px solid rgba(244,114,182,.18);
+  }
+
+  /* ---------- NAV ---------- */
+  .topnav{
+    position: sticky; top:0; z-index: 50;
+    backdrop-filter: blur(10px);
+    background: rgba(13,11,18,.72);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .topnav .wrap{ display:flex; align-items:center; justify-content:space-between; height: 60px; }
+  .brand{ display:flex; align-items:center; gap:10px; font-weight:800; color: var(--ink); font-size: 1rem; }
+  .brand-mark{ width:26px; height:26px; flex:none; }
+  .navlinks{ display:flex; gap:22px; font-size:.92rem; }
+  .navlinks a{ color: var(--ink-dim); }
+  .navlinks a:hover{ color: var(--ink); text-decoration:none; }
+  @media (max-width: 720px){ .navlinks{ display:none; } }
+
+  /* ---------- HERO ---------- */
+  .hero{ padding: 108px 0 88px; border-top:none; position:relative; overflow:hidden; }
+  .hero::after{
+    content:"";
+    position:absolute; inset:auto -20% -60% -20%;
+    height: 420px;
+    background: radial-gradient(closest-side, rgba(167,139,250,.10), transparent 70%);
+    pointer-events:none;
+  }
+  .hero-grid{ display:grid; grid-template-columns: 1.15fr .85fr; gap: 48px; align-items:center; position:relative; }
+  @media (max-width: 880px){ .hero-grid{ grid-template-columns: 1fr; } }
+
+  .hero h1{
+    font-size: clamp(2.5rem, 5.4vw, 4.1rem);
+    line-height: 1.04;
+    background: linear-gradient(180deg, #fff, #dcd0e8 65%, var(--ink-dim));
+    -webkit-background-clip: text; background-clip:text; color: transparent;
+  }
+  .hero .tagline{
+    margin-top: 20px;
+    font-size: clamp(1.05rem, 1.7vw, 1.25rem);
+    color: var(--ink-dim);
+    max-width: 54ch;
+  }
+  .hero .tagline strong{ color: var(--ink); font-weight: 650; }
+
+  .cta-row{ display:flex; gap:14px; flex-wrap:wrap; margin-top: 34px; }
+  .btn{
+    display:inline-flex; align-items:center; gap:9px;
+    padding: 13px 22px; border-radius: 10px; font-weight: 650; font-size: .96rem;
+    border: 1px solid transparent; transition: transform .15s ease, border-color .15s ease, background .15s ease;
+  }
+  .btn:hover{ text-decoration:none; transform: translateY(-1px); }
+  .btn-primary{ background: var(--accent); color: #170812; }
+  .btn-primary:hover{ background:#ff8ac4; }
+  .btn-ghost{ background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn-ghost:hover{ border-color: var(--accent-dim); color: var(--accent); }
+
+  .hero-badges{ display:flex; gap:10px; flex-wrap:wrap; margin-top:28px; }
+  .badge{
+    font-size:.78rem; color: var(--ink-faint); border:1px solid var(--line);
+    padding: 5px 11px; border-radius: 999px; font-family: var(--mono);
+  }
+
+  .orb-panel{
+    background: linear-gradient(160deg, var(--bg-raised), var(--bg-card));
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 30px 60px -30px rgba(0,0,0,.6);
+  }
+  .orb-panel svg{ display:block; width:100%; height:auto; }
+
+  /* ---------- CARDS ---------- */
+  .card-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  @media (max-width: 980px){ .card-grid{ grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px){ .card-grid{ grid-template-columns: 1fr; } }
+
+  .card{
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 26px 22px;
+    transition: border-color .18s ease, transform .18s ease;
+  }
+  .card:hover{ border-color: var(--accent-dim); transform: translateY(-3px); }
+  .card-icon{
+    width: 42px; height:42px; border-radius: 11px;
+    display:flex; align-items:center; justify-content:center;
+    background: rgba(244,114,182,.1); border: 1px solid rgba(244,114,182,.22);
+    margin-bottom: 16px;
+  }
+  .card h3{ font-size: 1.05rem; margin-bottom: 8px; }
+  .card p{ color: var(--ink-dim); font-size: .93rem; margin:0; }
+
+  /* ---------- DIAGRAMA ---------- */
+  .diagram-wrap{
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 28px;
+    overflow-x: auto;
+  }
+  .diagram-wrap svg{ display:block; margin: 0 auto; min-width: 640px; width:100%; height:auto; }
+
+  .legend-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap:16px; margin-top: 28px; }
+  @media (max-width: 880px){ .legend-grid{ grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 500px){ .legend-grid{ grid-template-columns: 1fr; } }
+  .legend-item{
+    border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px;
+    background: var(--bg-raised);
+  }
+  .legend-item .dot{ width:10px; height:10px; border-radius:3px; display:inline-block; margin-right:8px; }
+  .legend-item h4{ margin:0 0 6px; font-size:.92rem; color: var(--ink); display:flex; align-items:center; }
+  .legend-item p{ margin:0; color: var(--ink-dim); font-size: .85rem; }
+
+  /* ---------- CHIPS ---------- */
+  .kinds-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  @media (max-width: 900px){ .kinds-grid{ grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px){ .kinds-grid{ grid-template-columns: 1fr; } }
+  .kind-chip{
+    border: 1px solid var(--line); background: var(--bg-card);
+    border-radius: 12px; padding: 16px 16px;
+  }
+  .kind-chip .k{
+    font-family: var(--mono); font-size: .82rem; color: var(--accent);
+    display:block; margin-bottom:6px;
+  }
+  .kind-chip p{ margin:0; color: var(--ink-dim); font-size:.87rem; }
+
+  .edge-panel{
+    margin-top: 34px;
+    display:grid; grid-template-columns: 1.1fr .9fr; gap: 28px;
+    border: 1px solid var(--line); border-radius: 16px; padding: 28px;
+    background: linear-gradient(160deg, var(--bg-raised), var(--bg-card));
+  }
+  @media (max-width: 820px){ .edge-panel{ grid-template-columns: 1fr; } }
+  .edge-panel h3{ font-size: 1.1rem; margin-bottom: 10px; }
+  .edge-panel p{ color: var(--ink-dim); font-size: .95rem; }
+  .edge-tags{ display:flex; flex-wrap:wrap; gap: 8px; }
+  .edge-tag{
+    font-family: var(--mono); font-size: .78rem; color: var(--accent-2);
+    border: 1px solid rgba(167,139,250,.28); background: rgba(167,139,250,.08);
+    padding: 6px 10px; border-radius: 8px;
+  }
+
+  /* ---------- FEATURES ---------- */
+  .feat-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  @media (max-width: 980px){ .feat-grid{ grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px){ .feat-grid{ grid-template-columns: 1fr; } }
+  .feat{
+    border: 1px solid var(--line); border-radius: 12px; padding: 18px;
+    background: var(--bg-card);
+  }
+  .feat .f-icon{ margin-bottom: 12px; display:flex; }
+  .feat h4{ margin: 0 0 6px; font-size: .95rem; color: var(--ink); }
+  .feat p{ margin:0; color: var(--ink-dim); font-size: .83rem; }
+
+  /* ---------- FLUXO NUMERADO ---------- */
+  .flow-panel{
+    border: 1px solid var(--line-soft);
+    border-radius: 18px;
+    padding: 8px;
+    background: var(--bg-card);
+  }
+  .flow-list{ list-style:none; margin:0; padding: 10px 8px 16px; }
+  .flow-list li{
+    display:flex; gap: 14px; align-items:flex-start;
+    padding: 14px 16px; border-radius: 10px;
+  }
+  .flow-list li:hover{ background: var(--bg-raised); }
+  .flow-list .n{
+    font-family: var(--mono); color: var(--accent-2); font-size: .8rem;
+    min-width: 26px; padding-top: 2px;
+  }
+  .flow-list b{ color: var(--ink); }
+  .flow-list span.d{ color: var(--ink-dim); font-size:.92rem; }
+
+  /* ---------- FOOTER ---------- */
+  footer{ padding: 60px 0 80px; border-top: 1px solid var(--line-soft); }
+  .footer-grid{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap: 18px; }
+  .footer-note{ color: var(--ink-faint); font-size: .85rem; }
+  .footer-links{ display:flex; gap:18px; font-size:.88rem; }
+
+  .reveal{ opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.in{ opacity: 1; transform: none; }
+
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior: auto; }
+    .reveal{ transition: none; opacity:1; transform:none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="wrap">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" fill="none">
+        <defs>
+          <linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#f472b6"/><stop offset="1" stop-color="#a78bfa"/>
+          </linearGradient>
+        </defs>
+        <rect x="4" y="4" width="24" height="24" rx="7.5" stroke="url(#bg1)" stroke-width="1.8"/>
+        <circle cx="16" cy="16" r="5.4" stroke="url(#bg1)" stroke-width="1.8"/>
+        <circle cx="22.6" cy="9.4" r="1.7" fill="#f472b6"/>
+      </svg>
+      Instagram Agent
+    </div>
+    <div class="navlinks">
+      <a href="#o-que-e">O que é</a>
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#guardrails">Guardrails</a>
+      <a href="#leads">Leads</a>
+      <a href="#manychat">ManyChat</a>
+      <a href="#whatsapp">WhatsApp</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <div class="hero-grid">
+    <div>
+      <div class="eyebrow">Direct · MCP · Supabase</div>
+      <h1>Instagram Agent</h1>
+      <p class="tagline">
+        O Direct do Instagram como <strong>ferramenta do agente</strong>. O Claude lê, busca,
+        responde e transfere conversas do Instagram por MCP — com <strong>memória completa</strong>
+        de cada mensagem, a voz do dono verificada antes de qualquer envio, e confirmação
+        humana onde importa.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/Expert-Integrado/instagram-agent">Ver repositório no GitHub</a>
+        <a class="btn btn-ghost" href="../">Outros projetos</a>
+      </div>
+      <div class="hero-badges">
+        <span class="badge">Supabase · Postgres</span>
+        <span class="badge">Edge Functions · Deno</span>
+        <span class="badge">MCP HTTP · OAuth 2.1</span>
+        <span class="badge">Meta Graph API</span>
+        <span class="badge">Whisper · áudio</span>
+      </div>
+    </div>
+    <div class="orb-panel reveal">
+      <svg viewBox="0 0 360 320" role="img" aria-label="Ilustração de conversas do Direct fluindo para o agente">
+        <defs>
+          <radialGradient id="glow" cx="50%" cy="50%" r="60%">
+            <stop offset="0%" stop-color="#f472b6" stop-opacity=".3"/>
+            <stop offset="100%" stop-color="#f472b6" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="ig" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#f472b6"/><stop offset="1" stop-color="#a78bfa"/>
+          </linearGradient>
+        </defs>
+        <circle cx="180" cy="160" r="140" fill="url(#glow)"/>
+        <!-- balões de conversa -->
+        <g>
+          <rect x="30" y="52" width="150" height="40" rx="14" fill="#17121f" stroke="#2a2233"/>
+          <rect x="44" y="66" width="90" height="6" rx="3" fill="#7d7389"/>
+          <rect x="44" y="78" width="60" height="6" rx="3" fill="#4a4157"/>
+          <rect x="60" y="112" width="150" height="40" rx="14" fill="#1d1526" stroke="url(#ig)"/>
+          <rect x="74" y="126" width="100" height="6" rx="3" fill="#f472b6"/>
+          <rect x="74" y="138" width="70" height="6" rx="3" fill="#a78bfa"/>
+          <rect x="30" y="172" width="130" height="40" rx="14" fill="#17121f" stroke="#2a2233"/>
+          <rect x="44" y="186" width="80" height="6" rx="3" fill="#7d7389"/>
+          <rect x="44" y="198" width="50" height="6" rx="3" fill="#4a4157"/>
+        </g>
+        <!-- setas pro nó do agente -->
+        <g stroke="#3d3350" stroke-width="1.4" fill="none">
+          <path d="M186 92 C 240 92, 260 140, 286 150"/>
+          <path d="M216 132 C 250 140, 262 148, 284 154"/>
+          <path d="M166 192 C 230 200, 254 170, 284 160"/>
+        </g>
+        <circle cx="296" cy="157" r="26" fill="#1d1526" stroke="url(#ig)" stroke-width="1.8"/>
+        <circle cx="296" cy="157" r="9" fill="url(#ig)"/>
+        <!-- saída: resposta -->
+        <g>
+          <path d="M292 186 C 270 240, 220 252, 176 254" stroke="#3d3350" stroke-width="1.4" fill="none"/>
+          <rect x="36" y="236" width="140" height="38" rx="14" fill="#1d1526" stroke="url(#ig)"/>
+          <rect x="50" y="249" width="86" height="6" rx="3" fill="#f472b6"/>
+          <rect x="50" y="260" width="56" height="6" rx="3" fill="#7d7389"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<section id="o-que-e" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">01 · O que é</div>
+    <h2>Não é um chatbot. É o inbox inteiro virando ferramenta.</h2>
+    <p class="section-sub">Um backend headless que grava tudo que acontece no Direct e expõe o inbox como ferramentas MCP pra qualquer agente Claude operar.</p>
+  </div>
+  <div class="card-grid reveal">
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 6h16v10H9l-5 4V6z" stroke="#f472b6" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>Inbox operável</h3>
+      <p>O agente vê quem está esperando resposta, lê a conversa inteira, busca por significado e responde — tudo por ferramentas MCP, de qualquer sessão do Claude.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="6" rx="7" ry="3" stroke="#f472b6" stroke-width="1.6"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6" stroke="#f472b6" stroke-width="1.6"/><path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3" stroke="#f472b6" stroke-width="1.6"/></svg>
+      </div>
+      <h3>Memória completa</h3>
+      <p>Cada mensagem, áudio, mídia, reação e interação fica gravada em Postgres — inclusive o histórico importado do export oficial da Meta. Nada se perde quando a janela do app fecha.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" stroke="#f472b6" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>Voz e confirmação</h3>
+      <p>Toda resposta passa pelo voice guide do dono antes de sair, e envio pra terceiro exige confirmação explícita. O agente escreve como você — e não dispara sozinho.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 12h13M13 6l6 6-6 6" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>Ponte pro WhatsApp</h3>
+      <p>Capturou o telefone na conversa? Uma ferramenta normaliza o número, vincula o contato e prepara o handoff — a venda continua no WhatsApp com todo o contexto do Direct.</p>
+    </div>
+  </div>
+</section>
+
+<section id="como-funciona" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">02 · Como funciona</div>
+    <h2>Dois sentidos, um banco no meio</h2>
+    <p class="section-sub">Tudo que entra chega por webhook da Meta e vira linha no banco. Tudo que sai passa por um proxy com guardrails antes de tocar a Graph API.</p>
+  </div>
+
+  <div class="diagram-wrap reveal">
+    <svg viewBox="0 0 920 300" role="img" aria-label="Fluxo: Meta envia webhooks para ig-webhook, que grava no Postgres; Claude fala com o gateway MCP, que envia pelo ig-proxy de volta à Meta">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#5a4d6e"/>
+        </marker>
+        <linearGradient id="ig2" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#f472b6"/><stop offset="1" stop-color="#a78bfa"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Meta -->
+      <g>
+        <rect x="10" y="115" width="150" height="70" rx="12" fill="#17121f" stroke="url(#ig2)"/>
+        <text x="85" y="144" text-anchor="middle" fill="#ede7f3" font-size="14" font-weight="700" font-family="inherit">Meta</text>
+        <text x="85" y="163" text-anchor="middle" fill="#b0a7bd" font-size="11" font-family="inherit">Instagram / Graph API</text>
+      </g>
+
+      <!-- entrada -->
+      <path d="M160 132 L 248 92" stroke="#5a4d6e" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+      <text x="196" y="98" fill="#7d7389" font-size="10.5" font-family="inherit">webhook + HMAC</text>
+
+      <g>
+        <rect x="250" y="55" width="150" height="64" rx="12" fill="#17121f" stroke="#f472b6"/>
+        <text x="325" y="82" text-anchor="middle" fill="#f472b6" font-size="13.5" font-weight="700" font-family="inherit">ig-webhook</text>
+        <text x="325" y="100" text-anchor="middle" fill="#b0a7bd" font-size="11" font-family="inherit">recebe, valida, baixa mídia</text>
+      </g>
+
+      <path d="M400 87 L 478 122" stroke="#5a4d6e" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+
+      <!-- banco -->
+      <g>
+        <rect x="480" y="112" width="160" height="76" rx="12" fill="#120e1a" stroke="#f2b866"/>
+        <text x="560" y="141" text-anchor="middle" fill="#f2b866" font-size="13.5" font-weight="700" font-family="inherit">Postgres + Storage</text>
+        <text x="560" y="160" text-anchor="middle" fill="#b0a7bd" font-size="11" font-family="inherit">conversas, mídia, score,</text>
+        <text x="560" y="174" text-anchor="middle" fill="#b0a7bd" font-size="11" font-family="inherit">audit log</text>
+      </g>
+
+      <!-- saída -->
+      <g>
+        <rect x="760" y="115" width="150" height="70" rx="12" fill="#17121f" stroke="#a78bfa"/>
+        <text x="835" y="144" text-anchor="middle" fill="#a78bfa" font-size="14" font-weight="700" font-family="inherit">Claude</text>
+        <text x="835" y="163" text-anchor="middle" fill="#b0a7bd" font-size="11" font-family="inherit">qualquer sessão, via MCP</text>
+      </g>
+
+      <path d="M760 138 L 652 138" stroke="#5a4d6e" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+      <text x="668" y="128" fill="#7d7389" font-size="10.5" font-family="inherit">gateway MCP lê o banco</text>
+
+      <g>
+        <rect x="480" y="222" width="160" height="64" rx="12" fill="#17121f" stroke="#a78bfa"/>
+        <text x="560" y="249" text-anchor="middle" fill="#a78bfa" font-size="13.5" font-weight="700" font-family="inherit">ig-proxy</text>
+        <text x="560" y="267" text-anchor="middle" fill="#b0a7bd" font-size="11" font-family="inherit">janela 24h, rate limit, audit</text>
+      </g>
+
+      <path d="M790 185 C 760 230, 700 250, 642 252" stroke="#5a4d6e" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+      <text x="688" y="278" fill="#7d7389" font-size="10.5" font-family="inherit">enviar = passar pelos guardrails</text>
+      <path d="M480 246 C 300 240, 160 220, 92 188" stroke="#5a4d6e" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+    </svg>
+  </div>
+
+  <div class="legend-grid reveal">
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#f472b6"></span>ig-webhook (entrada)</h4>
+      <p>Recebe cada evento da Meta com assinatura verificada, grava a mensagem, baixa a mídia pro Storage e dispara a transcrição de áudio.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#f2b866"></span>Postgres + Storage</h4>
+      <p>A memória: conversas, perfis, interações, categorias, notas e arquivos de mídia. Compartilha o projeto (e o voice guide) com o WhatsApp Agent.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#a78bfa"></span>Gateway MCP</h4>
+      <p>Mais de 20 ferramentas expostas por HTTP com autenticação própria: inbox, leitura, busca, envio, perfil, reação, transferência e ações administrativas.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#a78bfa"></span>ig-proxy (saída)</h4>
+      <p>Nenhuma chamada vai direto à Graph API: allowlist de ações, janela de 24h, rate limit, idempotência e registro de auditoria de cada envio.</p>
+    </div>
+  </div>
+</section>
+
+<section id="guardrails" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">03 · Guardrails</div>
+    <h2>Poder de enviar mensagem exige freios à altura</h2>
+    <p class="section-sub">O desenho parte do princípio de que agente com acesso a DM é risco — então cada camada limita o que pode acontecer de errado.</p>
+  </div>
+  <div class="feat-grid reveal">
+    <div class="feat">
+      <span class="f-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#f472b6" stroke-width="1.6"/><path d="M12 7.5V12l3 2" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+      <h4>Janela de 24h</h4>
+      <p>Regra da plataforma respeitada por construção: o proxy só envia se a pessoa falou nas últimas 24h. DM fria não existe.</p>
+    </div>
+    <div class="feat">
+      <span class="f-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M7 11V8a5 5 0 0110 0v3" stroke="#a78bfa" stroke-width="1.6"/><rect x="5" y="11" width="14" height="9" rx="2" stroke="#a78bfa" stroke-width="1.6"/></svg></span>
+      <h4>Voice check + confirmação</h4>
+      <p>O texto é checado contra o guia de voz do dono e o envio pra terceiro só sai com confirmação explícita na conversa.</p>
+    </div>
+    <div class="feat">
+      <span class="f-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M5 6h14M5 18h9" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+      <h4>Allowlist de ações</h4>
+      <p>O proxy aceita uma lista fechada de ações. O que não está na lista não existe — não há como o agente inventar chamada nova.</p>
+    </div>
+    <div class="feat">
+      <span class="f-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M13 3L5 13h5l-1 8 8-10h-5l1-8z" stroke="#f2b866" stroke-width="1.6" stroke-linejoin="round"/></svg></span>
+      <h4>Rate limit</h4>
+      <p>Limites por minuto e por dia pra envios. Um loop descontrolado bate no teto rápido em vez de disparar em massa.</p>
+    </div>
+    <div class="feat">
+      <span class="f-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="3" stroke="#a78bfa" stroke-width="1.6"/><path d="M9 12l2 2 4-5" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <h4>Idempotência</h4>
+      <p>Repetir a mesma chamada não repete o efeito: reenvio acidental retorna o resultado da primeira, sem duplicar mensagem.</p>
+    </div>
+    <div class="feat">
+      <span class="f-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 20V9M12 20V4M19 20v-7" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+      <h4>Audit log</h4>
+      <p>Cada ação — envio, leitura de perfil, reação — fica registrada com quem pediu, quando e com que resultado.</p>
+    </div>
+    <div class="feat">
+      <span class="f-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M17 4l3 3-3 3M20 7H9a5 5 0 000 10h2" stroke="#f2b866" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <h4>Echo anti-loop</h4>
+      <p>Mensagem enviada pela própria conta volta como eco e é gravada como enviada — nunca respondida. O agente não conversa consigo mesmo.</p>
+    </div>
+    <div class="feat">
+      <span class="f-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M20 12a8 8 0 11-2.3-5.6M20 4v4h-4" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <h4>Tokens que se renovam</h4>
+      <p>Um cron semanal renova os tokens de longa duração da Meta antes de expirarem. Sem surpresa de credencial morta.</p>
+    </div>
+  </div>
+</section>
+
+<section id="leads" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">04 · Inteligência de leads</div>
+    <h2>O Direct vira funil, não só caixa de entrada</h2>
+    <p class="section-sub">Cada interação alimenta um score por conversa — o agente sabe quem está quente antes de você abrir o app.</p>
+  </div>
+
+  <div class="kinds-grid reveal">
+    <div class="kind-chip"><span class="k">lead scoring</span><p>Postbacks, respostas de story, DMs, reações e gatilhos de automação têm pesos diferentes, com decaimento por recência. O resultado é um ranking vivo de interesse.</p></div>
+    <div class="kind-chip"><span class="k">categorias e notas</span><p>Conversas ganham categorias e anotações do agente — contexto que sobrevive entre sessões e entre máquinas.</p></div>
+    <div class="kind-chip"><span class="k">perfil enriquecido</span><p>Nome, username e foto de cada contato, buscados na Graph API — e, onde ela nega, pelo conector ManyChat.</p></div>
+    <div class="kind-chip"><span class="k">áudio transcrito</span><p>Mensagem de voz vira texto automaticamente via Whisper — pesquisável como qualquer outra mensagem.</p></div>
+  </div>
+
+  <div class="edge-panel reveal">
+    <div>
+      <h3>Inbox com <code>waiting_on</code></h3>
+      <p>
+        A pergunta operacional não é "quais são as conversas", é <strong>"quem está esperando por mim"</strong>.
+        O inbox responde isso direto: cada conversa diz de quem é a vez, se a janela de resposta está aberta,
+        se uma automação acabou de rodar e a quem a thread pertence.
+      </p>
+    </div>
+    <div>
+      <h3>Sinais expostos por conversa</h3>
+      <p>Campos que o agente usa pra decidir a próxima ação:</p>
+      <div class="edge-tags">
+        <span class="edge-tag">waiting_on</span>
+        <span class="edge-tag">janela_24h</span>
+        <span class="edge-tag">lead_score</span>
+        <span class="edge-tag">automation_active</span>
+        <span class="edge-tag">thread_owner</span>
+        <span class="edge-tag">categorias</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="manychat" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">05 · Conector ManyChat</div>
+    <h2>Automação e agente no mesmo Direct, sem pisar um no outro</h2>
+    <p class="section-sub">Quem já roda ManyChat não perde nada: o conector faz o agente enxergar as automações — e alcançar as conversas que só elas alcançavam.</p>
+  </div>
+  <div class="card-grid reveal">
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#f472b6" stroke-width="1.6"/><path d="M8 12.5l2.5 2.5L16 9.5" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>Atribuição de automação</h3>
+      <p>Flows instrumentados avisam o backend quando disparam. A mensagem da automação nasce marcada como tal — o agente sabe se deve intervir ou deixar o flow correr.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h10" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Dono da thread</h3>
+      <p>Conversa iniciada por campanha pertence à automação no roteamento da Meta. O sistema aprende isso sozinho e responde pelo caminho certo — a API do ManyChat.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 4v16M4 12h16" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="12" r="8.5" stroke="#f472b6" stroke-width="1.6"/></svg>
+      </div>
+      <h3>Dados de campanha no lead</h3>
+      <p>Tags, campos personalizados (e-mail, telefone capturados em flow) e o flow de origem entram no chat e contam pro score.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 18L18 6M18 6h-7M18 6v7" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>Flow como ferramenta</h3>
+      <p>O agente também dispara flows do ManyChat (lead magnet, sequência) como ação sua — orquestra a automação em vez de competir com ela.</p>
+    </div>
+  </div>
+</section>
+
+<section id="whatsapp" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">06 · Handoff pro WhatsApp</div>
+    <h2>O Direct qualifica. O WhatsApp fecha.</h2>
+    <p class="section-sub">O passo que transforma conversa de Instagram em pipeline de verdade — sem digitar número na mão e sem perder o contexto.</p>
+  </div>
+  <div class="flow-panel reveal">
+    <ul class="flow-list">
+      <li><span class="n">01</span><span><b>O telefone aparece na conversa</b> — <span class="d">o lead compartilha o número no Direct, em qualquer formato.</span></span></li>
+      <li><span class="n">02</span><span><b>Normalização</b> — <span class="d">variantes brasileiras e o nono dígito são canonicalizados contra a base do WhatsApp Agent, que vive no mesmo projeto.</span></span></li>
+      <li><span class="n">03</span><span><b>Identidade unificada</b> — <span class="d">o contato ganha a identidade do Instagram vinculada: a pessoa é uma só nos dois canais.</span></span></li>
+      <li><span class="n">04</span><span><b>Contexto viaja junto</b> — <span class="d">a ferramenta devolve o resumo da conversa do Direct pra primeira mensagem de WhatsApp já nascer informada.</span></span></li>
+      <li><span class="n">05</span><span><b>Envio com freio</b> — <span class="d">a primeira mensagem é redigida na voz do dono, passa pelo voice check e só sai com confirmação. O handoff prepara; quem aprova é humano.</span></span></li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap footer-grid">
+    <div>
+      <div class="brand" style="margin-bottom:6px;">Instagram Agent</div>
+      <div class="footer-note">Feito com Supabase Edge Functions + MCP. Repositório privado.</div>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/Expert-Integrado/instagram-agent">Repositório</a>
+      <a href="../">Projetos Expert Integrado</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    var els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) {
+      els.forEach(function(el){ el.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting){
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    els.forEach(function(el){ io.observe(el); });
+  })();
+</script>
+</body>
+</html>

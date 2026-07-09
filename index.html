@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<title>Expert Integrado — projetos</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Páginas públicas dos projetos da Expert Integrado: como cada sistema funciona, explicado visualmente.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='38' fill='none' stroke='%236ee7c4' stroke-width='9'/%3E%3Ccircle cx='50' cy='50' r='12' fill='%236ee7c4'/%3E%3C/svg%3E">
+
+<style>
+  :root{
+    --bg: #0b0f14;
+    --bg-card: #131a22;
+    --line: #212b36;
+    --ink: #e7edf3;
+    --ink-dim: #a7b3bf;
+    --ink-faint: #6b7885;
+    --accent: #6ee7c4;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(1000px 500px at 20% -10%, rgba(110,231,196,.07), transparent 60%),
+      radial-gradient(800px 450px at 100% 0%, rgba(122,162,255,.06), transparent 55%);
+    background-repeat: no-repeat;
+  }
+  a{ color: var(--accent); text-decoration:none; }
+  a:hover{ text-decoration: underline; }
+  .wrap{ max-width: 880px; margin: 0 auto; padding: 0 24px; }
+
+  header{ padding: 110px 0 40px; }
+  h1{
+    font-size: clamp(2.1rem, 5vw, 3.2rem); margin:0;
+    font-weight: 750; letter-spacing: -0.02em;
+    background: linear-gradient(180deg, #fff, #c9d6e2 65%, var(--ink-dim));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .sub{ color: var(--ink-dim); margin: 16px 0 0; max-width: 56ch; font-size: 1.08rem; }
+
+  main{ padding: 30px 0 80px; }
+  .proj{
+    display:block;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 26px 26px;
+    margin: 18px 0;
+    color: var(--ink);
+    transition: border-color .18s ease, transform .18s ease;
+  }
+  .proj:hover{ text-decoration:none; transform: translateY(-2px); }
+  .proj h2{ margin:0 0 6px; font-size: 1.25rem; letter-spacing:-0.01em; display:flex; align-items:center; gap:10px; }
+  .proj p{ margin:0; color: var(--ink-dim); font-size: .95rem; }
+  .proj .go{ font-family: var(--mono); font-size:.8rem; margin-top: 12px; display:inline-block; }
+
+  .proj-brain:hover{ border-color:#3fae8c; }
+  .proj-brain .go{ color:#6ee7c4; }
+  .proj-ig:hover{ border-color:#c2528f; }
+  .proj-ig .go{ color:#f472b6; }
+
+  footer{ padding: 20px 0 60px; color: var(--ink-faint); font-size: .85rem; }
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <h1>Projetos Expert Integrado</h1>
+  <p class="sub">Cada projeto tem uma página explicando o que ele é e como funciona por dentro — a arquitetura em linguagem de gente.</p>
+</header>
+
+<main class="wrap">
+  <a class="proj proj-brain" href="https://expert-integrado.github.io/expert-brain/">
+    <h2>
+      <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" stroke="#6ee7c4" stroke-width="1.4" opacity=".5"/><circle cx="16" cy="9" r="2.6" fill="#6ee7c4"/><circle cx="9" cy="20" r="2.6" fill="#7aa2ff"/><circle cx="23" cy="20" r="2.6" fill="#7aa2ff"/><path d="M16 11.4 10.6 18M16 11.4 21.4 18M11.6 20h8.8" stroke="#3a4756" stroke-width="1.3"/></svg>
+      Expert Brain
+    </h2>
+    <p>Um segundo cérebro em grafo de conhecimento, rodando 100% na sua conta Cloudflare e conversando com o Claude via MCP. Notas atômicas, ligações com porquê, tasks e console web.</p>
+    <span class="go">ver como funciona</span>
+  </a>
+
+  <a class="proj proj-ig" href="./instagram-agent/">
+    <h2>
+      <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f472b6"/><stop offset="1" stop-color="#a78bfa"/></linearGradient></defs><rect x="4" y="4" width="24" height="24" rx="7.5" stroke="url(#g1)" stroke-width="1.8"/><circle cx="16" cy="16" r="5.4" stroke="url(#g1)" stroke-width="1.8"/><circle cx="22.6" cy="9.4" r="1.7" fill="#f472b6"/></svg>
+      Instagram Agent
+    </h2>
+    <p>O Direct do Instagram como ferramenta do Claude: inbox operável por MCP, memória completa das conversas, guardrails de voz e confirmação, e handoff com contexto pro WhatsApp.</p>
+    <span class="go">ver como funciona</span>
+  </a>
+</main>
+
+<footer class="wrap">
+  Expert Integrado · páginas geradas a partir dos próprios repositórios.
+</footer>
+
+</body>
+</html>
