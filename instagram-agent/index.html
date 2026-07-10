@@ -622,10 +622,37 @@
 
 <section id="manychat" class="wrap">
   <div class="section-head reveal">
-    <div class="eyebrow">06 · Conector ManyChat</div>
-    <h2>Automação e agente no mesmo Direct, sem pisar um no outro</h2>
-    <p class="section-sub">Quem já roda ManyChat não perde nada: o conector faz o agente enxergar as automações — e alcançar as conversas que só elas alcançavam.</p>
+    <div class="eyebrow">06 · Conector ManyChat <span style="font-family:var(--mono); font-size:.72rem; color:var(--warn); border:1px solid rgba(242,184,102,.35); background:rgba(242,184,102,.08); padding:3px 9px; border-radius:999px; letter-spacing:.06em; margin-left:10px;">MÓDULO OPCIONAL</span></div>
+    <h2>Já usa ManyChat? O agente convive com ele. Não usa? Não precisa dele.</h2>
+    <p class="section-sub">O Instagram Agent opera o Direct inteiro sozinho. O conector ManyChat só existe pra um caso: contas que já rodam automações no ManyChat e não querem (nem precisam) desligá-las pra ter o agente junto.</p>
   </div>
+
+  <div class="edge-panel reveal" style="margin-top:0; margin-bottom:34px;">
+    <div>
+      <h3>Pra que serve, na prática</h3>
+      <p>
+        A Meta roteia o Direct entre os aplicativos conectados à conta: uma conversa iniciada por uma
+        campanha do ManyChat (resposta de story, palavra-chave, anúncio) <strong>pertence ao ManyChat</strong>
+        no roteamento — e a API oficial não consegue responder nela. Sem o conector, essas conversas
+        ficariam invisíveis e inalcançáveis pro agente. Com ele, o agente <strong>enxerga o que a automação
+        fez e responde por dentro do próprio ManyChat</strong>, sem conflito e sem perder nenhum lead.
+      </p>
+    </div>
+    <div>
+      <h3>Como funciona</h3>
+      <p>
+        A conta ManyChat é conectada por token. Os flows avisam o backend quando disparam, então cada
+        mensagem nasce com a origem certa: automação, agente ou humano. Tags e campos capturados em
+        campanha (e-mail, telefone) entram no perfil do lead e contam pro score. E o agente também usa
+        o ManyChat como ferramenta: responde threads de campanha e dispara flows quando faz sentido.
+      </p>
+      <div class="edge-tags" style="margin-top:10px;">
+        <span class="edge-tag">sem ManyChat: agente opera 100% do Direct</span>
+        <span class="edge-tag">com ManyChat: convivência sem conflito</span>
+      </div>
+    </div>
+  </div>
+
   <div class="card-grid reveal">
     <div class="card">
       <div class="card-icon">
