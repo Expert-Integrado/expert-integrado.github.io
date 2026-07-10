@@ -4,7 +4,7 @@
 <title>Instagram Agent — como funciona</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Como o Instagram Agent funciona: o Direct do Instagram como ferramenta do Claude, com memória completa, guardrails de voz e ponte para o WhatsApp.">
+<meta name="description" content="Como o Instagram Agent funciona: Direct, comentários, menções, curtidas e métricas do Instagram como ferramentas do Claude, com memória completa, guardrails de voz e ponte para o WhatsApp.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f472b6'/%3E%3Cstop offset='1' stop-color='%23a78bfa'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='12' y='12' width='76' height='76' rx='22' fill='none' stroke='url(%23g)' stroke-width='9'/%3E%3Ccircle cx='50' cy='50' r='17' fill='none' stroke='url(%23g)' stroke-width='9'/%3E%3Ccircle cx='71' cy='29' r='6' fill='%23f472b6'/%3E%3C/svg%3E">
 
 <style>
@@ -287,6 +287,7 @@
       <a href="#como-funciona">Como funciona</a>
       <a href="#guardrails">Guardrails</a>
       <a href="#leads">Leads</a>
+      <a href="#alem-do-direct">Além do Direct</a>
       <a href="#manychat">ManyChat</a>
       <a href="#whatsapp">WhatsApp</a>
     </div>
@@ -299,10 +300,11 @@
       <div class="eyebrow">Direct · MCP · Supabase</div>
       <h1>Instagram Agent</h1>
       <p class="tagline">
-        O Direct do Instagram como <strong>ferramenta do agente</strong>. O Claude lê, busca,
-        responde e transfere conversas do Instagram por MCP — com <strong>memória completa</strong>
-        de cada mensagem, a voz do dono verificada antes de qualquer envio, e confirmação
-        humana onde importa.
+        O Instagram inteiro como <strong>ferramenta do agente</strong>. O Claude lê, busca,
+        responde e transfere conversas do Direct; acompanha, responde e curte
+        <strong>comentários e menções</strong>; e enxerga as métricas de cada post — com
+        <strong>memória completa</strong>, a voz do dono verificada antes de qualquer envio,
+        e confirmação humana onde importa.
       </p>
       <div class="cta-row">
         <a class="btn btn-primary" href="https://github.com/Expert-Integrado/instagram-agent">Ver repositório no GitHub</a>
@@ -573,9 +575,54 @@
   </div>
 </section>
 
+<section id="alem-do-direct" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">05 · Além do Direct</div>
+    <h2>O perfil inteiro virou território do agente</h2>
+    <p class="section-sub">Comentários, menções, curtidas e métricas entram pelo mesmo webhook e pelo mesmo banco — cada sinal público conta pro funil.</p>
+  </div>
+  <div class="card-grid reveal">
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H11l-4 3v-3H4V5z" stroke="#f472b6" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 9h8M8 12h5" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Comentários em tempo real</h3>
+      <p>Cada comentário em post, reel ou live chega por webhook e vira sinal de lead com peso alto no score. O agente tem um inbox só de comentários não respondidos — e responde publicamente com os mesmos guardrails de voz.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 6h10v8H8l-4 3V6z" stroke="#f472b6" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 10h6M17 7l3 3-3 3" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>Comentário vira DM</h3>
+      <p>A private reply abre conversa privada com quem comentou — mesmo sem janela de 24h. É o gancho que transforma engajamento público em conversa de funil, com as regras da plataforma respeitadas por construção.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 20s-7-4.5-9-9a5 5 0 019-3 5 5 0 019 3c-2 4.5-9 9-9 9z" stroke="#f472b6" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>Curtir como a conta</h3>
+      <p>O agente curte (e descurte) comentários e posts em nome da conta — capacidade nova da API da Meta, integrada com auditoria, idempotência e rastro no banco. Reconhecer um lead custa um toque.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 4a4 4 0 100 8 4 4 0 000-8zM5 20a7 7 0 0114 0" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Menções no radar</h3>
+      <p>Quem menciona a conta em post ou comentário entra no funil com o maior peso do score — é o sinal público mais forte que existe, e antes ficava invisível.</p>
+    </div>
+  </div>
+
+  <div class="kinds-grid reveal" style="margin-top:18px;">
+    <div class="kind-chip"><span class="k">catálogo + métricas</span><p>Todo post, reel e story da conta catalogado, com métricas diárias por mídia e da conta — inclusive stories capturados antes de expirarem.</p></div>
+    <div class="kind-chip"><span class="k">crescimento</span><p>Snapshot diário de seguidores: o agente responde "quanto a conta cresceu esse mês" sem abrir o app.</p></div>
+    <div class="kind-chip"><span class="k">histórico completo</span><p>Varredura retroativa carregou dezenas de milhares de comentários de anos de posts — o funil enxerga quem sempre engajou.</p></div>
+    <div class="kind-chip"><span class="k">quentes sem DM</span><p>Ranking de quem comenta e menciona mas nunca abriu conversa — a lista de oportunidades que nenhum inbox mostra.</p></div>
+  </div>
+</section>
+
 <section id="manychat" class="wrap">
   <div class="section-head reveal">
-    <div class="eyebrow">05 · Conector ManyChat</div>
+    <div class="eyebrow">06 · Conector ManyChat</div>
     <h2>Automação e agente no mesmo Direct, sem pisar um no outro</h2>
     <p class="section-sub">Quem já roda ManyChat não perde nada: o conector faz o agente enxergar as automações — e alcançar as conversas que só elas alcançavam.</p>
   </div>
@@ -613,7 +660,7 @@
 
 <section id="whatsapp" class="wrap">
   <div class="section-head reveal">
-    <div class="eyebrow">06 · Handoff pro WhatsApp</div>
+    <div class="eyebrow">07 · Handoff pro WhatsApp</div>
     <h2>O Direct qualifica. O WhatsApp fecha.</h2>
     <p class="section-sub">O passo que transforma conversa de Instagram em pipeline de verdade — sem digitar número na mão e sem perder o contexto.</p>
   </div>
