@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<title>Super SDR — como funciona</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Como o Super SDR funciona: agentes SDR de IA que conversam, qualificam e movem o CRM — com um núcleo v3 100% Rust e Postgres como único datastore.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M18 20h64l-22 28v24l-20 10V48Z' fill='none' stroke='%23f0876a' stroke-width='8' stroke-linejoin='round'/%3E%3C/svg%3E">
+
+<style>
+  :root{
+    --bg: #0b0f14;
+    --bg-raised: #10161d;
+    --bg-card: #131a22;
+    --line: #212b36;
+    --line-soft: #1a232c;
+    --ink: #e7edf3;
+    --ink-dim: #a7b3bf;
+    --ink-faint: #6b7885;
+    --accent: #6ee7c4;
+    --accent-dim: #3fae8c;
+    --accent-2: #7aa2ff;
+    --accent-2-dim: #4f6bc4;
+    --rust: #f0876a;
+    --warn: #f2b866;
+    --radius: 14px;
+    --maxw: 1080px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html{ scroll-behavior: smooth; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    background-image:
+      radial-gradient(1200px 600px at 15% -10%, rgba(240,135,106,.07), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(110,231,196,.06), transparent 55%);
+    background-repeat: no-repeat;
+  }
+
+  ::selection{ background: rgba(240,135,106,.3); color: #fff; }
+
+  a{ color: var(--accent); text-decoration: none; }
+  a:hover{ text-decoration: underline; }
+
+  .wrap{ max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+  section{ padding: 96px 0; border-top: 1px solid var(--line-soft); }
+  section:first-of-type{ border-top: none; }
+
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size: 12.5px; letter-spacing:.14em; text-transform: uppercase;
+    color: var(--rust); font-weight: 700;
+    margin: 0 0 14px;
+  }
+  .eyebrow::before{ content:""; width:7px; height:7px; border-radius:50%; background: var(--rust); box-shadow: 0 0 0 4px rgba(240,135,106,.15); }
+
+  h1,h2,h3{ font-weight: 750; letter-spacing: -0.02em; margin: 0; }
+  h2{ font-size: clamp(1.7rem, 3vw, 2.35rem); color: var(--ink); }
+  .section-sub{ color: var(--ink-dim); max-width: 660px; margin: 14px 0 0; font-size: 1.05rem; }
+  .section-head{ margin-bottom: 48px; }
+
+  code, .mono{ font-family: var(--mono); }
+  code{
+    background: rgba(110,231,196,.1);
+    color: var(--accent);
+    padding: .12em .42em;
+    border-radius: 5px;
+    font-size: .88em;
+    border: 1px solid rgba(110,231,196,.18);
+  }
+
+  /* ---------- NAV ---------- */
+  .topnav{
+    position: sticky; top:0; z-index: 50;
+    backdrop-filter: blur(10px);
+    background: rgba(11,15,20,.72);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .topnav .wrap{ display:flex; align-items:center; justify-content:space-between; height: 60px; }
+  .brand{ display:flex; align-items:center; gap:10px; font-weight:800; color: var(--ink); font-size: 1rem; }
+  .brand-mark{ width:26px; height:26px; flex:none; }
+  .navlinks{ display:flex; gap:22px; font-size:.92rem; }
+  .navlinks a{ color: var(--ink-dim); }
+  .navlinks a:hover{ color: var(--ink); text-decoration:none; }
+  @media (max-width: 720px){ .navlinks{ display:none; } }
+
+  /* ---------- HERO ---------- */
+  .hero{ padding: 108px 0 88px; border-top:none; position:relative; overflow:hidden; }
+  .hero::after{
+    content:"";
+    position:absolute; inset:auto -20% -60% -20%;
+    height: 420px;
+    background: radial-gradient(closest-side, rgba(110,231,196,.09), transparent 70%);
+    pointer-events:none;
+  }
+  .hero-grid{ display:grid; grid-template-columns: 1.15fr .85fr; gap: 48px; align-items:center; position:relative; }
+  @media (max-width: 880px){ .hero-grid{ grid-template-columns: 1fr; } }
+
+  .hero h1{
+    font-size: clamp(2.5rem, 5.4vw, 4.1rem);
+    line-height: 1.04;
+    background: linear-gradient(180deg, #fff, #c9d6e2 65%, var(--ink-dim));
+    -webkit-background-clip: text; background-clip:text; color: transparent;
+  }
+  .hero .tagline{
+    margin-top: 20px;
+    font-size: clamp(1.05rem, 1.7vw, 1.25rem);
+    color: var(--ink-dim);
+    max-width: 54ch;
+  }
+  .hero .tagline strong{ color: var(--ink); font-weight: 650; }
+  .hero .byline{ margin-top: 14px; color: var(--ink-faint); font-size: .95rem; }
+
+  .hero-badges{ display:flex; gap:10px; flex-wrap:wrap; margin-top:28px; }
+  .badge{
+    font-size:.78rem; color: var(--ink-faint); border:1px solid var(--line);
+    padding: 5px 11px; border-radius: 999px; font-family: var(--mono);
+  }
+
+  .orb-panel{
+    background: linear-gradient(160deg, var(--bg-raised), var(--bg-card));
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 30px 60px -30px rgba(0,0,0,.6);
+  }
+  .orb-panel svg{ display:block; width:100%; height:auto; }
+
+  /* ---------- CARDS ---------- */
+  .card-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  @media (max-width: 980px){ .card-grid{ grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px){ .card-grid{ grid-template-columns: 1fr; } }
+
+  .card{
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 26px 22px;
+    transition: border-color .18s ease, transform .18s ease;
+  }
+  .card:hover{ border-color: var(--accent-dim); transform: translateY(-3px); }
+  .card-icon{
+    width: 42px; height:42px; border-radius: 11px;
+    display:flex; align-items:center; justify-content:center;
+    background: rgba(110,231,196,.1); border: 1px solid rgba(110,231,196,.22);
+    margin-bottom: 16px;
+  }
+  .card h3{ font-size: 1.05rem; margin-bottom: 8px; }
+  .card p{ color: var(--ink-dim); font-size: .93rem; margin:0; }
+
+  /* ---------- DIAGRAMA ---------- */
+  .diagram-wrap{
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 28px;
+    overflow-x: auto;
+  }
+  .diagram-wrap svg{ display:block; margin: 0 auto; min-width: 680px; width:100%; height:auto; }
+
+  .legend-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap:16px; margin-top: 28px; }
+  @media (max-width: 880px){ .legend-grid{ grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 500px){ .legend-grid{ grid-template-columns: 1fr; } }
+  .legend-item{
+    border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px;
+    background: var(--bg-raised);
+  }
+  .legend-item .dot{ width:10px; height:10px; border-radius:3px; display:inline-block; margin-right:8px; }
+  .legend-item h4{ margin:0 0 6px; font-size:.92rem; color: var(--ink); display:flex; align-items:center; }
+  .legend-item p{ margin:0; color: var(--ink-dim); font-size: .85rem; }
+
+  /* ---------- MARCOS ---------- */
+  .cat-block{ margin-bottom: 26px; }
+  .cat-label{
+    display:flex; align-items:center; gap:9px;
+    font-family: var(--mono); font-size:.8rem; letter-spacing:.1em; text-transform:uppercase;
+    color: var(--ink-faint); margin-bottom: 12px;
+  }
+  .cat-label .dot{ width:9px; height:9px; border-radius:3px; display:inline-block; }
+  .chips{ display:flex; flex-wrap:wrap; gap:10px; }
+  .ms-chip{
+    border: 1px solid var(--line); background: var(--bg-card);
+    border-radius: 10px; padding: 8px 13px;
+    font-family: var(--mono); font-size: .82rem; color: var(--ink);
+  }
+  .ms-chip small{ display:block; font-family: var(--font); color: var(--ink-faint); font-size:.78rem; margin-top:1px; }
+
+  .edge-panel{
+    margin-top: 40px;
+    display:grid; grid-template-columns: 1.1fr .9fr; gap: 28px;
+    border: 1px solid var(--line); border-radius: 16px; padding: 28px;
+    background: linear-gradient(160deg, var(--bg-raised), var(--bg-card));
+  }
+  @media (max-width: 820px){ .edge-panel{ grid-template-columns: 1fr; } }
+  .edge-panel h3{ font-size: 1.1rem; margin-bottom: 10px; }
+  .edge-panel p{ color: var(--ink-dim); font-size: .95rem; }
+  .alias-example{
+    background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; font-size: .85rem; margin-top: 14px; font-family: var(--mono);
+    line-height: 1.9;
+  }
+  .alias-example .from{ color: var(--ink-faint); }
+  .alias-example .to{ color: var(--accent); }
+  .alias-example .arr{ color: var(--ink-dim); }
+
+  /* ---------- DECISOES ---------- */
+  .kinds-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  @media (max-width: 900px){ .kinds-grid{ grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px){ .kinds-grid{ grid-template-columns: 1fr; } }
+  .kind-chip{
+    border: 1px solid var(--line); background: var(--bg-card);
+    border-radius: 12px; padding: 16px 16px;
+  }
+  .kind-chip .k{
+    font-family: var(--mono); font-size: .82rem; color: var(--rust);
+    display:block; margin-bottom:6px;
+  }
+  .kind-chip p{ margin:0; color: var(--ink-dim); font-size:.87rem; }
+
+  /* ---------- ONDAS ---------- */
+  .release-panel{
+    border: 1px solid var(--line-soft);
+    border-radius: 18px;
+    padding: 8px;
+    background: var(--bg-card);
+  }
+  .release-head{
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
+    padding: 18px 20px 6px;
+  }
+  .version-pill{
+    font-family: var(--mono); font-weight: 700; color: #140b07;
+    background: var(--rust); padding: 5px 12px; border-radius: 999px; font-size: .82rem;
+  }
+  .release-list{ list-style:none; margin:0; padding: 10px 8px 16px; }
+  .release-list li{
+    display:flex; gap: 14px; align-items:flex-start;
+    padding: 14px 16px; border-radius: 10px;
+  }
+  .release-list li:hover{ background: var(--bg-raised); }
+  .release-list .n{
+    font-family: var(--mono); color: var(--accent-2); font-size: .8rem;
+    min-width: 26px; padding-top: 2px;
+  }
+  .release-list b{ color: var(--ink); }
+  .release-list span.d{ color: var(--ink-dim); font-size:.92rem; }
+  .tag-done{
+    font-family: var(--mono); font-size:.72rem; color:#0d1a14;
+    background: var(--accent); border-radius: 999px; padding: 2px 9px;
+    margin-left: 8px; vertical-align: 2px; font-weight: 700;
+  }
+  .prior-note{ color: var(--ink-faint); font-size: .88rem; padding: 6px 24px 16px; }
+
+  /* ---------- PILLS ---------- */
+  .pills{ display: flex; flex-wrap: wrap; gap: 10px; }
+  .pill{
+    padding: 6px 13px; border-radius: 999px; font-family: var(--mono); font-size: .84rem;
+    background: var(--bg-raised); border: 1px solid var(--line); color: var(--ink-dim);
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer{ padding: 60px 0 80px; border-top: 1px solid var(--line-soft); }
+  .footer-grid{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap: 18px; }
+  .footer-note{ color: var(--ink-faint); font-size: .85rem; }
+
+  .reveal{ opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.in{ opacity: 1; transform: none; }
+
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior: auto; }
+    .reveal{ transition: none; opacity:1; transform:none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="wrap">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" fill="none">
+        <path d="M6 7h20l-7 9v7.5L13 27V16Z" stroke="#f0876a" stroke-width="1.8" stroke-linejoin="round"/>
+        <circle cx="24.5" cy="24.5" r="3.2" fill="#6ee7c4"/>
+      </svg>
+      Super SDR
+    </div>
+    <div class="navlinks">
+      <a href="#o-que-e">O que é</a>
+      <a href="#nucleo">O núcleo v3</a>
+      <a href="#marcos">Marcos</a>
+      <a href="#decisoes">Decisões</a>
+      <a href="#ondas">Ondas</a>
+      <a href="#mcp">Servidor MCP</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <div class="hero-grid">
+    <div>
+      <div class="eyebrow">Agentes SDR de IA · Núcleo v3 · Rust</div>
+      <h1>Super SDR</h1>
+      <p class="tagline">
+        Uma plataforma de <strong>agentes SDR de inteligência artificial</strong>: eles conversam com
+        os leads nos canais da empresa, qualificam, agendam reuniões e movem o CRM — e registram cada
+        passo como um <strong>fato imutável</strong>. Por baixo, um núcleo reescrito
+        <strong>100% em Rust</strong>, com o Postgres como único datastore.
+      </p>
+      <p class="byline"><a href="https://expertintegrado.com.br">Um projeto da Expert Integrado.</a></p>
+      <div class="hero-badges">
+        <span class="badge">100% Rust</span>
+        <span class="badge">axum · tokio · sqlx</span>
+        <span class="badge">Postgres = único datastore</span>
+        <span class="badge">event_log append-only</span>
+        <span class="badge">mcp.supersdr.com.br</span>
+      </div>
+    </div>
+    <div class="orb-panel reveal" id="hero-orb">
+      <svg viewBox="0 0 360 320" role="img" aria-label="Ilustração de um funil de vendas alimentando um registro de eventos">
+        <defs>
+          <radialGradient id="glow" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="#f0876a" stop-opacity=".28"/>
+            <stop offset="100%" stop-color="#f0876a" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <circle cx="180" cy="140" r="140" fill="url(#glow)"/>
+        <!-- funil -->
+        <g stroke-linejoin="round">
+          <path d="M70 40h220l-24 46H94Z" fill="#131a22" stroke="#f0876a" stroke-width="1.6"/>
+          <path d="M100 96h160l-22 46H122Z" fill="#131a22" stroke="#f2b866" stroke-width="1.4"/>
+          <path d="M128 152h104l-20 46h-64Z" fill="#131a22" stroke="#6ee7c4" stroke-width="1.4"/>
+        </g>
+        <text x="180" y="68" text-anchor="middle" fill="#e7edf3" font-size="12" font-family="inherit">conexão · qualificação</text>
+        <text x="180" y="124" text-anchor="middle" fill="#e7edf3" font-size="12" font-family="inherit">reunião · proposta</text>
+        <text x="180" y="180" text-anchor="middle" fill="#e7edf3" font-size="12" font-family="inherit">negociação</text>
+        <!-- gotas de evento -->
+        <g stroke="#2a3846" stroke-width="1.3">
+          <line x1="180" y1="198" x2="180" y2="240"/>
+        </g>
+        <circle cx="180" cy="216" r="4" fill="#6ee7c4"/>
+        <!-- event_log -->
+        <rect x="90" y="242" width="180" height="52" rx="10" fill="#0f151b" stroke="#2a3846"/>
+        <text x="180" y="264" text-anchor="middle" fill="#6ee7c4" font-size="12" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">event_log</text>
+        <text x="180" y="282" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="inherit">cada marco vira um fato — para sempre</text>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<section id="o-que-e" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">01 · O que é</div>
+    <h2>Um SDR que não dorme, com um diário que não mente</h2>
+    <p class="section-sub">O produto em quatro peças, como aparecem no modelo de dados do sistema — agentes, CRM, agenda e cobrança.</p>
+  </div>
+  <div class="card-grid reveal">
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9l-4 4v-4a3 3 0 0 1-1-2.2Z" stroke="#6ee7c4" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>Agentes que conversam</h3>
+      <p>Cada agente atende sessões de conversa nos canais conectados, com base de conhecimento própria — e transfere para um humano quando a conversa pede.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 4v16h16" stroke="#6ee7c4" stroke-width="1.6" stroke-linecap="round"/><path d="M7 14l4-4 3 3 5-6" stroke="#6ee7c4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>CRM em movimento</h3>
+      <p>Conexões com o CRM levam pipelines, etapas e negócios para dentro do sistema. Quando a conversa cruza um marco — qualificou, agendou, ganhou — o funil anda junto.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="15" rx="2" stroke="#6ee7c4" stroke-width="1.6"/><path d="M3.5 9.5h17M8 3v4M16 3v4" stroke="#6ee7c4" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Reunião e follow-up</h3>
+      <p>O agente agenda, reagenda e registra reuniões; lead que some entra na cadência de follow-up em vez de morrer em silêncio na caixa de entrada.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="#6ee7c4" stroke-width="1.6"/><path d="M12 8v8M9.5 10c0-1 1-1.7 2.5-1.7s2.5.7 2.5 1.7c0 2.4-5 1.4-5 4 0 1 1 1.7 2.5 1.7s2.5-.7 2.5-1.7" stroke="#6ee7c4" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Créditos por conversa</h3>
+      <p>A unidade de cobrança é a sessão de conversa — não o token. O consumo de modelo é custo interno do sistema, medido à parte, invisível para quem usa.</p>
+    </div>
+  </div>
+</section>
+
+<section id="nucleo" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">02 · O núcleo v3</div>
+    <h2>Um binário Rust, um Postgres, e nada mais</h2>
+    <p class="section-sub">O v3 elimina camadas inteiras por decisão de projeto: sem broker de filas, sem cache server, sem segundo banco. Tudo que acontece vira um fato no <code>event_log</code>, e os motores trabalham a partir dele.</p>
+  </div>
+
+  <div class="diagram-wrap reveal">
+    <svg viewBox="0 0 940 330" role="img" aria-label="Fluxo: conversas entram no núcleo Rust, que grava fatos no event_log do Postgres; os motores consomem a fila no mesmo banco e movem CRM, follow-up e agenda">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#4a5a6a"/>
+        </marker>
+      </defs>
+
+      <!-- Conversas -->
+      <g>
+        <rect x="10" y="120" width="160" height="80" rx="12" fill="#131a22" stroke="#2a3846"/>
+        <text x="90" y="152" text-anchor="middle" fill="#e7edf3" font-size="14" font-weight="700" font-family="inherit">Conversas</text>
+        <text x="90" y="172" text-anchor="middle" fill="#a7b3bf" font-size="11" font-family="inherit">canais · sessões · mensagens</text>
+      </g>
+
+      <line x1="170" y1="160" x2="228" y2="160" stroke="#4a5a6a" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+      <!-- Nucleo Rust -->
+      <g>
+        <rect x="230" y="120" width="170" height="80" rx="12" fill="#131a22" stroke="#f0876a"/>
+        <text x="315" y="152" text-anchor="middle" fill="#f0876a" font-size="14" font-weight="700" font-family="inherit">Núcleo v3</text>
+        <text x="315" y="172" text-anchor="middle" fill="#a7b3bf" font-size="11" font-family="inherit">Rust · axum · tokio · sqlx</text>
+      </g>
+
+      <line x1="400" y1="160" x2="458" y2="160" stroke="#4a5a6a" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+      <!-- Postgres container -->
+      <g>
+        <rect x="460" y="20" width="230" height="290" rx="14" fill="#0f151b" stroke="#7aa2ff"/>
+        <text x="575" y="46" text-anchor="middle" fill="#7aa2ff" font-size="13" font-weight="700" font-family="inherit">Postgres — único datastore</text>
+
+        <rect x="478" y="62" width="194" height="64" rx="10" fill="#131a22" stroke="#2a3846"/>
+        <text x="575" y="88" text-anchor="middle" fill="#6ee7c4" font-size="12.5" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">event_log</text>
+        <text x="575" y="107" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="inherit">append-only, garantido por trigger</text>
+
+        <rect x="478" y="138" width="194" height="64" rx="10" fill="#131a22" stroke="#2a3846"/>
+        <text x="575" y="164" text-anchor="middle" fill="#6ee7c4" font-size="12.5" font-weight="700" font-family="ui-monospace, Menlo, Consolas, monospace">milestones</text>
+        <text x="575" y="183" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="inherit">taxonomia canônica de marcos</text>
+
+        <rect x="478" y="214" width="194" height="76" rx="10" fill="#131a22" stroke="#2a3846"/>
+        <text x="575" y="240" text-anchor="middle" fill="#e7edf3" font-size="12.5" font-weight="700" font-family="inherit">fila de trabalho</text>
+        <text x="575" y="258" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="ui-monospace, Menlo, Consolas, monospace">FOR UPDATE SKIP LOCKED</text>
+        <text x="575" y="275" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="ui-monospace, Menlo, Consolas, monospace">+ pg_cron</text>
+      </g>
+
+      <line x1="690" y1="252" x2="748" y2="252" stroke="#4a5a6a" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+      <!-- Motores -->
+      <g>
+        <rect x="750" y="212" width="180" height="80" rx="12" fill="#131a22" stroke="#6ee7c4"/>
+        <text x="840" y="242" text-anchor="middle" fill="#6ee7c4" font-size="13" font-weight="700" font-family="inherit">Motores</text>
+        <text x="840" y="262" text-anchor="middle" fill="#a7b3bf" font-size="11" font-family="inherit">follow-up · automação</text>
+      </g>
+
+      <!-- Saidas -->
+      <path d="M840 212 C 840 130, 840 130, 840 108" fill="none" stroke="#4a5a6a" stroke-width="1.4" marker-end="url(#arrow)"/>
+      <g>
+        <rect x="750" y="28" width="180" height="80" rx="12" fill="#0f151b" stroke="#2a3846"/>
+        <text x="840" y="60" text-anchor="middle" fill="#e7edf3" font-size="13" font-weight="700" font-family="inherit">CRM · agenda · cadência</text>
+        <text x="840" y="80" text-anchor="middle" fill="#a7b3bf" font-size="11" font-family="inherit">o funil anda, o lead volta</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="legend-grid reveal">
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#6ee7c4"></span>event_log (fonte de verdade)</h4>
+      <p>Todo fato do domínio — marco cruzado, reunião marcada, handoff — vira uma linha aqui, com o instante em que aconteceu no mundo separado do instante da gravação. UPDATE, DELETE e TRUNCATE são bloqueados por trigger no próprio banco: é imutável por construção, não por combinado.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#7aa2ff"></span>Fila sem broker</h4>
+      <p>Nada de Redis, RabbitMQ ou serviço de fila: os motores consomem trabalho do mesmo Postgres com <code>FOR UPDATE SKIP LOCKED</code>, e o <code>pg_cron</code> cuida do agendamento. Uma peça a menos pra operar, monitorar e derrubar.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#f2b866"></span>Motores por onda</h4>
+      <p>Os motores de follow-up e automação chegam nas próximas ondas da migração, consumindo os fatos do <code>event_log</code> como caixa de saída — o padrão outbox, dentro do banco.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#e7edf3"></span>Cada fato tem dono</h4>
+      <p>Toda linha do <code>event_log</code> carrega o identificador do cliente dono do fato e a entidade âncora (sessão, negócio, contato) — o histórico inteiro de qualquer conversa se reconstrói com uma consulta.</p>
+    </div>
+  </div>
+</section>
+
+<section id="marcos" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">03 · Taxonomia de marcos</div>
+    <h2>Dezesseis marcos, um vocabulário só</h2>
+    <p class="section-sub">Tudo que importa numa conversa de vendas está catalogado numa taxonomia canônica — a mesma tabela no banco e o mesmo código Rust, com um teste garantindo que nunca divergem.</p>
+  </div>
+
+  <div class="reveal">
+    <div class="cat-block">
+      <div class="cat-label"><span class="dot" style="background:#6ee7c4"></span>Funil</div>
+      <div class="chips">
+        <span class="ms-chip">conexao<small>Conexão</small></span>
+        <span class="ms-chip">tentando_contato<small>Tentando contato</small></span>
+        <span class="ms-chip">qualificacao<small>Qualificação</small></span>
+        <span class="ms-chip">qualificado<small>Qualificado</small></span>
+        <span class="ms-chip">desqualificado<small>Desqualificado</small></span>
+        <span class="ms-chip">proposta_enviada<small>Proposta enviada</small></span>
+        <span class="ms-chip">negociacao<small>Negociação</small></span>
+        <span class="ms-chip">ganhou<small>Ganhou</small></span>
+        <span class="ms-chip">perdeu<small>Perdeu</small></span>
+      </div>
+    </div>
+    <div class="cat-block">
+      <div class="cat-label"><span class="dot" style="background:#7aa2ff"></span>Reunião</div>
+      <div class="chips">
+        <span class="ms-chip">reuniao_agendada<small>Reunião agendada</small></span>
+        <span class="ms-chip">reuniao_cancelada<small>Reunião cancelada</small></span>
+        <span class="ms-chip">reuniao_reagendada<small>Reunião reagendada</small></span>
+      </div>
+    </div>
+    <div class="cat-block">
+      <div class="cat-label"><span class="dot" style="background:#f0876a"></span>Handoff</div>
+      <div class="chips">
+        <span class="ms-chip">transferiu_para_humano<small>Transferiu para humano</small></span>
+        <span class="ms-chip">transferiu_para_agente<small>Transferiu para agente</small></span>
+      </div>
+    </div>
+    <div class="cat-block">
+      <div class="cat-label"><span class="dot" style="background:#f2b866"></span>Follow-up</div>
+      <div class="chips">
+        <span class="ms-chip">sem_resposta<small>Sem resposta</small></span>
+      </div>
+    </div>
+    <div class="cat-block">
+      <div class="cat-label"><span class="dot" style="background:#6b7885"></span>Sessão</div>
+      <div class="chips">
+        <span class="ms-chip">conversa_encerrada<small>Conversa encerrada</small></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="edge-panel reveal">
+    <div>
+      <h3>Aliases resolvidos na borda</h3>
+      <p>
+        As gerações anteriores acumularam <strong>dois vocabulários</strong> para os mesmos marcos —
+        um em português, emitido pelas automações, e um em inglês, vindo do mapeamento de etapas do CRM.
+        O v3 resolve isso por design: os motores só emitem e consomem a key canônica; todo sinônimo é
+        traduzido na entrada do sistema.
+      </p>
+      <div class="alias-example">
+        <div><span class="from">em_conexao · connection</span> <span class="arr">→</span> <span class="to">conexao</span></div>
+        <div><span class="from">vendeu · fechou · sold · won · closed</span> <span class="arr">→</span> <span class="to">ganhou</span></div>
+        <div><span class="from">meeting_scheduled</span> <span class="arr">→</span> <span class="to">reuniao_agendada</span></div>
+      </div>
+    </div>
+    <div>
+      <h3>Garantido em três camadas</h3>
+      <p>
+        Uma foreign key impede que qualquer alias cru entre no <code>event_log</code> — só a key canônica
+        grava. Um teste de integração compara o seed do banco com a taxonomia em Rust, linha a linha,
+        contra um Postgres real. E o CI só deixa mergear com tudo verde: formatação, linter sem nenhum
+        warning tolerado, migrations aplicadas do zero e a suíte inteira de testes.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section id="decisoes" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">04 · Decisões de projeto</div>
+    <h2>As regras que regem o v3</h2>
+    <p class="section-sub">Ratificadas em julho de 2026 e registradas no próprio repositório — cada uma corta complexidade em vez de adicionar.</p>
+  </div>
+  <div class="kinds-grid reveal">
+    <div class="kind-chip"><span class="k">100% Rust</span><p>Nenhum outro runtime no produto. Dependências externas perto de zero — só onde há integração de verdade.</p></div>
+    <div class="kind-chip"><span class="k">Postgres único</span><p>Dados, fila e agendamento no mesmo banco. Sem segundo datastore, sem cache server, sem BaaS.</p></div>
+    <div class="kind-chip"><span class="k">fila sem broker</span><p><code>pg_cron</code> + <code>FOR UPDATE SKIP LOCKED</code> substituem Redis, RabbitMQ e afins.</p></div>
+    <div class="kind-chip"><span class="k">append-only</span><p>O <code>event_log</code> nunca sofre UPDATE ou DELETE — um trigger no banco bloqueia, não uma convenção de equipe.</p></div>
+    <div class="kind-chip"><span class="k">taxonomia canônica</span><p>Marcos têm uma key oficial; sinônimos viram aliases na borda. O CI verifica que Rust e SQL contam a mesma história.</p></div>
+    <div class="kind-chip"><span class="k">créditos por sessão</span><p>Cobrança por conversa atendida. Tokens de modelo são custo interno, não unidade de cobrança.</p></div>
+    <div class="kind-chip"><span class="k">MCP oficial em Rust</span><p>Um único servidor MCP, em Rust, atende os clientes de IA — a implementação anterior em TypeScript foi aposentada.</p></div>
+    <div class="kind-chip"><span class="k">merge só com CI verde</span><p>Formatação, linter com warning virando erro, migrations do zero num Postgres 17 real e todos os testes passando.</p></div>
+  </div>
+</section>
+
+<section id="ondas" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">05 · Migração em ondas</div>
+    <h2>O núcleo assume um pedaço por vez</h2>
+    <p class="section-sub">Em vez de um big bang, a reescrita avança em seis ondas — cada uma entra em produção sozinha, com a geração anterior ainda de pé.</p>
+  </div>
+  <div class="release-panel reveal">
+    <div class="release-head">
+      <h3 style="font-size:1.05rem;">As seis ondas do v3</h3>
+      <span class="version-pill">v2 → v3</span>
+    </div>
+    <ul class="release-list">
+      <li><span class="n">01</span><span><b>event_log + taxonomia de marcos</b><span class="tag-done">no repo</span> — <span class="d">a fonte de verdade append-only, os dezesseis marcos canônicos e o CI que protege tudo isso.</span></span></li>
+      <li><span class="n">02</span><span><b>Motor de follow-up</b> — <span class="d">a cadência que reengaja lead sem resposta, consumindo os fatos do event_log.</span></span></li>
+      <li><span class="n">03</span><span><b>Motor de automação</b> — <span class="d">as reações a cada marco: mover etapa no CRM, criar atividade, disparar o próximo passo.</span></span></li>
+      <li><span class="n">04</span><span><b>Adaptadores de canal</b> — <span class="d">as pontes com os canais de conversa passam para dentro do núcleo Rust.</span></span></li>
+      <li><span class="n">05</span><span><b>Brain interno</b> — <span class="d">a engine de LLM própria do agente, dentro do núcleo; o contrato do webhook v2 fica congelado durante a transição.</span></span></li>
+      <li><span class="n">06</span><span><b>Billing, insights e observabilidade</b> — <span class="d">créditos por sessão, métricas de operação e visão do que os agentes estão fazendo.</span></span></li>
+    </ul>
+    <p class="prior-note">A geração anterior (v2, rodando em Edge Functions) segue no ar durante a transição — cada onda assume um pedaço até o núcleo Rust responder por tudo.</p>
+  </div>
+</section>
+
+<section id="mcp" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">06 · Servidor MCP</div>
+    <h2>O Super SDR como ferramenta de qualquer agente de IA</h2>
+    <p class="section-sub">Um servidor MCP em Rust, publicado em <code>mcp.supersdr.com.br</code>, deixa clientes como o Claude gerenciarem agentes e prompts do Super SDR por conversa — com a mesma identidade e as mesmas permissões do usuário na plataforma.</p>
+  </div>
+
+  <div class="diagram-wrap reveal">
+    <svg viewBox="0 0 940 190" role="img" aria-label="Fluxo: o agente de IA chega pela edge da Cloudflare, entra por um túnel sem porta pública, o servidor MCP em Rust valida o token do usuário e consulta o banco, onde as políticas de acesso por linha isolam cada organização">
+      <defs>
+        <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#4a5a6a"/>
+        </marker>
+      </defs>
+      <g>
+        <rect x="10" y="60" width="150" height="72" rx="12" fill="#131a22" stroke="#2a3846"/>
+        <text x="85" y="90" text-anchor="middle" fill="#e7edf3" font-size="13.5" font-weight="700" font-family="inherit">Agente de IA</text>
+        <text x="85" y="109" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="inherit">Claude e outros clientes MCP</text>
+      </g>
+      <line x1="160" y1="96" x2="208" y2="96" stroke="#4a5a6a" stroke-width="1.6" marker-end="url(#arrow2)"/>
+      <g>
+        <rect x="210" y="60" width="170" height="72" rx="12" fill="#131a22" stroke="#f2b866"/>
+        <text x="295" y="90" text-anchor="middle" fill="#f2b866" font-size="13.5" font-weight="700" font-family="inherit">Edge Cloudflare</text>
+        <text x="295" y="109" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="ui-monospace, Menlo, Consolas, monospace">mcp.supersdr.com.br</text>
+      </g>
+      <line x1="380" y1="96" x2="428" y2="96" stroke="#4a5a6a" stroke-width="1.6" marker-end="url(#arrow2)"/>
+      <g>
+        <rect x="430" y="60" width="150" height="72" rx="12" fill="#131a22" stroke="#2a3846"/>
+        <text x="505" y="90" text-anchor="middle" fill="#e7edf3" font-size="13.5" font-weight="700" font-family="inherit">Túnel de saída</text>
+        <text x="505" y="109" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="inherit">nenhuma porta pública</text>
+      </g>
+      <line x1="580" y1="96" x2="628" y2="96" stroke="#4a5a6a" stroke-width="1.6" marker-end="url(#arrow2)"/>
+      <g>
+        <rect x="630" y="60" width="150" height="72" rx="12" fill="#131a22" stroke="#f0876a"/>
+        <text x="705" y="90" text-anchor="middle" fill="#f0876a" font-size="13.5" font-weight="700" font-family="inherit">Servidor MCP</text>
+        <text x="705" y="109" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="inherit">Rust · rmcp · axum</text>
+      </g>
+      <line x1="780" y1="96" x2="828" y2="96" stroke="#4a5a6a" stroke-width="1.6" marker-end="url(#arrow2)"/>
+      <g>
+        <rect x="830" y="60" width="100" height="72" rx="12" fill="#0f151b" stroke="#7aa2ff"/>
+        <text x="880" y="90" text-anchor="middle" fill="#7aa2ff" font-size="13.5" font-weight="700" font-family="inherit">Banco</text>
+        <text x="880" y="109" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="inherit">isolamento por linha</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="legend-grid reveal">
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#6ee7c4"></span>Login de verdade, com MFA</h4>
+      <p>Conectar o servidor abre o login da própria plataforma (OAuth 2.1). Quem tem segundo fator configurado passa pelo código TOTP — e só usuários com o nível de permissão certo entram.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#7aa2ff"></span>Sem credencial própria</h4>
+      <p>O servidor não guarda senha nem chave-mestra: valida a assinatura do token do usuário e repassa o mesmo token ao banco a cada consulta. As políticas de acesso por linha do banco fazem o isolamento por organização sozinhas.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#f2b866"></span>Um endpoint, dois modos</h4>
+      <p>Todo o protocolo MCP passa por um único endpoint HTTP. O servidor detecta se o cliente aceita streaming e responde por stream de eventos ou JSON puro, conforme o caso.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#f0876a"></span>Invisível na internet</h4>
+      <p>O servidor não expõe porta nenhuma: um daemon mantém um túnel de saída até a edge da Cloudflare, que termina o TLS e roteia o tráfego. Ninguém alcança a máquina diretamente.</p>
+    </div>
+  </div>
+</section>
+
+<section id="stack" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">07 · Stack</div>
+    <h2>Poucas peças, todas com motivo</h2>
+    <p class="section-sub">O repositório também versiona o modelo de dados de referência — 59 schemas JSON descrevendo o domínio inteiro, do agente ao crédito consumido, para o modelo acompanhar o código.</p>
+  </div>
+  <div class="pills reveal">
+    <span class="pill">Rust</span>
+    <span class="pill">axum</span>
+    <span class="pill">tokio</span>
+    <span class="pill">sqlx</span>
+    <span class="pill">Postgres 17</span>
+    <span class="pill">pg_cron</span>
+    <span class="pill">rmcp (SDK oficial Rust do MCP)</span>
+    <span class="pill">Cloudflare Tunnel</span>
+    <span class="pill">JSON Schema</span>
+    <span class="pill">GitHub Actions</span>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap footer-grid">
+    <div>
+      <div class="brand" style="margin-bottom:6px;">
+        <svg class="brand-mark" viewBox="0 0 32 32" fill="none">
+          <path d="M6 7h20l-7 9v7.5L13 27V16Z" stroke="#f0876a" stroke-width="1.8" stroke-linejoin="round"/>
+          <circle cx="24.5" cy="24.5" r="3.2" fill="#6ee7c4"/>
+        </svg>
+        Super SDR
+      </div>
+      <div class="footer-note">Um projeto da <a href="https://expertintegrado.com.br">Expert Integrado</a> — IA aplicada a negócios.</div>
+    </div>
+    <div class="footer-note">Página gerada a partir do próprio repositório do projeto.</div>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    var els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) {
+      els.forEach(function(el){ el.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting){
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    els.forEach(function(el){ io.observe(el); });
+  })();
+</script>
+</body>
+</html>

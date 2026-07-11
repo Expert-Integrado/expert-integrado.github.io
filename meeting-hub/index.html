@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<title>Meeting Hub — como funciona</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Como o Meeting Hub funciona: o sistema da Expert Integrado que capta leads de qualquer porta, registra no CRM com a origem certa, dispara lembretes e transforma a transcrição da call em ata e campos preenchidos.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='14' y='18' width='72' height='68' rx='12' fill='none' stroke='%237aa2ff' stroke-width='8'/%3E%3Cpath d='M32 12v14M68 12v14' stroke='%237aa2ff' stroke-width='8' stroke-linecap='round'/%3E%3Ccircle cx='50' cy='58' r='12' fill='%236ee7c4'/%3E%3C/svg%3E">
+
+<style>
+  :root{
+    --bg: #0b0f14;
+    --bg-raised: #10161d;
+    --bg-card: #131a22;
+    --line: #212b36;
+    --line-soft: #1a232c;
+    --ink: #e7edf3;
+    --ink-dim: #a7b3bf;
+    --ink-faint: #6b7885;
+    --accent: #6ee7c4;
+    --accent-dim: #3fae8c;
+    --accent-2: #7aa2ff;
+    --accent-2-dim: #4f6bc4;
+    --warn: #f2b866;
+    --radius: 14px;
+    --maxw: 1080px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html{ scroll-behavior: smooth; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    background-image:
+      radial-gradient(1200px 600px at 15% -10%, rgba(122,162,255,.08), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(110,231,196,.07), transparent 55%);
+    background-repeat: no-repeat;
+  }
+
+  ::selection{ background: rgba(122,162,255,.28); color: #fff; }
+
+  a{ color: var(--accent); text-decoration: none; }
+  a:hover{ text-decoration: underline; }
+
+  .wrap{ max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+  section{ padding: 92px 0; border-top: 1px solid var(--line-soft); }
+  section:first-of-type{ border-top: none; }
+
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size: 12.5px; letter-spacing:.14em; text-transform: uppercase;
+    color: var(--accent-2); font-weight: 700;
+    margin: 0 0 14px;
+  }
+  .eyebrow::before{ content:""; width:7px; height:7px; border-radius:50%; background: var(--accent-2); box-shadow: 0 0 0 4px rgba(122,162,255,.15); }
+
+  h1,h2,h3{ font-weight: 750; letter-spacing: -0.02em; margin: 0; }
+  h2{ font-size: clamp(1.7rem, 3vw, 2.35rem); color: var(--ink); }
+  .section-sub{ color: var(--ink-dim); max-width: 660px; margin: 14px 0 0; font-size: 1.05rem; }
+  .section-head{ margin-bottom: 48px; }
+
+  code, .mono{ font-family: var(--mono); }
+  code{
+    background: rgba(122,162,255,.1);
+    color: var(--accent-2);
+    padding: .12em .42em;
+    border-radius: 5px;
+    font-size: .88em;
+    border: 1px solid rgba(122,162,255,.18);
+  }
+
+  /* ---------- NAV ---------- */
+  .topnav{
+    position: sticky; top:0; z-index: 50;
+    backdrop-filter: blur(10px);
+    background: rgba(11,15,20,.72);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .topnav .wrap{ display:flex; align-items:center; justify-content:space-between; height: 60px; }
+  .brand{ display:flex; align-items:center; gap:10px; font-weight:800; color: var(--ink); font-size: 1rem; }
+  .brand-mark{ width:26px; height:26px; flex:none; }
+  .navlinks{ display:flex; gap:22px; font-size:.92rem; }
+  .navlinks a{ color: var(--ink-dim); }
+  .navlinks a:hover{ color: var(--ink); text-decoration:none; }
+  @media (max-width: 720px){ .navlinks{ display:none; } }
+
+  /* ---------- HERO ---------- */
+  .hero{ padding: 104px 0 84px; border-top:none; position:relative; overflow:hidden; }
+  .hero::after{
+    content:"";
+    position:absolute; inset:auto -20% -60% -20%;
+    height: 420px;
+    background: radial-gradient(closest-side, rgba(110,231,196,.10), transparent 70%);
+    pointer-events:none;
+  }
+  .hero-grid{ display:grid; grid-template-columns: 1.15fr .85fr; gap: 48px; align-items:center; position:relative; }
+  @media (max-width: 880px){ .hero-grid{ grid-template-columns: 1fr; } }
+
+  .hero h1{
+    font-size: clamp(2.5rem, 5.4vw, 4.1rem);
+    line-height: 1.04;
+    background: linear-gradient(180deg, #fff, #c9d6e2 65%, var(--ink-dim));
+    -webkit-background-clip: text; background-clip:text; color: transparent;
+  }
+  .hero .tagline{
+    margin-top: 20px;
+    font-size: clamp(1.05rem, 1.7vw, 1.25rem);
+    color: var(--ink-dim);
+    max-width: 52ch;
+  }
+  .hero .tagline strong{ color: var(--ink); font-weight: 650; }
+  .hero .byline{ margin-top: 14px; color: var(--ink-faint); font-size: .95rem; }
+
+  .cta-row{ display:flex; gap:14px; flex-wrap:wrap; margin-top: 30px; }
+  .btn{
+    display:inline-flex; align-items:center; gap:9px;
+    padding: 13px 22px; border-radius: 10px; font-weight: 650; font-size: .96rem;
+    border: 1px solid transparent; transition: transform .15s ease, border-color .15s ease, background .15s ease;
+  }
+  .btn:hover{ text-decoration:none; transform: translateY(-1px); }
+  .btn-primary{ background: var(--accent-2); color: #0a1024; }
+  .btn-primary:hover{ background:#94b4ff; }
+  .btn-ghost{ background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn-ghost:hover{ border-color: var(--accent-2-dim); color: var(--accent-2); }
+
+  .hero-badges{ display:flex; gap:10px; flex-wrap:wrap; margin-top:28px; }
+  .badge{
+    font-size:.78rem; color: var(--ink-faint); border:1px solid var(--line);
+    padding: 5px 11px; border-radius: 999px; font-family: var(--mono);
+  }
+
+  .orb-panel{
+    background: linear-gradient(160deg, var(--bg-raised), var(--bg-card));
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 30px 60px -30px rgba(0,0,0,.6);
+  }
+  .orb-panel svg{ display:block; width:100%; height:auto; }
+
+  /* ---------- CARDS ---------- */
+  .card-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  @media (max-width: 980px){ .card-grid{ grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px){ .card-grid{ grid-template-columns: 1fr; } }
+
+  .card{
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 26px 22px;
+    transition: border-color .18s ease, transform .18s ease;
+  }
+  .card:hover{ border-color: var(--accent-2-dim); transform: translateY(-3px); }
+  .card-icon{
+    width: 42px; height:42px; border-radius: 11px;
+    display:flex; align-items:center; justify-content:center;
+    background: rgba(122,162,255,.1); border: 1px solid rgba(122,162,255,.22);
+    margin-bottom: 16px;
+  }
+  .card h3{ font-size: 1.05rem; margin-bottom: 8px; }
+  .card p{ color: var(--ink-dim); font-size: .93rem; margin:0; }
+
+  /* ---------- DIAGRAMA ---------- */
+  .diagram-wrap{
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 28px;
+    overflow-x: auto;
+  }
+  .diagram-wrap svg{ display:block; margin: 0 auto; min-width: 760px; width:100%; height:auto; }
+
+  .legend-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap:16px; margin-top: 28px; }
+  @media (max-width: 880px){ .legend-grid{ grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 500px){ .legend-grid{ grid-template-columns: 1fr; } }
+  .legend-item{
+    border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px;
+    background: var(--bg-raised);
+  }
+  .legend-item .dot{ width:10px; height:10px; border-radius:3px; display:inline-block; margin-right:8px; }
+  .legend-item h4{ margin:0 0 6px; font-size:.92rem; color: var(--ink); display:flex; align-items:center; }
+  .legend-item p{ margin:0; color: var(--ink-dim); font-size: .85rem; }
+
+  /* ---------- TRILHAS ---------- */
+  .trilha{
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--bg-card);
+    padding: 28px;
+    margin-top: 26px;
+  }
+  .trilha-head{ display:flex; align-items:baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+  .trilha-head .t-num{
+    font-family: var(--mono); font-weight: 700; font-size: .8rem;
+    color: #0a1024; background: var(--accent-2); border-radius: 999px; padding: 4px 12px;
+  }
+  .trilha-head h3{ font-size: 1.2rem; }
+  .trilha > .t-sub{ color: var(--ink-dim); margin: 4px 0 18px; font-size: .97rem; max-width: 70ch; }
+
+  .flow{ display: flex; flex-direction: column; gap: 12px; }
+  .step{ display: flex; gap: 16px; background: var(--bg-raised); border: 1px solid var(--line-soft); border-radius: 12px; padding: 16px 18px; }
+  .step-n{
+    flex: none; width: 32px; height: 32px; border-radius: 50%;
+    background: var(--bg-card); border: 1px solid var(--accent-2-dim); color: var(--accent-2);
+    display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: .85rem;
+  }
+  .step h4{ font-size: .98rem; margin: 2px 0 4px; color: var(--ink); }
+  .step p{ color: var(--ink-dim); font-size: .93rem; margin: 0; }
+
+  /* ---------- CONFIG / MODULOS ---------- */
+  .mod-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  @media (max-width: 900px){ .mod-grid{ grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 540px){ .mod-grid{ grid-template-columns: 1fr; } }
+  .mod{
+    border: 1px solid var(--line); background: var(--bg-card);
+    border-radius: 12px; padding: 18px;
+  }
+  .mod .m-name{ font-family: var(--mono); font-size: .8rem; color: var(--accent); display:block; margin-bottom: 6px; }
+  .mod h4{ margin: 0 0 6px; font-size: .98rem; color: var(--ink); }
+  .mod p{ margin:0; color: var(--ink-dim); font-size: .88rem; }
+
+  .invariantes{ margin-top: 40px; border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(160deg, var(--bg-raised), var(--bg-card)); padding: 28px; }
+  .invariantes h3{ font-size: 1.1rem; margin-bottom: 14px; }
+  .invariantes ul{ margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 24px; }
+  @media (max-width: 760px){ .invariantes ul{ grid-template-columns: 1fr; } }
+  .invariantes li{ color: var(--ink-dim); font-size: .93rem; padding-left: 22px; position: relative; }
+  .invariantes li::before{
+    content:""; position:absolute; left:0; top: .42em;
+    width: 10px; height: 10px; border-radius: 3px; background: var(--accent-dim);
+  }
+  .invariantes li b{ color: var(--ink); }
+
+  /* ---------- STACK ---------- */
+  .pills{ display: flex; flex-wrap: wrap; gap: 10px; }
+  .pill{ padding: 6px 13px; border-radius: 999px; font-family: var(--mono); font-size: .84rem; background: var(--bg-raised); border: 1px solid var(--line); color: var(--ink-dim); }
+  .v2-note{
+    margin-top: 30px; border: 1px dashed var(--line); border-radius: 12px;
+    padding: 16px 20px; color: var(--ink-dim); font-size: .95rem; background: var(--bg-raised);
+  }
+  .v2-note b{ color: var(--ink); }
+
+  /* ---------- FOOTER ---------- */
+  footer{ padding: 60px 0 80px; border-top: 1px solid var(--line-soft); }
+  .footer-grid{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap: 18px; }
+  .footer-note{ color: var(--ink-faint); font-size: .85rem; }
+  .footer-links{ display:flex; gap:18px; font-size:.88rem; }
+
+  .reveal{ opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.in{ opacity: 1; transform: none; }
+
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior: auto; }
+    .reveal{ transition: none; opacity:1; transform:none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="wrap">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" fill="none">
+        <rect x="4" y="6" width="24" height="22" rx="5" stroke="#7aa2ff" stroke-width="1.6"/>
+        <path d="M10 3.5v5M22 3.5v5" stroke="#7aa2ff" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="16" cy="19" r="4.5" fill="#6ee7c4"/>
+      </svg>
+      Meeting Hub
+    </div>
+    <div class="navlinks">
+      <a href="#o-que-e">O que é</a>
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#trilhas">As três trilhas</a>
+      <a href="#config">Config-driven</a>
+      <a href="#modulos">Módulos</a>
+      <a href="#stack">Stack</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <div class="hero-grid">
+    <div>
+      <div class="eyebrow">Leads · Reuniões · CRM</div>
+      <h1>Meeting Hub</h1>
+      <p class="tagline">
+        O sistema que cuida de <strong>tudo em volta de uma reunião comercial</strong>:
+        capta o lead de qualquer porta, registra no CRM com a origem certa,
+        lembra as pessoas de aparecer e transforma a transcrição da call em
+        <strong>ata e campos preenchidos</strong> — sem ninguém digitar.
+      </p>
+      <p class="byline">Um projeto da <a href="https://expertintegrado.com.br">Expert Integrado</a>.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://meetinghub.expertintegrado.com.br">Acessar o Meeting Hub</a>
+        <a class="btn btn-ghost" href="https://expert-integrado.github.io/">Outros projetos</a>
+      </div>
+      <div class="hero-badges">
+        <span class="badge">Next.js · Vercel</span>
+        <span class="badge">Supabase · Postgres</span>
+        <span class="badge">17 edge functions</span>
+        <span class="badge">config-driven</span>
+      </div>
+    </div>
+    <div class="orb-panel reveal" id="hero-orb">
+      <svg viewBox="0 0 360 320" role="img" aria-label="Ilustração: várias portas de entrada convergindo num hub central, que distribui para CRM, mensagens e atas">
+        <defs>
+          <radialGradient id="glow" cx="50%" cy="50%" r="60%">
+            <stop offset="0%" stop-color="#7aa2ff" stop-opacity=".32"/>
+            <stop offset="100%" stop-color="#7aa2ff" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <circle cx="180" cy="160" r="140" fill="url(#glow)"/>
+        <g stroke="#2a3846" stroke-width="1.3">
+          <path d="M60 70 Q120 110 158 148"/>
+          <path d="M50 160 Q110 160 152 160"/>
+          <path d="M60 250 Q120 210 158 172"/>
+          <path d="M202 148 Q250 110 306 78"/>
+          <path d="M208 160 Q255 160 300 160"/>
+          <path d="M202 172 Q250 210 306 242"/>
+        </g>
+        <!-- portas de entrada -->
+        <g>
+          <rect x="30" y="52" width="36" height="36" rx="9" fill="#131a22" stroke="#3fae8c"/>
+          <path d="M40 64h16M40 70h16M40 76h10" stroke="#6ee7c4" stroke-width="1.6" stroke-linecap="round"/>
+          <rect x="22" y="142" width="36" height="36" rx="9" fill="#131a22" stroke="#4f6bc4"/>
+          <rect x="30" y="152" width="20" height="17" rx="3" stroke="#7aa2ff" stroke-width="1.6" fill="none"/>
+          <path d="M34 149v5M46 149v5" stroke="#7aa2ff" stroke-width="1.6" stroke-linecap="round"/>
+          <rect x="30" y="232" width="36" height="36" rx="9" fill="#131a22" stroke="#c9964f"/>
+          <circle cx="48" cy="250" r="7" stroke="#f2b866" stroke-width="1.6" fill="none"/>
+          <path d="M48 245v5l3 2" stroke="#f2b866" stroke-width="1.6" stroke-linecap="round"/>
+        </g>
+        <!-- hub central -->
+        <g>
+          <circle cx="180" cy="160" r="26" fill="#131a22" stroke="#7aa2ff" stroke-width="1.8"/>
+          <circle cx="180" cy="160" r="9" fill="#6ee7c4"/>
+        </g>
+        <!-- saidas -->
+        <g>
+          <rect x="304" y="58" width="36" height="36" rx="9" fill="#131a22" stroke="#3fae8c"/>
+          <path d="M312 76l6 6 12-12" stroke="#6ee7c4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <rect x="298" y="142" width="36" height="36" rx="9" fill="#131a22" stroke="#4f6bc4"/>
+          <path d="M306 152h20v14l-6-4h-14z" stroke="#7aa2ff" stroke-width="1.6" stroke-linejoin="round" fill="none"/>
+          <rect x="304" y="224" width="36" height="36" rx="9" fill="#131a22" stroke="#c9964f"/>
+          <path d="M312 232h20M312 238h20M312 244h20M312 250h12" stroke="#f2b866" stroke-width="1.6" stroke-linecap="round"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<section id="o-que-e" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">01 · O que é</div>
+    <h2>Quatro trabalhos chatos, um sistema só.</h2>
+    <p class="section-sub">Entre "alguém preencheu um formulário" e "a ata está no CRM com os campos certos" existem dezenas de passos manuais. O Meeting Hub faz todos eles.</p>
+  </div>
+  <div class="card-grid reveal">
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h10" stroke="#7aa2ff" stroke-width="1.6" stroke-linecap="round"/><circle cx="19" cy="18" r="2.4" fill="#6ee7c4"/></svg>
+      </div>
+      <h3>Captação de qualquer porta</h3>
+      <p>Agendamentos do Calendly, formulários próprios, sites dos produtos, portais parceiros e canais de mensagem: tudo converge no mesmo ponto de entrada.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="4" width="17" height="16" rx="2" stroke="#7aa2ff" stroke-width="1.6"/><path d="M7.5 9l3 3 6-6" stroke="#6ee7c4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 15.5h9" stroke="#7aa2ff" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <h3>CRM com a origem certa</h3>
+      <p>Cada lead vira (ou reaproveita) um negócio no CRM, no funil e na etapa que a regra de roteamento decidiu — com a origem registrada, sem duplicar pessoa.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 4a6 6 0 0 1 6 6v3l2 3H4l2-3v-3a6 6 0 0 1 6-6z" stroke="#7aa2ff" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 19a2 2 0 0 0 4 0" stroke="#6ee7c4" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Lembretes multicanal</h3>
+      <p>WhatsApp, e-mail e até ligação de voz com IA confirmando presença antes da reunião — com horário de silêncio à noite e retentativas com espera crescente.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="3.5" width="16" height="17" rx="2" stroke="#7aa2ff" stroke-width="1.6"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#6ee7c4" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Ata e campos pós-call</h3>
+      <p>A reunião termina, a transcrição chega, o sistema acha o negócio certo, escreve a ata e preenche os campos do CRM com o que o lead falou na call.</p>
+    </div>
+  </div>
+</section>
+
+<section id="como-funciona" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">02 · Como funciona</div>
+    <h2>O banco de dados é o contrato.</h2>
+    <p class="section-sub">Nenhum serviço chama outro por HTTP. Webhooks escrevem no banco, crons leem do banco, o painel edita o banco. Cada peça consulta o estado, age e registra o resultado — por isso uma falha nunca derruba o resto.</p>
+  </div>
+
+  <div class="diagram-wrap reveal">
+    <svg viewBox="0 0 1000 460" role="img" aria-label="Diagrama: portas de entrada passam por webhooks que escrevem no banco Postgres; crons leem o banco e disparam ações para CRM, ClickUp, mensagens e alertas; o painel Next.js edita o mesmo banco">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#4a5a6a"/>
+        </marker>
+      </defs>
+
+      <!-- portas de entrada -->
+      <g>
+        <rect x="10" y="30" width="180" height="52" rx="10" fill="#10161d" stroke="#2a3846"/>
+        <text x="100" y="52" text-anchor="middle" fill="#e7edf3" font-size="13" font-weight="700" font-family="inherit">Calendly</text>
+        <text x="100" y="69" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="inherit">agendamentos do time</text>
+
+        <rect x="10" y="96" width="180" height="52" rx="10" fill="#10161d" stroke="#2a3846"/>
+        <text x="100" y="118" text-anchor="middle" fill="#e7edf3" font-size="13" font-weight="700" font-family="inherit">Formulários próprios</text>
+        <text x="100" y="135" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="inherit">páginas públicas e embed</text>
+
+        <rect x="10" y="162" width="180" height="52" rx="10" fill="#10161d" stroke="#2a3846"/>
+        <text x="100" y="184" text-anchor="middle" fill="#e7edf3" font-size="13" font-weight="700" font-family="inherit">Sites dos produtos</text>
+        <text x="100" y="201" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="inherit">landing pages e widgets</text>
+
+        <rect x="10" y="228" width="180" height="52" rx="10" fill="#10161d" stroke="#2a3846"/>
+        <text x="100" y="250" text-anchor="middle" fill="#e7edf3" font-size="13" font-weight="700" font-family="inherit">Parceiros e canais</text>
+        <text x="100" y="267" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="inherit">portais, WhatsApp, Instagram</text>
+
+        <rect x="10" y="294" width="180" height="52" rx="10" fill="#10161d" stroke="#2a3846"/>
+        <text x="100" y="316" text-anchor="middle" fill="#e7edf3" font-size="13" font-weight="700" font-family="inherit">Zoom</text>
+        <text x="100" y="333" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="inherit">gravação + transcrição</text>
+      </g>
+
+      <line x1="190" y1="56" x2="248" y2="130" stroke="#4a5a6a" stroke-width="1.4" marker-end="url(#arrow)"/>
+      <line x1="190" y1="122" x2="248" y2="160" stroke="#4a5a6a" stroke-width="1.4" marker-end="url(#arrow)"/>
+      <line x1="190" y1="188" x2="248" y2="190" stroke="#4a5a6a" stroke-width="1.4" marker-end="url(#arrow)"/>
+      <line x1="190" y1="254" x2="248" y2="220" stroke="#4a5a6a" stroke-width="1.4" marker-end="url(#arrow)"/>
+      <line x1="190" y1="320" x2="248" y2="250" stroke="#4a5a6a" stroke-width="1.4" marker-end="url(#arrow)"/>
+
+      <!-- webhooks -->
+      <g>
+        <rect x="250" y="110" width="180" height="160" rx="12" fill="#131a22" stroke="#7aa2ff"/>
+        <text x="340" y="138" text-anchor="middle" fill="#7aa2ff" font-size="13.5" font-weight="700" font-family="inherit">Webhooks de entrada</text>
+        <text x="340" y="156" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="inherit">edge functions · Deno</text>
+        <text x="340" y="182" text-anchor="middle" fill="#e7edf3" font-size="11" font-family="ui-monospace, Menlo, Consolas, monospace">create-lead</text>
+        <text x="340" y="200" text-anchor="middle" fill="#e7edf3" font-size="11" font-family="ui-monospace, Menlo, Consolas, monospace">calendly-webhook</text>
+        <text x="340" y="218" text-anchor="middle" fill="#e7edf3" font-size="11" font-family="ui-monospace, Menlo, Consolas, monospace">form-webhook</text>
+        <text x="340" y="236" text-anchor="middle" fill="#e7edf3" font-size="11" font-family="ui-monospace, Menlo, Consolas, monospace">zoom-webhook</text>
+        <text x="340" y="254" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="inherit">valida assinatura, grava, responde</text>
+      </g>
+
+      <line x1="430" y1="190" x2="488" y2="190" stroke="#4a5a6a" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+      <!-- banco -->
+      <g>
+        <rect x="490" y="96" width="190" height="188" rx="14" fill="#131a22" stroke="#6ee7c4" stroke-width="1.6"/>
+        <text x="585" y="130" text-anchor="middle" fill="#6ee7c4" font-size="14" font-weight="750" font-family="inherit">Postgres · Supabase</text>
+        <text x="585" y="150" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="inherit">o contrato entre as camadas</text>
+        <text x="585" y="178" text-anchor="middle" fill="#e7edf3" font-size="11" font-family="ui-monospace, Menlo, Consolas, monospace">leads · reuniões</text>
+        <text x="585" y="196" text-anchor="middle" fill="#e7edf3" font-size="11" font-family="ui-monospace, Menlo, Consolas, monospace">filas de lembrete e envio</text>
+        <text x="585" y="214" text-anchor="middle" fill="#e7edf3" font-size="11" font-family="ui-monospace, Menlo, Consolas, monospace">rotas · templates · conectores</text>
+        <text x="585" y="232" text-anchor="middle" fill="#e7edf3" font-size="11" font-family="ui-monospace, Menlo, Consolas, monospace">logs de tudo que entrou e saiu</text>
+        <text x="585" y="262" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="inherit">RLS em toda tabela com dado pessoal</text>
+      </g>
+
+      <line x1="680" y1="190" x2="738" y2="190" stroke="#4a5a6a" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+      <!-- crons -->
+      <g>
+        <rect x="740" y="110" width="180" height="160" rx="12" fill="#131a22" stroke="#f2b866"/>
+        <text x="830" y="138" text-anchor="middle" fill="#f2b866" font-size="13.5" font-weight="700" font-family="inherit">Crons</text>
+        <text x="830" y="156" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="inherit">pg_cron · a cada minuto</text>
+        <text x="830" y="182" text-anchor="middle" fill="#e7edf3" font-size="11" font-family="ui-monospace, Menlo, Consolas, monospace">reminder-dispatch</text>
+        <text x="830" y="200" text-anchor="middle" fill="#e7edf3" font-size="11" font-family="ui-monospace, Menlo, Consolas, monospace">launch-dispatch</text>
+        <text x="830" y="218" text-anchor="middle" fill="#e7edf3" font-size="11" font-family="ui-monospace, Menlo, Consolas, monospace">tracking-sync</text>
+        <text x="830" y="236" text-anchor="middle" fill="#e7edf3" font-size="11" font-family="ui-monospace, Menlo, Consolas, monospace">lead-flow-monitor</text>
+        <text x="830" y="254" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="inherit">leem a fila, agem, registram</text>
+      </g>
+
+      <!-- saidas -->
+      <g>
+        <line x1="830" y1="270" x2="830" y2="308" stroke="#4a5a6a" stroke-width="1.4" marker-end="url(#arrow)"/>
+        <rect x="620" y="310" width="380" height="0" fill="none"/>
+        <rect x="560" y="310" width="140" height="46" rx="10" fill="#10161d" stroke="#2a3846"/>
+        <text x="630" y="330" text-anchor="middle" fill="#e7edf3" font-size="12" font-weight="700" font-family="inherit">CRM</text>
+        <text x="630" y="346" text-anchor="middle" fill="#a7b3bf" font-size="10" font-family="inherit">negócios, atividades, atas</text>
+
+        <rect x="712" y="310" width="120" height="46" rx="10" fill="#10161d" stroke="#2a3846"/>
+        <text x="772" y="330" text-anchor="middle" fill="#e7edf3" font-size="12" font-weight="700" font-family="inherit">ClickUp</text>
+        <text x="772" y="346" text-anchor="middle" fill="#a7b3bf" font-size="10" font-family="inherit">atas internas</text>
+
+        <rect x="844" y="310" width="146" height="46" rx="10" fill="#10161d" stroke="#2a3846"/>
+        <text x="917" y="330" text-anchor="middle" fill="#e7edf3" font-size="12" font-weight="700" font-family="inherit">WhatsApp · e-mail · voz</text>
+        <text x="917" y="346" text-anchor="middle" fill="#a7b3bf" font-size="10" font-family="inherit">lembretes e alertas</text>
+
+        <line x1="700" y1="333" x2="712" y2="333" stroke="#2a3846" stroke-width="1.2"/>
+        <line x1="832" y1="333" x2="844" y2="333" stroke="#2a3846" stroke-width="1.2"/>
+      </g>
+
+      <!-- painel -->
+      <g>
+        <rect x="250" y="370" width="430" height="70" rx="12" fill="#131a22" stroke="#3fae8c"/>
+        <text x="465" y="398" text-anchor="middle" fill="#6ee7c4" font-size="13.5" font-weight="700" font-family="inherit">Painel · Next.js na Vercel</text>
+        <text x="465" y="418" text-anchor="middle" fill="#a7b3bf" font-size="10.5" font-family="inherit">humanos configuram rotas, templates e conectores via Server Actions — no mesmo banco</text>
+        <line x1="540" y1="370" x2="570" y2="288" stroke="#4a5a6a" stroke-width="1.4" marker-end="url(#arrow)"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="legend-grid reveal">
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#7aa2ff"></span>Webhooks</h4>
+      <p>Sistemas externos batem na porta. Cada webhook valida a assinatura, grava o evento no banco e responde rápido. Tudo que entra fica espelhado num log de eventos para depuração.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#6ee7c4"></span>Banco</h4>
+      <p>Postgres no Supabase. Filas, rotas, templates, conectores e logs moram aqui. Nenhuma função precisa saber da existência das outras — só do estado no banco.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#f2b866"></span>Crons</h4>
+      <p>A cada minuto, dispatchers pegam o que venceu na fila (com claim atômico — duas execuções nunca pegam a mesma linha), executam e registram o resultado.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#3fae8c"></span>Painel</h4>
+      <p>A interface web onde o time configura o comportamento do sistema inteiro. Editar uma regra é salvar um campo — nenhum deploy, nenhuma linha de código.</p>
+    </div>
+  </div>
+</section>
+
+<section id="trilhas" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">03 · As três trilhas</div>
+    <h2>Da primeira visita à ata da reunião.</h2>
+    <p class="section-sub">O sistema se organiza em três trilhas independentes. Cada uma pode falhar, ser reprocessada ou evoluir sem quebrar as outras.</p>
+  </div>
+
+  <div class="trilha reveal">
+    <div class="trilha-head"><span class="t-num">Trilha 1</span><h3>Captação — todo lead passa pela mesma porta</h3></div>
+    <p class="t-sub">Não importa se a pessoa veio de um agendamento, de um formulário ou de um widget no site: todas as origens convergem na função <code>create-lead</code>, que aplica as mesmas regras para todo mundo.</p>
+    <div class="flow">
+      <div class="step">
+        <div class="step-n">1</div>
+        <div><h4>Deduplicação de verdade</h4><p>Antes de criar qualquer coisa, o sistema procura a pessoa por e-mail e pelos últimos dígitos do telefone. A mesma pessoa entrando por duas portas diferentes continua sendo uma pessoa só.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-n">2</div>
+        <div><h4>Um negócio aberto por pessoa</h4><p>Se já existe um negócio aberto no CRM, ele é reaproveitado e atualizado — nunca duplicado. Se a regra da rota mandar, o negócio existente é movido para o funil certo (ex.: de prospecção para o funil de vendas quando o lead agenda uma demonstração).</p></div>
+      </div>
+      <div class="step">
+        <div class="step-n">3</div>
+        <div><h4>A etapa é decisão do roteamento</h4><p>O negócio nasce na etapa que a configuração daquela origem define — e o sistema nunca fica movendo o negócio depois. O funil é do vendedor; a entrada é da máquina.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-n">4</div>
+        <div><h4>Tudo fica registrado</h4><p>Cada payload que entra é espelhado numa tabela de eventos. Quando algo parece estranho, dá para inspecionar exatamente o que a porta enviou, campo a campo.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="trilha reveal">
+    <div class="trilha-head"><span class="t-num">Trilha 2</span><h3>Agendamento e lembretes — ninguém esquece a reunião</h3></div>
+    <p class="t-sub">O Hub escuta os agendamentos do Calendly da organização inteira e ainda oferece um agendador próprio, com página pública por anfitrião e distribuição automática entre os atendentes.</p>
+    <div class="flow">
+      <div class="step">
+        <div class="step-n">1</div>
+        <div><h4>Roteamento por tipo de reunião</h4><p>Cada tipo de evento (diagnóstico, apresentação, reunião geral) tem uma regra: qual funil, qual etapa, qual atividade criar no CRM. Reagendou? A atividade existente é atualizada. Cancelou? Vira registro de não comparecimento — nunca é apagada.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-n">2</div>
+        <div><h4>Agendador nativo com round-robin</h4><p>Páginas públicas de agendamento calculam horários livres a partir de regras de disponibilidade e distribuem as reuniões entre os atendentes. Um índice único no banco garante que dois leads nunca reservam o mesmo horário — nem clicando no mesmo segundo.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-n">3</div>
+        <div><h4>Fila de lembretes</h4><p>Cada reunião agendada gera uma sequência de lembretes numa fila. Um cron roda a cada minuto, pega o que venceu e envia pelo canal configurado: WhatsApp (chip próprio ou API oficial), e-mail ou ligação de voz com IA que confirma a presença.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-n">4</div>
+        <div><h4>Respeito ao horário e à pessoa</h4><p>Nada é enviado entre 22h e 8h. Quem pediu para não receber WhatsApp não recebe. Ligações não atendidas são retentadas com espera crescente — de 30 segundos a horas — em vez de martelar o telefone do lead.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="trilha reveal">
+    <div class="trilha-head"><span class="t-num">Trilha 3</span><h3>Pós-call — a transcrição vira trabalho feito</h3></div>
+    <p class="t-sub">Quando uma reunião no Zoom termina e a gravação fica pronta, o Hub recebe o aviso, baixa a transcrição e faz o trabalho que ninguém gosta de fazer.</p>
+    <div class="flow">
+      <div class="step">
+        <div class="step-n">1</div>
+        <div><h4>Achar a reunião certa</h4><p>O sistema casa a gravação com o negócio no CRM por uma hierarquia de confiança: e-mail do convidado, nome citado na transcrição, domínio da empresa e, por último, data e hora. Confiança baixa nunca vira escrita automática.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-n">2</div>
+        <div><h4>Rotear pelo tipo de reunião</h4><p>Reunião de venda: a atividade é concluída no CRM e a ata entra na anotação do negócio. Reunião interna ou com cliente: a ata vira documento no ClickUp, na pasta certa. Sem match confiável: entra numa fila de revisão humana e o time é avisado.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-n">3</div>
+        <div><h4>Preencher os campos com IA</h4><p>Uma segunda função lê a transcrição e extrai o que o lead contou — tamanho da operação, contexto, dor — e preenche os campos personalizados do negócio no CRM.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-n">4</div>
+        <div><h4>Sem sobrescrever o trabalho do vendedor</h4><p>Cada rota define a política de preenchimento: <code>keep</code> só completa campo vazio (padrão), <code>overwrite</code> substitui, <code>merge</code> combina o antigo com o novo. O que o humano escreveu não some.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="config" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">04 · Config-driven</div>
+    <h2>Mudar uma regra é editar um campo, não fazer deploy.</h2>
+    <p class="section-sub">Rotas de origem, templates de mensagem, credenciais de conectores, políticas de preenchimento: tudo vive em tabelas no banco e é editado pelo painel. O código só sabe ler a configuração e obedecer.</p>
+  </div>
+  <div class="mod-grid reveal">
+    <div class="mod"><span class="m-name">/eventos</span><h4>Rotas de evento</h4><p>Define para cada tipo de reunião o destino no CRM: funil, etapa, tipo de atividade e se o negócio existente deve ser movido.</p></div>
+    <div class="mod"><span class="m-name">/agendador</span><h4>Agendador</h4><p>Tipos de reunião por anfitrião, regras de disponibilidade, perguntas de qualificação e links de uso único.</p></div>
+    <div class="mod"><span class="m-name">/lembretes</span><h4>Lembretes</h4><p>Sequências de lembrete por tipo de reunião: quando disparar, por qual canal e com qual template de mensagem.</p></div>
+    <div class="mod"><span class="m-name">/campos</span><h4>Campos e templates</h4><p>Mapeia o que a IA extrai da transcrição para os campos personalizados do CRM, com política de preenchimento por rota.</p></div>
+    <div class="mod"><span class="m-name">/conectores</span><h4>Conectores</h4><p>Credenciais e instâncias dos serviços externos (WhatsApp, e-mail, voz, CRM) guardadas no banco — trocar de provedor é editar um registro.</p></div>
+    <div class="mod"><span class="m-name">/monitor</span><h4>Monitor</h4><p>Saúde da captação em tempo real: se nenhum lead entra por algumas horas em horário comercial, o time recebe alerta automático no Telegram.</p></div>
+  </div>
+
+  <div class="invariantes reveal">
+    <h3>Invariantes — o que o sistema garante sempre</h3>
+    <ul>
+      <li><b>Segurança por linha (RLS)</b> em todas as tabelas com dado pessoal; rotas públicas têm limite de requisições.</li>
+      <li><b>Assinatura validada</b> em todo webhook — requisição sem a assinatura correta é recusada.</li>
+      <li><b>Anti agendamento duplo</b> garantido pelo banco, não por boa vontade do código.</li>
+      <li><b>Claim atômico nas filas</b> — duas execuções do mesmo cron nunca processam a mesma linha.</li>
+      <li><b>Fail-closed</b> — na dúvida (resposta ambígua, confiança baixa), o sistema para e pede revisão humana em vez de agir errado.</li>
+      <li><b>Segredos fora do código</b> — credenciais vivem no cofre de secrets ou em configuração no banco, nunca no repositório.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="modulos" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">05 · Módulos</div>
+    <h2>O mesmo motor, outros trabalhos.</h2>
+    <p class="section-sub">Sobre a base de banco + filas + crons, o Hub ganhou módulos que reaproveitam a mesma mecânica.</p>
+  </div>
+  <div class="card-grid reveal">
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 19V9M10 19V5M16 19v-8M21 19H3" stroke="#7aa2ff" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Funis</h3>
+      <p>Um espelho somente-leitura do CRM dentro do Hub, sincronizado por cron, que junta etapas do funil, custos de anúncio e conversões para mostrar o caminho do lead do clique ao fechamento.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="#7aa2ff" stroke-width="1.6"/><circle cx="17" cy="10" r="2.2" stroke="#7aa2ff" stroke-width="1.6"/><path d="M4 19c0-2.8 2.2-5 5-5s5 2.2 5 5M15 15.5c2 .3 3.5 1.7 4 3.5" stroke="#6ee7c4" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Lançamentos</h3>
+      <p>Gestão de grupos de WhatsApp para eventos: cria grupos, rotaciona quando enchem, agenda mensagens com limite diário de envio e janela de silêncio — e nunca reenvia mensagem em caso de dúvida.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="12" rx="2" stroke="#7aa2ff" stroke-width="1.6"/><path d="M8 20h8" stroke="#7aa2ff" stroke-width="1.6" stroke-linecap="round"/><path d="M8 10l2.5 2.5L15 8" stroke="#6ee7c4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>Formulários e páginas</h3>
+      <p>Formulários públicos com URL própria ou embutidos em qualquer site, links curtos de campanha e páginas de enquete — todas as respostas entram pela mesma trilha de captação.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke="#7aa2ff" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="12" r="4.5" stroke="#6ee7c4" stroke-width="1.6"/></svg>
+      </div>
+      <h3>Monitor e histórico</h3>
+      <p>Alerta automático quando a captação para, fila de revisão para reuniões sem match confiável e histórico navegável de reuniões, envios e eventos — nada acontece sem deixar rastro.</p>
+    </div>
+  </div>
+</section>
+
+<section id="stack" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">06 · Stack</div>
+    <h2>Peças simples, bem separadas.</h2>
+    <p class="section-sub">Frontend e Server Actions na Vercel; banco, autenticação e funções de borda no Supabase. Deploy contínuo: push na branch principal publica painel, funções e migrações.</p>
+  </div>
+  <div class="pills reveal">
+    <span class="pill">Next.js · App Router</span>
+    <span class="pill">Vercel</span>
+    <span class="pill">Supabase · Postgres</span>
+    <span class="pill">Row-Level Security</span>
+    <span class="pill">Edge Functions · Deno</span>
+    <span class="pill">pg_cron</span>
+    <span class="pill">Tailwind v4</span>
+    <span class="pill">shadcn/ui</span>
+    <span class="pill">GitHub Actions</span>
+  </div>
+  <div class="v2-note reveal">
+    <b>Próximo capítulo:</b> a V2 do Meeting Hub — com painel em SvelteKit e motor em Rust — está em desenvolvimento.
+  </div>
+</section>
+
+<footer>
+  <div class="wrap footer-grid">
+    <div class="footer-note">Feito pela <a href="https://expertintegrado.com.br">Expert Integrado</a> — IA aplicada a negócios.</div>
+    <div class="footer-links">
+      <a href="https://meetinghub.expertintegrado.com.br">meetinghub.expertintegrado.com.br</a>
+      <a href="https://expert-integrado.github.io/">Mais projetos</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    var els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) {
+      els.forEach(function(el){ el.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.12 });
+    els.forEach(function(el){ io.observe(el); });
+  })();
+</script>
+
+</body>
+</html>

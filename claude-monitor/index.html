@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<title>Claude Monitor — como funciona</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Como o Claude Monitor funciona: um monitor na bandeja do Windows que lê os limites do plano do Claude Code, acompanha a memória de contexto de cada conversa, troca de conta sozinho quando o limite estoura e sincroniza a frota do time sem pesar na API.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='28' height='28' rx='7' fill='%237d7dff'/%3E%3Crect x='8' y='17' width='4' height='7' rx='1.5' fill='%23141420'/%3E%3Crect x='14' y='12' width='4' height='12' rx='1.5' fill='%23141420'/%3E%3Crect x='20' y='8' width='4' height='16' rx='1.5' fill='%23141420'/%3E%3C/svg%3E">
+
+<style>
+  :root{
+    --bg: #141420;
+    --bg-raised: #191927;
+    --bg-card: #1d1d2b;
+    --line: #2d2d42;
+    --line-soft: #232336;
+    --ink: #e9e9f4;
+    --ink-dim: #a6a6bd;
+    --ink-faint: #6e6e88;
+    --accent: #7d7dff;
+    --accent-dim: #5757c9;
+    --green: #5dd39e;
+    --warn: #e8b45a;
+    --red: #e06c75;
+    --radius: 14px;
+    --maxw: 1080px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html{ scroll-behavior: smooth; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    background-image:
+      radial-gradient(1200px 600px at 15% -10%, rgba(125,125,255,.10), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(93,211,158,.05), transparent 55%);
+    background-repeat: no-repeat;
+  }
+
+  ::selection{ background: rgba(125,125,255,.35); color: #fff; }
+
+  a{ color: var(--accent); text-decoration: none; }
+  a:hover{ text-decoration: underline; }
+
+  .wrap{
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  section{ padding: 96px 0; border-top: 1px solid var(--line-soft); }
+  section:first-of-type{ border-top: none; }
+
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size: 12.5px; letter-spacing:.14em; text-transform: uppercase;
+    color: var(--accent); font-weight: 700;
+    margin: 0 0 14px;
+  }
+  .eyebrow::before{ content:""; width:7px; height:7px; border-radius:50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(125,125,255,.15); }
+
+  h1,h2,h3{ font-weight: 750; letter-spacing: -0.02em; margin: 0; }
+  h2{ font-size: clamp(1.7rem, 3vw, 2.35rem); color: var(--ink); }
+  .section-sub{ color: var(--ink-dim); max-width: 680px; margin: 14px 0 0; font-size: 1.05rem; }
+  .section-head{ margin-bottom: 48px; }
+
+  code, .mono{ font-family: var(--mono); }
+  code{
+    background: rgba(125,125,255,.12);
+    color: #a9a9ff;
+    padding: .12em .42em;
+    border-radius: 5px;
+    font-size: .88em;
+    border: 1px solid rgba(125,125,255,.2);
+  }
+
+  /* ---------- NAV ---------- */
+  .topnav{
+    position: sticky; top:0; z-index: 50;
+    backdrop-filter: blur(10px);
+    background: rgba(20,20,32,.75);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .topnav .wrap{
+    display:flex; align-items:center; justify-content:space-between;
+    height: 60px;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; font-weight:800; color: var(--ink); font-size: 1rem; }
+  .brand-mark{ width:26px; height:26px; flex:none; }
+  .navlinks{ display:flex; gap:20px; font-size:.92rem; }
+  .navlinks a{ color: var(--ink-dim); }
+  .navlinks a:hover{ color: var(--ink); text-decoration:none; }
+  @media (max-width: 860px){ .navlinks{ display:none; } }
+
+  /* ---------- HERO ---------- */
+  .hero{ padding: 108px 0 88px; border-top:none; position:relative; overflow:hidden; }
+  .hero::after{
+    content:"";
+    position:absolute; inset:auto -20% -60% -20%;
+    height: 420px;
+    background: radial-gradient(closest-side, rgba(125,125,255,.10), transparent 70%);
+    pointer-events:none;
+  }
+  .hero-grid{ display:grid; grid-template-columns: 1.15fr .85fr; gap: 48px; align-items:center; position:relative; }
+  @media (max-width: 880px){ .hero-grid{ grid-template-columns: 1fr; } }
+
+  .hero h1{
+    font-size: clamp(2.5rem, 5.4vw, 4.1rem);
+    line-height: 1.04;
+    background: linear-gradient(180deg, #fff, #cfcfe6 65%, var(--ink-dim));
+    -webkit-background-clip: text; background-clip:text; color: transparent;
+  }
+  .hero .tagline{
+    margin-top: 20px;
+    font-size: clamp(1.05rem, 1.7vw, 1.25rem);
+    color: var(--ink-dim);
+    max-width: 54ch;
+  }
+  .hero .tagline strong{ color: var(--ink); font-weight: 650; }
+  .hero .ei-note{ margin-top: 14px; color: var(--ink-faint); font-size: .95rem; }
+
+  .cta-row{ display:flex; gap:14px; flex-wrap:wrap; margin-top: 30px; }
+  .btn{
+    display:inline-flex; align-items:center; gap:9px;
+    padding: 13px 22px; border-radius: 10px; font-weight: 650; font-size: .96rem;
+    border: 1px solid transparent; transition: transform .15s ease, border-color .15s ease, background .15s ease;
+  }
+  .btn:hover{ text-decoration:none; transform: translateY(-1px); }
+  .btn-primary{ background: var(--accent); color: #10101c; }
+  .btn-primary:hover{ background:#9292ff; }
+  .btn-ghost{ background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn-ghost:hover{ border-color: var(--accent-dim); color: var(--accent); }
+
+  .hero-badges{ display:flex; gap:10px; flex-wrap:wrap; margin-top:28px; }
+  .badge{
+    font-size:.78rem; color: var(--ink-faint); border:1px solid var(--line);
+    padding: 5px 11px; border-radius: 999px; font-family: var(--mono);
+  }
+
+  .panel-mock{
+    background: linear-gradient(160deg, var(--bg-raised), var(--bg-card));
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 30px 60px -30px rgba(0,0,0,.65);
+  }
+  .panel-mock svg{ display:block; width:100%; height:auto; }
+
+  /* ---------- CARDS ---------- */
+  .card-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  @media (max-width: 980px){ .card-grid{ grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px){ .card-grid{ grid-template-columns: 1fr; } }
+
+  .card{
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 26px 22px;
+    transition: border-color .18s ease, transform .18s ease;
+  }
+  .card:hover{ border-color: var(--accent-dim); transform: translateY(-3px); }
+  .card-icon{
+    width: 42px; height:42px; border-radius: 11px;
+    display:flex; align-items:center; justify-content:center;
+    background: rgba(125,125,255,.12); border: 1px solid rgba(125,125,255,.24);
+    margin-bottom: 16px;
+  }
+  .card h3{ font-size: 1.05rem; margin-bottom: 8px; }
+  .card p{ color: var(--ink-dim); font-size: .93rem; margin:0; }
+
+  /* ---------- DIAGRAMA ---------- */
+  .diagram-wrap{
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 28px;
+    overflow-x: auto;
+  }
+  .diagram-wrap svg{ display:block; margin: 0 auto; min-width: 640px; width:100%; height:auto; }
+
+  .legend-grid{
+    display:grid; grid-template-columns: repeat(4, 1fr); gap:16px; margin-top: 28px;
+  }
+  @media (max-width: 880px){ .legend-grid{ grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 500px){ .legend-grid{ grid-template-columns: 1fr; } }
+  .legend-item{
+    border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px;
+    background: var(--bg-raised);
+  }
+  .legend-item .dot{ width:10px; height:10px; border-radius:3px; display:inline-block; margin-right:8px; }
+  .legend-item h4{ margin:0 0 6px; font-size:.92rem; color: var(--ink); display:flex; align-items:center; }
+  .legend-item p{ margin:0; color: var(--ink-dim); font-size: .85rem; }
+
+  /* ---------- CHIPS ---------- */
+  .kinds-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  @media (max-width: 900px){ .kinds-grid{ grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px){ .kinds-grid{ grid-template-columns: 1fr; } }
+  .kind-chip{
+    border: 1px solid var(--line); background: var(--bg-card);
+    border-radius: 12px; padding: 16px 16px;
+  }
+  .kind-chip .k{
+    font-family: var(--mono); font-size: .82rem; color: var(--accent);
+    display:block; margin-bottom:6px;
+  }
+  .kind-chip p{ margin:0; color: var(--ink-dim); font-size:.87rem; }
+
+  .edge-panel{
+    margin-top: 34px;
+    display:grid; grid-template-columns: 1.1fr .9fr; gap: 28px;
+    border: 1px solid var(--line); border-radius: 16px; padding: 28px;
+    background: linear-gradient(160deg, var(--bg-raised), var(--bg-card));
+  }
+  @media (max-width: 820px){ .edge-panel{ grid-template-columns: 1fr; } }
+  .edge-panel h3{ font-size: 1.1rem; margin-bottom: 10px; }
+  .edge-panel p{ color: var(--ink-dim); font-size: .95rem; }
+  .why-example{
+    background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; font-size: .85rem; margin-top: 14px;
+    font-family: var(--mono);
+  }
+  .why-example .no{ color: var(--red); }
+  .why-example .yes{ color: var(--green); }
+  .edge-tags{ display:flex; flex-wrap:wrap; gap: 8px; }
+  .edge-tag{
+    font-family: var(--mono); font-size: .78rem; color: #a9a9ff;
+    border: 1px solid rgba(125,125,255,.3); background: rgba(125,125,255,.08);
+    padding: 6px 10px; border-radius: 8px;
+  }
+
+  /* ---------- TIMELINE / PASSOS ---------- */
+  .steps{ list-style:none; margin: 0; padding: 0; counter-reset: passo; }
+  .steps li{
+    display:flex; gap: 18px; align-items:flex-start;
+    padding: 18px 20px; border: 1px solid var(--line); border-radius: 12px;
+    background: var(--bg-card); margin-bottom: 12px;
+  }
+  .steps li::before{
+    counter-increment: passo;
+    content: counter(passo, decimal-leading-zero);
+    font-family: var(--mono); color: var(--accent); font-size: .82rem;
+    padding-top: 3px; min-width: 26px;
+  }
+  .steps b{ color: var(--ink); }
+  .steps span.d{ color: var(--ink-dim); font-size: .92rem; display:block; margin-top: 3px; }
+
+  /* ---------- FOOTER ---------- */
+  footer{ padding: 60px 0 80px; border-top: 1px solid var(--line-soft); }
+  .footer-grid{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap: 18px; }
+  .footer-note{ color: var(--ink-faint); font-size: .85rem; }
+  .footer-links{ display:flex; gap:18px; font-size:.88rem; }
+
+  .reveal{ opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.in{ opacity: 1; transform: none; }
+
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior: auto; }
+    .reveal{ transition: none; opacity:1; transform:none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="wrap">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" fill="none">
+        <rect x="2" y="2" width="28" height="28" rx="7" fill="#7d7dff"/>
+        <rect x="8" y="17" width="4" height="7" rx="1.5" fill="#141420"/>
+        <rect x="14" y="12" width="4" height="12" rx="1.5" fill="#141420"/>
+        <rect x="20" y="8" width="4" height="16" rx="1.5" fill="#141420"/>
+      </svg>
+      Claude Monitor
+    </div>
+    <div class="navlinks">
+      <a href="#o-que-e">O que é</a>
+      <a href="#dados">De onde vêm os dados</a>
+      <a href="#frota">Multi-conta</a>
+      <a href="#troca">Troca automática</a>
+      <a href="#api">Convivendo com a API</a>
+      <a href="#time">Modo time</a>
+      <a href="#stats">Estatísticas</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <div class="hero-grid">
+    <div>
+      <div class="eyebrow">Bandeja do Windows · Claude Code · multi-conta</div>
+      <h1>Claude Monitor</h1>
+      <p class="tagline">
+        Um monitor que vive na bandeja do Windows e responde as duas perguntas que o
+        Claude Code não responde sozinho: <strong>quanto do meu limite ainda resta</strong>
+        (sessão de 5h + limites semanais) e <strong>quanto de contexto cada conversa já
+        comeu</strong>. E, quando a conta estoura, ele <strong>troca pra próxima da fila
+        sozinho</strong> — sem senha, sem navegador, sem parar o trabalho.
+      </p>
+      <p class="ei-note">Um projeto da <a href="https://expertintegrado.com.br">Expert Integrado</a>.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://claudemonitor.expertintegrado.com.br">Baixar o app</a>
+        <a class="btn btn-ghost" href="https://expert-integrado.github.io/">Outros projetos</a>
+      </div>
+      <div class="hero-badges">
+        <span class="badge">Windows 11</span>
+        <span class="badge">exe único · ~30 MB</span>
+        <span class="badge">Python + CustomTkinter</span>
+        <span class="badge">dados 100% locais</span>
+        <span class="badge">token nunca em texto plano</span>
+      </div>
+    </div>
+    <div class="panel-mock reveal">
+      <svg viewBox="0 0 360 320" role="img" aria-label="Ilustração do painel: barras de sessão, semana e contexto">
+        <rect x="8" y="8" width="344" height="304" rx="16" fill="#141420" stroke="#2d2d42"/>
+        <circle cx="30" cy="32" r="5" fill="#5dd39e"/>
+        <text x="44" y="37" fill="#e9e9f4" font-size="13" font-weight="700" font-family="inherit">conta ativa</text>
+        <text x="152" y="37" fill="#7d7dff" font-size="10" font-family="inherit">Premium · 6,25x</text>
+        <text x="330" y="37" fill="#6e6e88" font-size="11" font-family="inherit" text-anchor="end">v4.25</text>
+
+        <text x="30" y="76" fill="#a6a6bd" font-size="11" font-family="inherit">Sessão de 5h</text>
+        <rect x="30" y="84" width="300" height="10" rx="5" fill="#232336"/>
+        <rect x="30" y="84" width="222" height="10" rx="5" fill="#7d7dff"/>
+        <text x="330" y="77" fill="#7d7dff" font-size="11" font-weight="700" font-family="inherit" text-anchor="end">74%</text>
+
+        <text x="30" y="122" fill="#a6a6bd" font-size="11" font-family="inherit">Semana — geral</text>
+        <rect x="30" y="130" width="300" height="10" rx="5" fill="#232336"/>
+        <rect x="30" y="130" width="123" height="10" rx="5" fill="#5dd39e"/>
+        <text x="330" y="123" fill="#5dd39e" font-size="11" font-weight="700" font-family="inherit" text-anchor="end">41%</text>
+
+        <text x="30" y="168" fill="#a6a6bd" font-size="11" font-family="inherit">Semana — modelo</text>
+        <rect x="30" y="176" width="300" height="10" rx="5" fill="#232336"/>
+        <rect x="30" y="176" width="36" height="10" rx="5" fill="#5dd39e"/>
+        <text x="330" y="169" fill="#5dd39e" font-size="11" font-weight="700" font-family="inherit" text-anchor="end">12%</text>
+
+        <line x1="30" y1="204" x2="330" y2="204" stroke="#232336"/>
+
+        <text x="30" y="230" fill="#a6a6bd" font-size="11" font-family="inherit">Conversas ativas</text>
+        <circle cx="36" cy="252" r="4" fill="#5dd39e"/>
+        <text x="48" y="256" fill="#e9e9f4" font-size="11" font-family="inherit">refatorar o worker</text>
+        <rect x="200" y="247" width="130" height="8" rx="4" fill="#232336"/>
+        <rect x="200" y="247" width="88" height="8" rx="4" fill="#e8b45a"/>
+        <circle cx="36" cy="278" r="4" fill="#5dd39e"/>
+        <text x="48" y="282" fill="#e9e9f4" font-size="11" font-family="inherit">landing page nova</text>
+        <rect x="200" y="273" width="130" height="8" rx="4" fill="#232336"/>
+        <rect x="200" y="273" width="34" height="8" rx="4" fill="#5dd39e"/>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<section id="o-que-e" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">01 · O que é</div>
+    <h2>Seis trabalhos, um ícone na bandeja</h2>
+    <p class="section-sub">O app inteiro é um arquivo Python só, empacotado num executável. Ele não ocupa a barra de tarefas: vive no ícone da bandeja, numa janela única com abas (Visão geral / Contas / Estatísticas / Config / Sobre).</p>
+  </div>
+  <div class="card-grid reveal">
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="#7d7dff" stroke-width="1.6"/><path d="M12 8v4l3 2" stroke="#7d7dff" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Limites do plano ao vivo</h3>
+      <p>Sessão de 5h e limites semanais da conta ativa, os mesmos números da tela "Seus limites de uso" — com %, barra e horário de reset. O ícone da bandeja mostra o % da sessão, full-bleed, legível nos 16–24px reais do tray.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="14" width="3.6" height="6" rx="1" fill="#7d7dff"/><rect x="10.2" y="9" width="3.6" height="11" rx="1" fill="#7d7dff"/><rect x="16.4" y="4" width="3.6" height="16" rx="1" fill="#7d7dff"/></svg>
+      </div>
+      <h3>Contexto por conversa</h3>
+      <p>Cada conversa aberta do Claude Code aparece com a própria barra de memória de contexto — você vê qual sessão está perto de compactar antes de ela travar no meio do raciocínio.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="8" r="3" stroke="#7d7dff" stroke-width="1.6"/><circle cx="16" cy="16" r="3" stroke="#7d7dff" stroke-width="1.6"/><path d="M14 6h4M16 4v4M6 16.5h3" stroke="#7d7dff" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Frota de contas</h3>
+      <p>Registra todas as contas que já logaram na máquina e mantém uma fila de troca. A ordem da lista É a fila: dá pra deixar o app decidir (anti-desperdício) ou fixar a sua ordem manual — que aí vira lei.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 4a6 6 0 0 0-6 6v3l-1.5 3h15L18 13v-3a6 6 0 0 0-6-6z" stroke="#7d7dff" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 19a2 2 0 0 0 4 0" stroke="#7d7dff" stroke-width="1.6"/></svg>
+      </div>
+      <h3>Alertas com histerese</h3>
+      <p>Três alertas independentes (sessão, contexto, semana), com pop-up e som. Cada um dispara UMA vez por cruzamento de limiar, e só em cruzamento observado ao vivo — nada de rajada ao abrir o app.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="7" cy="7" r="2.4" stroke="#7d7dff" stroke-width="1.6"/><circle cx="17" cy="7" r="2.4" stroke="#7d7dff" stroke-width="1.6"/><circle cx="12" cy="17" r="2.4" stroke="#7d7dff" stroke-width="1.6"/><path d="M8.5 9l2.4 5M15.5 9l-2.4 5M9.4 7h5.2" stroke="#7d7dff" stroke-width="1.4"/></svg>
+      </div>
+      <h3>Painel do time</h3>
+      <p>Pra equipes que compartilham as mesmas contas: um quadro na nuvem mostra quem está em cada conta agora, o assento de cada uma e o uso colorido pelo consumo — uma leitura da API serve o time inteiro.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 19V5" stroke="#7d7dff" stroke-width="1.6" stroke-linecap="round"/><path d="M4 19h16" stroke="#7d7dff" stroke-width="1.6" stroke-linecap="round"/><path d="M7 15l3.5-4 3 2.5L18 8" stroke="#7d7dff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>Estatísticas de produção</h3>
+      <p>Tokens de saída e entrada, sessões, projetos e a frota completa, por período — tudo derivado dos transcripts locais, com cache persistente por arquivo pra varredura custar quase nada.</p>
+    </div>
+  </div>
+</section>
+
+<section id="dados" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">02 · De onde vêm os dados</div>
+    <h2>Ele não intercepta nada. Ele lê o que o Claude Code já deixa no disco.</h2>
+    <p class="section-sub">Todo o segredo mora na pasta <code>~/.claude</code>, que o próprio Claude Code mantém. O monitor é um leitor educado dela.</p>
+  </div>
+
+  <div class="diagram-wrap reveal">
+    <svg viewBox="0 0 920 300" role="img" aria-label="Fluxo: arquivos do ~/.claude alimentam o monitor, que consulta a rota de uso da API com o token OAuth">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#55557a"/>
+        </marker>
+      </defs>
+
+      <!-- coluna ~/.claude -->
+      <text x="115" y="28" text-anchor="middle" fill="#6e6e88" font-size="12" font-family="inherit" letter-spacing="2">~/.claude</text>
+      <g>
+        <rect x="10" y="42" width="210" height="58" rx="10" fill="#191927" stroke="#2d2d42"/>
+        <text x="26" y="66" fill="#e9e9f4" font-size="13" font-weight="700" font-family="inherit">.credentials.json</text>
+        <text x="26" y="84" fill="#a6a6bd" font-size="11" font-family="inherit">token OAuth do login atual</text>
+      </g>
+      <g>
+        <rect x="10" y="112" width="210" height="58" rx="10" fill="#191927" stroke="#2d2d42"/>
+        <text x="26" y="136" fill="#e9e9f4" font-size="13" font-weight="700" font-family="inherit">projects/**/*.jsonl</text>
+        <text x="26" y="154" fill="#a6a6bd" font-size="11" font-family="inherit">transcript de cada conversa</text>
+      </g>
+      <g>
+        <rect x="10" y="182" width="210" height="58" rx="10" fill="#191927" stroke="#2d2d42"/>
+        <text x="26" y="206" fill="#e9e9f4" font-size="13" font-weight="700" font-family="inherit">sessions/</text>
+        <text x="26" y="224" fill="#a6a6bd" font-size="11" font-family="inherit">PID das sessões abertas</text>
+      </g>
+
+      <path d="M220 71 C 280 71, 280 130, 340 135" fill="none" stroke="#55557a" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <path d="M220 141 L 338 141" fill="none" stroke="#55557a" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <path d="M220 211 C 280 211, 280 152, 340 147" fill="none" stroke="#55557a" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+      <!-- box: monitor -->
+      <g>
+        <rect x="342" y="100" width="200" height="84" rx="12" fill="#1d1d2b" stroke="#7d7dff"/>
+        <text x="442" y="134" text-anchor="middle" fill="#7d7dff" font-size="15" font-weight="700" font-family="inherit">Claude Monitor</text>
+        <text x="442" y="154" text-anchor="middle" fill="#a6a6bd" font-size="11" font-family="inherit">lê, cruza e desenha</text>
+      </g>
+
+      <path d="M542 128 L 640 128" fill="none" stroke="#55557a" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <path d="M640 156 L 542 156" fill="none" stroke="#55557a" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <text x="591" y="118" text-anchor="middle" fill="#6e6e88" font-size="10.5" font-family="inherit">token OAuth</text>
+      <text x="591" y="174" text-anchor="middle" fill="#6e6e88" font-size="10.5" font-family="inherit">% da sessão e da semana</text>
+
+      <!-- box: API -->
+      <g>
+        <rect x="642" y="100" width="268" height="84" rx="12" fill="#191927" stroke="#2d2d42"/>
+        <text x="776" y="130" text-anchor="middle" fill="#e9e9f4" font-size="14" font-weight="700" font-family="inherit">API da Anthropic</text>
+        <text x="776" y="150" text-anchor="middle" fill="#a6a6bd" font-size="11" font-family="inherit">rota de uso do plano (a mesma</text>
+        <text x="776" y="166" text-anchor="middle" fill="#a6a6bd" font-size="11" font-family="inherit">que alimenta "Seus limites de uso")</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="legend-grid reveal">
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#7d7dff"></span>Limites do plano</h4>
+      <p>Uma consulta HTTP à rota de uso, autenticada com o token OAuth que o Claude Code já guarda. Rota não-oficial: se ela mudar, o painel degrada pra uma mensagem de erro — nunca inventa número.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#5dd39e"></span>Contexto das conversas</h4>
+      <p>Soma entrada + cache do último turno de cada transcript. Lê só a cauda do arquivo, e só o trecho novo desde a última leitura — acompanhar dezenas de conversas custa quase nada de disco.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#e8b45a"></span>Sessões vivas</h4>
+      <p>A bolinha verde de "processo vivo" vem dos PIDs em <code>sessions/</code>: se o processo existe, a conversa está aberta agora.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#e9e9f4"></span>O que ele NUNCA faz</h4>
+      <p>Não manda transcript ou conteúdo de conversa pra lugar nenhum e não grava credencial em texto plano — o cache de tokens é criptografado com DPAPI, só o seu usuário Windows abre. A conta ativa é sempre do Claude Code: o monitor nunca mexe nela.</p>
+    </div>
+  </div>
+</section>
+
+<section id="frota" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">03 · Multi-conta</div>
+    <h2>A fila de contas é o coração do app</h2>
+    <p class="section-sub">Quem usa mais de uma conta do Claude conhece a dor: uma estoura, e a troca manual custa login, senha e contexto perdido. O monitor transforma isso numa fila — e trata a cota semanal como o que ela é: estoque perecível.</p>
+  </div>
+
+  <div class="kinds-grid reveal">
+    <div class="kind-chip"><span class="k">fila automática anti-desperdício</span><p>Cota que não foi usada até o reset semanal é perdida pra sempre. A fila ordena por pressão de desperdício — quota restante dividida pelas horas até o reset: a conta cuja semana vence em 4 horas passa na frente da folgada que só vence em 6 dias.</p></div>
+    <div class="kind-chip"><span class="k">fila manual = lei</span><p>Você fixa a ordem e o monitor troca EXATAMENTE nela — dado velho não rebaixa ninguém. A cada troca automática a fila gira: quem saiu vai pro fim, as puladas descem junto. Só ficam de fora contas comprovadamente esgotadas, semana cheia ou sem login.</p></div>
+    <div class="kind-chip"><span class="k">assento Premium / Standard</span><p>No plano Team cada conta tem um assento com multiplicador de cota (~6,25x ou ~1,25x), detectado pela rota de perfil. A troca otimiza por capacidade absoluta restante: uma Premium com 80% de uso ainda tem mais runway que uma Standard vazia.</p></div>
+    <div class="kind-chip"><span class="k">troca sem senha</span><p>Se o monitor já viu o login de uma conta, trocar é devolver a credencial oficial do último login — o Claude Code segue nela. Se nunca viu, abre o login manual com o email pré-preenchido. A credencial nunca se perde: o monitor a renova em segundo plano pelo fluxo OAuth oficial.</p></div>
+    <div class="kind-chip"><span class="k">frescor do dado</span><p>% de sessão com mais de 10 minutos não vale como folga confirmada. Conta com dado fresco ganha; dado velho vira último recurso. Foi um incidente real que ensinou essa regra: um "76%" antigo escondia uma conta já estourada.</p></div>
+    <div class="kind-chip"><span class="k">quarentena persistente</span><p>Conta que saiu por limite fica fora da fila até o reset REAL da própria janela — a regra sobrevive a restart do app e a dado velho "com folga". Dentro da mesma janela de 5h o % só cresce: dado antigo é um piso, nunca uma esperança.</p></div>
+  </div>
+
+  <div class="edge-panel reveal">
+    <div>
+      <h3>A conta ativa é identificada pelo dono real do token</h3>
+      <p>
+        O monitor não confia em rótulo: ele pergunta à rota de perfil quem é o dono do token
+        que está no <code>.credentials.json</code> agora — e toda leitura de uso é atribuída
+        a esse dono confirmado, nunca ao nome local. Se uma sessão antiga "desfizer" a troca
+        ao renovar o próprio login, o painel detecta, corrige e avisa — o que você vê é sempre
+        a conta que o Claude Code está usando de verdade.
+      </p>
+    </div>
+    <div>
+      <h3>Estado honesto por conta</h3>
+      <p>Cada card diz em que pé a conta está, sem eufemismo. Dado que envelheceu aparece esmaecido e carimbado ("dado há 2h"); se a janela já reiniciou desde a última leitura boa, o painel mostra "—" em vez de um % fantasma.</p>
+      <div class="edge-tags">
+        <span class="edge-tag">monitorando</span>
+        <span class="edge-tag">liberada (est.) · era X%</span>
+        <span class="edge-tag">em uso</span>
+        <span class="edge-tag">esgotada + reset</span>
+        <span class="edge-tag">aguardando login</span>
+        <span class="edge-tag">fora do radar</span>
+        <span class="edge-tag">janela já reiniciou</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="troca" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">04 · Troca automática</div>
+    <h2>O que acontece quando a conta estoura às 3 da manhã</h2>
+    <p class="section-sub">Dois gatilhos independentes — por uso e por tempo — e um caminho de troca desenhado pra falhar barulhento, nunca em silêncio. Cada blindagem abaixo nasceu de um incidente real.</p>
+  </div>
+
+  <ul class="steps reveal">
+    <li><span><b>Cruzamento observado ao vivo</b><span class="d">A conta ativa cruza o limiar configurado (ex.: sessão ≥ 95%) num ciclo de consulta. No boot, a troca espera o primeiro dado fresco — abrir o app com a conta já estourada troca uma única vez, pelo caminho normal, nunca em pânico. Se uma sessão do Claude Code parar com "limite de sessão atingido", o monitor lê a prova no próprio transcript e troca NA HORA, mesmo com a API de uso cega.</span></span></li>
+    <li><span><b>Escolha da próxima</b><span class="d">O app varre a fila procurando a primeira conta com login visto, folga mínima de sessão e de semana (configurável — entrar em conta quase cheia só adia a troca em minutos) e dado fresco. Conta em quarentena, punida por 429 recente ou em uso por um colega do time é pulada.</span></span></li>
+    <li><span><b>Conferência ao vivo antes de gravar</b><span class="d">Se o dado do alvo estiver velho, o monitor faz uma consulta síncrona na API e re-escolhe se ele aparecer esgotado. Se o login guardado do alvo está perto de vencer, renova ANTES de entregar — login morto é detectado na hora da troca, não de madrugada no meio do uso.</span></span></li>
+    <li><span><b>Gravação da credencial</b><span class="d">A credencial oficial do último login da escolhida é gravada no <code>.credentials.json</code>. Se outra sessão estiver segurando o arquivo (acontece: o próprio VSCode renovando token), a escrita re-tenta 4 vezes com espera crescente.</span></span></li>
+    <li><span><b>Se ainda assim falhar, ninguém engole o erro</b><span class="d">A troca re-arma e re-tenta sozinha a cada 10 segundos; na 3ª falha seguida, pop-up avisando que a troca não está conseguindo completar. Essa regra nasceu de um incidente em que a falha era engolida em silêncio e a conta bateu 100%.</span></span></li>
+    <li><span><b>Fila gira, quarentena entra e as sessões voltam</b><span class="d">Quem saiu por limite entra em quarentena até o reset real da própria janela. Pop-up confirma a troca; sessões novas do Claude Code já nascem na conta nova — e, com "Retomar sessões" ligado, as que pararam por limite reabrem sozinhas num terminal visível (<code>claude --resume</code>), na pasta do projeto, já na conta nova.</span></span></li>
+  </ul>
+
+  <div class="legend-grid reveal">
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#7d7dff"></span>Troca por tempo</h4>
+      <p>Rotação agendada: troca pra próxima da fila a cada 15 min até 5h, mesmo sem estourar nada — pra revezar as contas rodando sozinho a noite inteira. O timer sobrevive a restart; sem candidata com folga, adia sem alarde.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#e8b45a"></span>Preempção anti-desperdício</h4>
+      <p>Conta da fila com a semana vencendo em menos de 3h e menos da metade usada é puxada pra ativa mesmo sem a atual ter estourado. Máximo 1 vez por janela semanal por conta, 30 min entre preempções, sempre conferindo o alvo ao vivo — e quem sai volta pra fila com a folga intacta.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#5dd39e"></span>Folga conferida na API</h4>
+      <p>Antes de trocar, o monitor confere a folga do alvo em tempo real — importa quando o time compartilha as mesmas contas: alguém pode ter esgotado a conta por fora. Sem folga, um diálogo pergunta se quer usar mesmo assim.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#e9e9f4"></span>O que a troca nunca faz</h4>
+      <p>Não digita senha, não abre navegador e não captura código de e-mail. O app só devolve uma credencial que o próprio Claude Code emitiu — autenticação de verdade é sempre do Claude Code, nunca do monitor.</p>
+    </div>
+  </div>
+</section>
+
+<section id="api" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">05 · Convivendo com a API</div>
+    <h2>Educado com o rate limit, mas nunca cego</h2>
+    <p class="section-sub">Consultar muitas contas na mesma máquina exige diplomacia: o limite da rota tem componente por IP. O app equilibra isso com uma regra de ouro — a conta ativa nunca pode ficar muito tempo sem dado.</p>
+  </div>
+
+  <div class="legend-grid reveal" style="margin-top:0;">
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#7d7dff"></span>Ritmo adaptativo</h4>
+      <p>A conta ativa é consultada pela distância até o gatilho da troca: longe do limite, a cada 10–15 min; perto, acelera até 30 s. A velocidade de queima entra na conta — uma sessão consumindo rápido antecipa o ritmo mesmo com % baixo — e com sessão aberta o intervalo nunca passa de ~2 min.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#e8b45a"></span>429: recuo e gelo global</h4>
+      <p>Resposta 429 gera recuo exponencial respeitando o <code>Retry-After</code> e um gelo global de 2–10 min: como o limite é por IP, insistir nas outras contas só estende a punição. Qualquer sucesso encerra o gelo na hora; o espaçamento das reservas dobra a cada 429.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#e06c75"></span>Teto pra conta ativa</h4>
+      <p>As reservas podem recuar longamente; a conta ATIVA tem teto de 15 min de pausa. Alertas, ícone e troca automática dependem dela — um recuo de 1h na ativa deixaria o monitor cego bem na hora do estouro (aconteceu; virou regra).</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#5dd39e"></span>Atualizar = varredura honesta</h4>
+      <p>O botão Atualizar consulta TODAS as contas monitoradas, furando gelo e backoff — parando só com dois 429 seguidos, e aí reporta quantas ficaram sem dado fresco. Se a API já estiver limitada, ele avisa antes e, se você forçar, faz um tiro só na conta ativa.</p>
+    </div>
+  </div>
+</section>
+
+<section id="time" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">06 · Modo time</div>
+    <h2>Quando a equipe inteira divide as mesmas contas</h2>
+    <p class="section-sub">Todo mundo consultando a Anthropic ao mesmo tempo só gera 429. Com o painel do time ativo, o monitor elege sozinho — sem servidor extra — uma única máquina líder por conta: só ela consulta a API no ritmo cheio; as outras leem do quadro compartilhado.</p>
+  </div>
+
+  <div class="diagram-wrap reveal">
+    <svg viewBox="0 0 920 360" role="img" aria-label="Diagrama do modo time: máquinas publicam leituras num quadro na nuvem; só a líder de cada conta consulta a API">
+      <defs>
+        <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="#55557a"/>
+        </marker>
+      </defs>
+
+      <text x="120" y="28" text-anchor="middle" fill="#6e6e88" font-size="12" font-family="inherit" letter-spacing="2">máquinas do time</text>
+
+      <g>
+        <rect x="15" y="42" width="210" height="62" rx="10" fill="#1d1d2b" stroke="#7d7dff"/>
+        <text x="31" y="67" fill="#e9e9f4" font-size="13" font-weight="700" font-family="inherit">máquina A</text>
+        <text x="31" y="86" fill="#7d7dff" font-size="11" font-family="inherit">líder da conta ativa</text>
+      </g>
+      <g>
+        <rect x="15" y="118" width="210" height="62" rx="10" fill="#191927" stroke="#2d2d42"/>
+        <text x="31" y="143" fill="#e9e9f4" font-size="13" font-weight="700" font-family="inherit">máquina B</text>
+        <text x="31" y="162" fill="#a6a6bd" font-size="11" font-family="inherit">leitora do quadro + vigia esparso</text>
+      </g>
+      <g>
+        <rect x="15" y="194" width="210" height="62" rx="10" fill="#191927" stroke="#2d2d42"/>
+        <text x="31" y="219" fill="#e9e9f4" font-size="13" font-weight="700" font-family="inherit">máquina C</text>
+        <text x="31" y="238" fill="#e8b45a" font-size="11" font-family="inherit">varredora das contas paradas</text>
+      </g>
+
+      <path d="M225 73 C 300 73, 300 140, 360 148" fill="none" stroke="#55557a" stroke-width="1.5" marker-end="url(#arrow2)"/>
+      <path d="M360 162 C 300 164, 300 149, 225 149" fill="none" stroke="#55557a" stroke-width="1.5" marker-end="url(#arrow2)"/>
+      <path d="M225 225 C 300 225, 300 170, 360 166" fill="none" stroke="#55557a" stroke-width="1.5" marker-end="url(#arrow2)"/>
+      <text x="292" y="120" text-anchor="middle" fill="#6e6e88" font-size="10.5" font-family="inherit">publica leituras</text>
+      <text x="292" y="196" text-anchor="middle" fill="#6e6e88" font-size="10.5" font-family="inherit">lê o quadro</text>
+
+      <!-- box: funcao na nuvem -->
+      <g>
+        <rect x="362" y="108" width="240" height="96" rx="12" fill="#1d1d2b" stroke="#7d7dff"/>
+        <text x="482" y="140" text-anchor="middle" fill="#7d7dff" font-size="14" font-weight="700" font-family="inherit">Função na nuvem (AI OS)</text>
+        <text x="482" y="160" text-anchor="middle" fill="#a6a6bd" font-size="11" font-family="inherit">quadro compartilhado da frota:</text>
+        <text x="482" y="176" text-anchor="middle" fill="#a6a6bd" font-size="11" font-family="inherit">uso, assento, frescor e quem está</text>
+        <text x="482" y="192" text-anchor="middle" fill="#a6a6bd" font-size="11" font-family="inherit">em cada conta, pelo nome real</text>
+      </g>
+
+      <path d="M602 142 L 690 142" fill="none" stroke="#55557a" stroke-width="1.5" marker-end="url(#arrow2)"/>
+      <path d="M690 170 L 602 170" fill="none" stroke="#55557a" stroke-width="1.5" marker-end="url(#arrow2)"/>
+      <text x="646" y="132" text-anchor="middle" fill="#6e6e88" font-size="10.5" font-family="inherit">só as líderes</text>
+      <text x="646" y="188" text-anchor="middle" fill="#6e6e88" font-size="10.5" font-family="inherit">consultam</text>
+
+      <!-- box: API -->
+      <g>
+        <rect x="692" y="108" width="218" height="96" rx="12" fill="#191927" stroke="#2d2d42"/>
+        <text x="801" y="146" text-anchor="middle" fill="#e9e9f4" font-size="14" font-weight="700" font-family="inherit">API da Anthropic</text>
+        <text x="801" y="166" text-anchor="middle" fill="#a6a6bd" font-size="11" font-family="inherit">uma leitura serve o time inteiro:</text>
+        <text x="801" y="182" text-anchor="middle" fill="#a6a6bd" font-size="11" font-family="inherit">menos 429 pra frota</text>
+      </g>
+
+      <text x="460" y="290" text-anchor="middle" fill="#6e6e88" font-size="11.5" font-family="inherit">Se a líder desliga, outra máquina assume em minutos (revezamento automático).</text>
+      <text x="460" y="312" text-anchor="middle" fill="#6e6e88" font-size="11.5" font-family="inherit">Se o quadro cair ou você deslogar, cada monitor volta sozinho ao modo não sincronizado — consulta direta, comportamento de sempre.</text>
+    </svg>
+  </div>
+
+  <div class="legend-grid reveal">
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#7d7dff"></span>Login uma vez só</h4>
+      <p>Entre com a sua conta do AIOS na aba Config (código que chega no seu e-mail, uma vez); a sessão fica criptografada com DPAPI e renova sozinha. Sem login, o recurso fica 100% desligado — o app não faz nenhuma chamada e se comporta como sempre.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#5dd39e"></span>Identidade real, sem disfarce</h4>
+      <p>O quadro mostra quem está em cada conta agora pelo nome real do cadastro — não tem como se passar por outra pessoa. Conta em uso por um colega é pulada pela troca automática; o "usar esta" manual ainda funciona, com confirmação.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#e8b45a"></span>Varredora de fundo</h4>
+      <p>Uma única máquina do time mantém as contas paradas frescas mesmo com o painel fechado (no máximo a cada 15–60 min) — é ela que abastece o quadro de candidatas da troca automática de todo mundo. O seu papel aparece na linha de status do painel.</p>
+    </div>
+    <div class="legend-item">
+      <h4><span class="dot" style="background:#e9e9f4"></span>Política da organização</h4>
+      <p>Logado, a organização pode gerenciar centralmente algumas configurações do Claude Code — hoje, a auto-compactação. O controle gerenciado aparece desabilitado na Config, com aviso. O que a organização não gerencia continua 100% seu.</p>
+    </div>
+  </div>
+</section>
+
+<section id="stats" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">07 · Estatísticas</div>
+    <h2>Quanto essa máquina já produziu</h2>
+    <p class="section-sub">A mesma pasta de transcripts que alimenta as barras de contexto vira uma central de produção: tokens, sessões, projetos e a saúde da frota, por período.</p>
+  </div>
+
+  <div class="kinds-grid reveal">
+    <div class="kind-chip"><span class="k">resumo</span><p>Saída, entrada, respostas, sessões, % de cache hit, dia de pico, modelo mais usado e gráfico de produção por dia — por semana quando o período passa de 60 dias.</p></div>
+    <div class="kind-chip"><span class="k">sessões e projetos</span><p>Top 10 conversas por tokens de saída (com título) e top 10 projetos com barra proporcional.</p></div>
+    <div class="kind-chip"><span class="k">frota completa</span><p>Todas as contas com uso acumulado — inclusive as que você já desconectou, marcadas "desconectada". O histórico é da máquina, não da conta: desconectar não apaga nada.</p></div>
+    <div class="kind-chip"><span class="k">leituras incrementais</span><p>A primeira varredura lê o histórico inteiro uma vez; depois, só o trecho novo de cada arquivo que cresceu. Manuseio fluido mesmo com sessão ativa grande e dezenas de contas na fila.</p></div>
+    <div class="kind-chip"><span class="k">registro com backup</span><p>O registro de contas ganha backup automático com restauração sozinha se o arquivo principal corromper — arquivo ilegível é preservado como evidência, nunca sobrescrito por um registro vazio.</p></div>
+    <div class="kind-chip"><span class="k">hook opcional</span><p>Um hook de notificação do Claude Code grava os avisos "você usou N% do limite" que o CLI mostra; o monitor observa esse arquivo e consulta a conta ativa na hora, sem esperar o próximo ciclo. Com o app fechado, o hook vira toast nativo de fallback.</p></div>
+  </div>
+
+  <div class="edge-panel reveal">
+    <div>
+      <h3>Como uma atualização chega até você</h3>
+      <p>
+        O app é um exe único (PyInstaller). A release publica o binário num bucket com URL fixa
+        e, só depois de conferir byte a byte que o upload bateu, atualiza um
+        <code>version.json</code> público — é ele que o app instalado consulta pra avisar que
+        existe versão nova. A ordem importa: o aviso nunca sai antes do arquivo certo estar no ar.
+      </p>
+      <div class="why-example">
+        <div class="no">✗ nunca: avisar versão nova com exe antigo no bucket</div>
+        <div class="yes">✓ sempre: exe verificado primeiro, aviso depois</div>
+      </div>
+    </div>
+    <div>
+      <h3>Fora de escopo, por decisão</h3>
+      <p>
+        O monitor não faz login automatizado capturando código de e-mail e não usa a API da
+        Anthropic pra nada além de ler o uso e o perfil do plano. É um monitor com reflexos —
+        não um automatizador de autenticação.
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap footer-grid">
+    <div>
+      <div class="brand" style="margin-bottom:6px;">Claude Monitor</div>
+      <div class="footer-note">Um projeto da <a href="https://expertintegrado.com.br">Expert Integrado</a> — IA aplicada a negócios. Sem vínculo com a Anthropic.</div>
+    </div>
+    <div class="footer-links">
+      <a href="https://claudemonitor.expertintegrado.com.br">Download</a>
+      <a href="https://expert-integrado.github.io/">Outros projetos Expert Integrado</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    var els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) {
+      els.forEach(function(el){ el.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting){
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    els.forEach(function(el){ io.observe(el); });
+  })();
+</script>
+</body>
+</html>
