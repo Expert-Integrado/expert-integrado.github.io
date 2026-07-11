@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ExpertMonitor — como funciona</title>
+<meta name="description" content="Escalonamento progressivo de notificações para incidentes de infraestrutura: recebe webhooks do Uptime Kuma, dispara push crítico no celular e só para quando um humano dá ack.">
+<style>
+  :root{
+    --bg: #0b0f14;
+    --bg-raised: #10161d;
+    --bg-card: #131a22;
+    --line: #212b36;
+    --line-soft: #1a232c;
+    --ink: #e7edf3;
+    --ink-dim: #a7b3bf;
+    --ink-faint: #6b7885;
+    --accent: #f28b82;
+    --accent-dim: #c94747;
+    --ok: #6ee7c4;
+    --warn: #f2b866;
+    --radius: 14px;
+    --maxw: 1080px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  *{ box-sizing: border-box; margin: 0; }
+  html{ scroll-behavior: smooth; }
+  body{ background: var(--bg); color: var(--ink); font-family: var(--font); line-height: 1.6; }
+  .wrap{ max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+  a{ color: var(--accent); text-decoration: none; }
+  a:hover{ text-decoration: underline; }
+  code, .mono{ font-family: var(--mono); }
+  code{ background: var(--bg-raised); border: 1px solid var(--line-soft); border-radius: 6px; padding: 1px 6px; font-size: .88em; color: var(--ink-dim); }
+
+  /* NAV */
+  .topnav{ border-bottom: 1px solid var(--line-soft); position: sticky; top: 0; background: rgba(11,15,20,.92); backdrop-filter: blur(8px); z-index: 10; }
+  .topnav .wrap{ display: flex; align-items: center; justify-content: space-between; padding-top: 12px; padding-bottom: 12px; gap: 16px; }
+  .brand{ display: flex; align-items: center; gap: 10px; font-weight: 600; }
+  .brand svg{ width: 26px; height: 26px; flex: none; }
+  .navlinks{ display: flex; gap: 18px; flex-wrap: wrap; font-size: .88rem; }
+  .navlinks a{ color: var(--ink-dim); }
+  .navlinks a:hover{ color: var(--accent); text-decoration: none; }
+  @media (max-width: 720px){ .navlinks{ display: none; } }
+
+  /* HERO */
+  header.hero{ padding: 72px 0 48px; border-bottom: 1px solid var(--line-soft); }
+  .kicker{ font-family: var(--mono); font-size: .82rem; color: var(--accent); letter-spacing: .08em; text-transform: uppercase; }
+  h1{ font-size: clamp(1.8rem, 4vw, 2.6rem); margin: 10px 0 14px; }
+  .lead{ color: var(--ink-dim); font-size: 1.08rem; max-width: 46rem; }
+  .lead strong{ color: var(--ink); }
+  .byline{ margin-top: 18px; color: var(--ink-faint); font-size: .95rem; }
+  .hero-badges{ display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+  .badge{ padding: 5px 11px; border-radius: 999px; font-family: var(--mono); font-size: .8rem; background: var(--bg-raised); border: 1px solid var(--line); color: var(--ink-dim); }
+
+  /* SECOES */
+  section{ padding: 56px 0; border-bottom: 1px solid var(--line-soft); }
+  h2{ font-size: 1.4rem; margin-bottom: 8px; }
+  h2 .num{ color: var(--accent); font-family: var(--mono); margin-right: 8px; }
+  .sec-sub{ color: var(--ink-dim); margin-bottom: 26px; max-width: 46rem; }
+
+  /* FLUXO (etapas numeradas) */
+  .flow{ display: flex; flex-direction: column; gap: 14px; }
+  .step{ display: flex; gap: 16px; background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; }
+  .step-n{ flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--bg-raised); border: 1px solid var(--accent-dim); color: var(--accent); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: .9rem; }
+  .step h3{ font-size: 1rem; margin-bottom: 4px; }
+  .step p{ color: var(--ink-dim); font-size: .95rem; }
+
+  /* DIAGRAMAS */
+  .diagram{ background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin: 26px 0 8px; overflow-x: auto; }
+  .diagram svg{ display: block; width: 100%; height: auto; min-width: 640px; }
+  .diagram-note{ color: var(--ink-faint); font-size: .85rem; margin-top: 6px; }
+
+  /* FEATURES */
+  .grid{ display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .card{ background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; }
+  .card h3{ font-size: 1rem; margin-bottom: 6px; }
+  .card p{ color: var(--ink-dim); font-size: .93rem; }
+
+  /* ROADMAP */
+  .phases{ display: flex; flex-direction: column; gap: 10px; }
+  .phase{ display: flex; align-items: baseline; gap: 12px; background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px; }
+  .phase .tag{ flex: none; font-family: var(--mono); font-size: .75rem; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); }
+  .tag-done{ color: var(--ok); border-color: rgba(110,231,196,.35); }
+  .tag-doing{ color: var(--warn); border-color: rgba(242,184,102,.4); }
+  .tag-next{ color: var(--ink-faint); }
+  .phase p{ color: var(--ink-dim); font-size: .92rem; }
+  .phase strong{ color: var(--ink); font-size: .95rem; }
+
+  /* STACK */
+  .pills{ display: flex; flex-wrap: wrap; gap: 10px; }
+  .pill{ padding: 5px 11px; border-radius: 999px; font-family: var(--mono); font-size: .82rem; background: var(--bg-raised); border: 1px solid var(--line); color: var(--ink-dim); }
+
+  /* CALLOUT */
+  .callout{ background: rgba(242,184,102,.06); border: 1px solid rgba(242,184,102,.3); border-radius: var(--radius); padding: 14px 18px; color: var(--ink-dim); font-size: .93rem; margin-top: 22px; }
+  .callout strong{ color: var(--warn); }
+
+  /* FOOTER */
+  footer{ padding: 48px 0 64px; }
+  .footer-grid{ display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 18px; }
+  .footer-note{ color: var(--ink-faint); font-size: .85rem; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="wrap">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <circle cx="16" cy="16" r="13" stroke="#c94747" stroke-width="1.5" opacity=".55"/>
+        <path d="M6 16h5l2.4-6 4.2 12 2.4-6H26" stroke="#f28b82" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      ExpertMonitor
+    </div>
+    <div class="navlinks">
+      <a href="#o-que-e">O que é</a>
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#escalonamento">Escalonamento</a>
+      <a href="#ciclo">Ciclo de vida</a>
+      <a href="#recursos">Recursos</a>
+      <a href="#roadmap">Roadmap</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">Incidentes de infraestrutura · push crítico · ack humano</div>
+    <h1>ExpertMonitor</h1>
+    <p class="lead">
+      Sistema de <strong>escalonamento progressivo de notificações</strong> para quedas de
+      infraestrutura. Recebe os webhooks do <strong>Uptime Kuma</strong>, abre um incidente e
+      dispara push crítico no celular do plantão (Android e iOS, via Expo). Se ninguém
+      reconhecer, a notificação <strong>sobe a cadeia A → B → C</strong> até que uma pessoa
+      abra o app e dê <strong>ack manual</strong> — recuperação automática do serviço não
+      substitui ciência humana.
+    </p>
+    <p class="byline">Um projeto da <a href="https://expertintegrado.com.br">Expert Integrado</a>.</p>
+    <div class="hero-badges">
+      <span class="badge">Uptime Kuma → webhook</span>
+      <span class="badge">push crítico Expo</span>
+      <span class="badge">Android + iOS</span>
+      <span class="badge">ack manual encerra</span>
+      <span class="badge">VM única · Docker Compose</span>
+    </div>
+  </div>
+</header>
+
+<section id="o-que-e">
+  <div class="wrap">
+    <h2><span class="num">01</span>O problema que ele resolve</h2>
+    <p class="sec-sub">
+      Monitor de uptime que só manda mensagem num grupo não acorda ninguém às 3h da manhã.
+      A mensagem chega, silenciada, e a queda fica horas sem resposta.
+    </p>
+    <div class="grid">
+      <div class="card">
+        <h3>Toda queda crítica é vista por um humano</h3>
+        <p>O incidente só encerra quando alguém abre o app e toca em "reconhecer".
+        Nada de "o serviço voltou sozinho, então tudo bem": a recuperação automática
+        fica registrada, mas não fecha o incidente.</p>
+      </div>
+      <div class="card">
+        <h3>Notificação que fura o silencioso</h3>
+        <p>No Android, o app cria o canal <code>criticos</code> com importância máxima e
+        pedido de exceção ao Não Perturbe antes mesmo de registrar o aparelho.
+        O push chega com som e vibração, não como mais uma notificação qualquer.</p>
+      </div>
+      <div class="card">
+        <h3>Ninguém vira gargalo</h3>
+        <p>Se a primeira pessoa da cadeia não responde, o sistema notifica a segunda,
+        depois a terceira — e, no limite, faz broadcast para o time inteiro até
+        alguém assumir.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="como-funciona">
+  <div class="wrap">
+    <h2><span class="num">02</span>Como funciona</h2>
+    <p class="sec-sub">A espinha do sistema, do heartbeat do Kuma até o ack no celular. Cada etapa abaixo existe no código.</p>
+
+    <div class="diagram" role="img" aria-label="Diagrama do fluxo: Uptime Kuma envia webhook para a API, que valida, enfileira, abre incidente e dispara push até o ack">
+      <svg viewBox="0 0 980 240" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#6b7885"/>
+          </marker>
+        </defs>
+        <!-- Kuma -->
+        <rect x="10" y="70" width="150" height="72" rx="12" fill="#10161d" stroke="#212b36"/>
+        <text x="85" y="100" text-anchor="middle" fill="#e7edf3" font-size="15" font-weight="600" font-family="system-ui">Uptime Kuma</text>
+        <text x="85" y="122" text-anchor="middle" fill="#a7b3bf" font-size="12" font-family="system-ui">detecta a queda</text>
+        <!-- arrow -->
+        <line x1="160" y1="106" x2="212" y2="106" stroke="#6b7885" stroke-width="1.6" marker-end="url(#arr)"/>
+        <text x="186" y="94" text-anchor="middle" fill="#6b7885" font-size="11" font-family="ui-monospace,monospace">POST</text>
+        <!-- API -->
+        <rect x="214" y="54" width="196" height="104" rx="12" fill="#131a22" stroke="#c94747"/>
+        <text x="312" y="82" text-anchor="middle" fill="#e7edf3" font-size="15" font-weight="600" font-family="system-ui">API · ingestão</text>
+        <text x="312" y="104" text-anchor="middle" fill="#a7b3bf" font-size="12" font-family="system-ui">secret em tempo constante</text>
+        <text x="312" y="122" text-anchor="middle" fill="#a7b3bf" font-size="12" font-family="system-ui">auditoria verbatim</text>
+        <text x="312" y="140" text-anchor="middle" fill="#a7b3bf" font-size="12" font-family="system-ui">classifica o heartbeat</text>
+        <!-- arrow -->
+        <line x1="410" y1="106" x2="462" y2="106" stroke="#6b7885" stroke-width="1.6" marker-end="url(#arr)"/>
+        <!-- fila -->
+        <rect x="464" y="70" width="150" height="72" rx="12" fill="#10161d" stroke="#212b36"/>
+        <text x="539" y="100" text-anchor="middle" fill="#e7edf3" font-size="15" font-weight="600" font-family="system-ui">Fila BullMQ</text>
+        <text x="539" y="122" text-anchor="middle" fill="#a7b3bf" font-size="12" font-family="system-ui">Redis · jobs idempotentes</text>
+        <!-- arrow -->
+        <line x1="614" y1="106" x2="666" y2="106" stroke="#6b7885" stroke-width="1.6" marker-end="url(#arr)"/>
+        <!-- incidente -->
+        <rect x="668" y="54" width="150" height="104" rx="12" fill="#131a22" stroke="#c94747"/>
+        <text x="743" y="86" text-anchor="middle" fill="#e7edf3" font-size="15" font-weight="600" font-family="system-ui">Incidente</text>
+        <text x="743" y="108" text-anchor="middle" fill="#a7b3bf" font-size="12" font-family="system-ui">1 aberto por monitor</text>
+        <text x="743" y="126" text-anchor="middle" fill="#a7b3bf" font-size="12" font-family="system-ui">dedup em 3 camadas</text>
+        <text x="743" y="144" text-anchor="middle" fill="#a7b3bf" font-size="12" font-family="system-ui">timeline de eventos</text>
+        <!-- arrow -->
+        <line x1="818" y1="106" x2="870" y2="106" stroke="#6b7885" stroke-width="1.6" marker-end="url(#arr)"/>
+        <!-- celular -->
+        <rect x="872" y="54" width="98" height="104" rx="14" fill="#10161d" stroke="#f28b82"/>
+        <rect x="898" y="66" width="46" height="6" rx="3" fill="#212b36"/>
+        <text x="921" y="102" text-anchor="middle" fill="#f28b82" font-size="13" font-weight="600" font-family="system-ui">push</text>
+        <text x="921" y="120" text-anchor="middle" fill="#e7edf3" font-size="13" font-weight="600" font-family="system-ui">crítico</text>
+        <text x="921" y="142" text-anchor="middle" fill="#a7b3bf" font-size="11" font-family="system-ui">ack manual</text>
+        <!-- ack loop -->
+        <path d="M 921 158 L 921 196 L 743 196 L 743 162" fill="none" stroke="#3fae8c" stroke-width="1.6" marker-end="url(#arr)" stroke-dasharray="5 4"/>
+        <text x="832" y="214" text-anchor="middle" fill="#6ee7c4" font-size="12" font-family="system-ui">ack encerra o incidente (OPEN → ACKED)</text>
+      </svg>
+    </div>
+    <p class="diagram-note">Fluxo real do código: ingestão → auditoria → classificação → fila → máquina de estado → push → ack.</p>
+
+    <div class="flow" style="margin-top:26px">
+      <div class="step">
+        <div class="step-n">1</div>
+        <div><h3>Kuma detecta a queda e chama o webhook</h3>
+        <p>Cada equipe cria uma integração no painel web e recebe uma URL única
+        (<code>/webhooks/kuma/:token</code>) com um secret longo e instruções em português de onde
+        colar no Uptime Kuma. O secret pode ser regenerado a qualquer momento — o antigo morre na hora.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-n">2</div>
+        <div><h3>Validação e auditoria de tudo que chega</h3>
+        <p>O secret é comparado em tempo constante contra o hash armazenado. O payload bruto é
+        persistido <em>verbatim</em> em <code>webhook_events</code> em todos os caminhos — inclusive
+        assinatura inválida e erro de parse. Payload que não bate com o schema nunca vira erro 400:
+        mudança de versão do Kuma não pode derrubar a ingestão.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-n">3</div>
+        <div><h3>Classificação do heartbeat</h3>
+        <p>Só segue adiante o que é acionável: <code>important=true</code> e status DOWN ou UP.
+        Pings periódicos, estados de manutenção e pendências são aceitos com 200, mas marcados como
+        ignorados com o motivo gravado — o admin enxerga tudo no inbox de webhooks do painel.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-n">4</div>
+        <div><h3>Incidente único por monitor, sem corrida</h3>
+        <p>Um worker BullMQ processa o evento com três camadas independentes de deduplicação:
+        jobId determinístico na fila, advisory lock do Postgres por (equipe, monitor) e índice único
+        parcial que garante no máximo um incidente OPEN por monitor. O serviço é auto-cadastrado na
+        primeira aparição.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-n">5</div>
+        <div><h3>Push crítico no celular do plantão</h3>
+        <p>Novo incidente enfileira um job de push: tokens ativos da equipe são validados, enviados
+        em lotes de até 100 pelo Expo Push, e cada envio vira uma linha de notificação rastreável.
+        Quinze minutos depois, um job de recibos confere a entrega e desativa sozinho os tokens de
+        aparelhos que não existem mais.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-n">6</div>
+        <div><h3>Só o ack humano encerra</h3>
+        <p>No app, a pessoa vê os incidentes ativos, abre o detalhe com a timeline e dá ack —
+        operação idempotente que muda o estado para ACKED e registra quem reconheceu e quando.
+        Se o serviço voltar antes disso, o incidente ganha <code>recovered_at</code> mas continua
+        aberto: voltar não é o mesmo que alguém ter visto.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="escalonamento">
+  <div class="wrap">
+    <h2><span class="num">03</span>Escalonamento A → B → C</h2>
+    <p class="sec-sub">
+      O coração do produto: enquanto não houver ack, a notificação sobe a cadeia de plantão da equipe.
+    </p>
+
+    <div class="diagram" role="img" aria-label="Diagrama do escalonamento: nível A é notificado, sem ack o nível B entra, depois o C, e por fim broadcast para todo o time; o ack para tudo a qualquer momento">
+      <svg viewBox="0 0 980 300" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#6b7885"/>
+          </marker>
+        </defs>
+        <!-- timeline base -->
+        <line x1="30" y1="250" x2="950" y2="250" stroke="#212b36" stroke-width="1.5"/>
+        <text x="30" y="276" fill="#6b7885" font-size="12" font-family="system-ui">incidente abre</text>
+        <text x="950" y="276" text-anchor="end" fill="#6b7885" font-size="12" font-family="system-ui">tempo sem ack →</text>
+        <!-- A -->
+        <rect x="40" y="120" width="190" height="96" rx="12" fill="#131a22" stroke="#c94747"/>
+        <circle cx="80" cy="152" r="16" fill="#10161d" stroke="#f28b82"/>
+        <text x="80" y="157" text-anchor="middle" fill="#f28b82" font-size="14" font-weight="700" font-family="ui-monospace,monospace">A</text>
+        <text x="110" y="150" fill="#e7edf3" font-size="13" font-weight="600" font-family="system-ui">Plantão nível A</text>
+        <text x="110" y="168" fill="#a7b3bf" font-size="11.5" font-family="system-ui">recebe o 1º push</text>
+        <text x="56" y="200" fill="#6b7885" font-size="11.5" font-family="system-ui">t = 0</text>
+        <line x1="135" y1="216" x2="135" y2="250" stroke="#3a4756" stroke-width="1.2" stroke-dasharray="3 3"/>
+        <!-- arrow A->B -->
+        <line x1="230" y1="168" x2="292" y2="168" stroke="#6b7885" stroke-width="1.6" marker-end="url(#arr2)"/>
+        <text x="261" y="156" text-anchor="middle" fill="#f2b866" font-size="11" font-family="system-ui">sem ack</text>
+        <!-- B -->
+        <rect x="294" y="120" width="190" height="96" rx="12" fill="#131a22" stroke="#c94747"/>
+        <circle cx="334" cy="152" r="16" fill="#10161d" stroke="#f28b82"/>
+        <text x="334" y="157" text-anchor="middle" fill="#f28b82" font-size="14" font-weight="700" font-family="ui-monospace,monospace">B</text>
+        <text x="364" y="150" fill="#e7edf3" font-size="13" font-weight="600" font-family="system-ui">Nível B entra</text>
+        <text x="364" y="168" fill="#a7b3bf" font-size="11.5" font-family="system-ui">após o delay do nível A</text>
+        <line x1="389" y1="216" x2="389" y2="250" stroke="#3a4756" stroke-width="1.2" stroke-dasharray="3 3"/>
+        <!-- arrow B->C -->
+        <line x1="484" y1="168" x2="546" y2="168" stroke="#6b7885" stroke-width="1.6" marker-end="url(#arr2)"/>
+        <text x="515" y="156" text-anchor="middle" fill="#f2b866" font-size="11" font-family="system-ui">sem ack</text>
+        <!-- C -->
+        <rect x="548" y="120" width="190" height="96" rx="12" fill="#131a22" stroke="#c94747"/>
+        <circle cx="588" cy="152" r="16" fill="#10161d" stroke="#f28b82"/>
+        <text x="588" y="157" text-anchor="middle" fill="#f28b82" font-size="14" font-weight="700" font-family="ui-monospace,monospace">C</text>
+        <text x="618" y="150" fill="#e7edf3" font-size="13" font-weight="600" font-family="system-ui">Nível C entra</text>
+        <text x="618" y="168" fill="#a7b3bf" font-size="11.5" font-family="system-ui">cadeia inteira alertada</text>
+        <line x1="643" y1="216" x2="643" y2="250" stroke="#3a4756" stroke-width="1.2" stroke-dasharray="3 3"/>
+        <!-- arrow C->broadcast -->
+        <line x1="738" y1="168" x2="800" y2="168" stroke="#6b7885" stroke-width="1.6" marker-end="url(#arr2)"/>
+        <text x="769" y="156" text-anchor="middle" fill="#f2b866" font-size="11" font-family="system-ui">sem ack</text>
+        <!-- broadcast -->
+        <rect x="802" y="120" width="160" height="96" rx="12" fill="#1b1218" stroke="#f28b82"/>
+        <text x="882" y="152" text-anchor="middle" fill="#f28b82" font-size="13" font-weight="700" font-family="system-ui">Broadcast</text>
+        <text x="882" y="172" text-anchor="middle" fill="#a7b3bf" font-size="11.5" font-family="system-ui">todo o time, em rounds</text>
+        <text x="882" y="190" text-anchor="middle" fill="#a7b3bf" font-size="11.5" font-family="system-ui">com teto definido</text>
+        <line x1="882" y1="216" x2="882" y2="250" stroke="#3a4756" stroke-width="1.2" stroke-dasharray="3 3"/>
+        <!-- ack banner -->
+        <rect x="40" y="30" width="922" height="52" rx="12" fill="rgba(110,231,196,.05)" stroke="#3fae8c"/>
+        <text x="501" y="52" text-anchor="middle" fill="#6ee7c4" font-size="13" font-weight="600" font-family="system-ui">ack humano em qualquer ponto = cancela os próximos degraus e encerra o incidente</text>
+        <text x="501" y="70" text-anchor="middle" fill="#a7b3bf" font-size="11.5" font-family="system-ui">os jobs de escalonamento agendados são cancelados de forma determinística</text>
+      </svg>
+    </div>
+
+    <div class="callout">
+      <strong>Em construção.</strong> A espinha completa — webhook, incidente, push crítico e ack —
+      já existe e é testada. O motor temporal do escalonamento (jobs atrasados por nível, snapshot da
+      cadeia na abertura, re-checagem de ack dentro do job e broadcast com teto de rounds) é a
+      Fase 6 do roadmap: o desenho acima descreve o comportamento planejado sobre a espinha já validada.
+    </div>
+  </div>
+</section>
+
+<section id="ciclo">
+  <div class="wrap">
+    <h2><span class="num">04</span>Ciclo de vida do incidente</h2>
+    <p class="sec-sub">
+      Máquina de estado enxuta, com histórico append-only: cada transição vira um evento na timeline.
+    </p>
+
+    <div class="diagram" role="img" aria-label="Máquina de estado do incidente: DOWN abre o incidente; DOWN repetido registra evento; UP registra recuperação mas mantém aberto; só o ack muda para ACKED">
+      <svg viewBox="0 0 980 250" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#6b7885"/>
+          </marker>
+        </defs>
+        <!-- sem incidente -->
+        <rect x="30" y="90" width="180" height="70" rx="12" fill="#10161d" stroke="#212b36"/>
+        <text x="120" y="120" text-anchor="middle" fill="#e7edf3" font-size="14" font-weight="600" font-family="system-ui">Sem incidente</text>
+        <text x="120" y="140" text-anchor="middle" fill="#a7b3bf" font-size="11.5" font-family="system-ui">serviço monitorado</text>
+        <!-- arrow open -->
+        <line x1="210" y1="125" x2="330" y2="125" stroke="#6b7885" stroke-width="1.6" marker-end="url(#arr3)"/>
+        <text x="270" y="112" text-anchor="middle" fill="#f28b82" font-size="11.5" font-family="ui-monospace,monospace">DOWN · opened</text>
+        <!-- OPEN -->
+        <rect x="332" y="70" width="230" height="110" rx="12" fill="#131a22" stroke="#c94747"/>
+        <text x="447" y="102" text-anchor="middle" fill="#e7edf3" font-size="15" font-weight="700" font-family="ui-monospace,monospace">OPEN</text>
+        <text x="447" y="126" text-anchor="middle" fill="#a7b3bf" font-size="11.5" font-family="system-ui">push crítico disparado</text>
+        <text x="447" y="144" text-anchor="middle" fill="#a7b3bf" font-size="11.5" font-family="system-ui">timeline acumula eventos</text>
+        <!-- self loops -->
+        <path d="M 400 70 C 380 26, 500 26, 494 68" fill="none" stroke="#6b7885" stroke-width="1.4" marker-end="url(#arr3)"/>
+        <text x="447" y="26" text-anchor="middle" fill="#f2b866" font-size="11" font-family="ui-monospace,monospace">DOWN de novo · down_repeated</text>
+        <path d="M 400 180 C 380 226, 500 226, 494 182" fill="none" stroke="#6b7885" stroke-width="1.4" marker-end="url(#arr3)"/>
+        <text x="447" y="236" text-anchor="middle" fill="#6ee7c4" font-size="11" font-family="ui-monospace,monospace">UP · recovered_at preenchido, segue OPEN</text>
+        <!-- arrow ack -->
+        <line x1="562" y1="125" x2="716" y2="125" stroke="#3fae8c" stroke-width="1.8" marker-end="url(#arr3)"/>
+        <text x="639" y="112" text-anchor="middle" fill="#6ee7c4" font-size="11.5" font-family="ui-monospace,monospace">ack humano · idempotente</text>
+        <!-- ACKED -->
+        <rect x="718" y="70" width="230" height="110" rx="12" fill="rgba(110,231,196,.05)" stroke="#3fae8c"/>
+        <text x="833" y="102" text-anchor="middle" fill="#6ee7c4" font-size="15" font-weight="700" font-family="ui-monospace,monospace">ACKED</text>
+        <text x="833" y="126" text-anchor="middle" fill="#a7b3bf" font-size="11.5" font-family="system-ui">registra quem reconheceu</text>
+        <text x="833" y="144" text-anchor="middle" fill="#a7b3bf" font-size="11.5" font-family="system-ui">e quando · encerra o ciclo</text>
+      </svg>
+    </div>
+    <p class="diagram-note">Transições exatamente como implementadas no worker de incidentes: <code>opened</code>, <code>down_repeated</code>, <code>recovered</code> e o ack por compare-and-set.</p>
+  </div>
+</section>
+
+<section id="recursos">
+  <div class="wrap">
+    <h2><span class="num">05</span>O que já está no sistema</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Auditoria verbatim de webhooks</h3>
+        <p>Todo POST que chega com assinatura verificável vira uma linha com o payload bruto,
+        o resultado da validação e o motivo de aceite ou descarte. O admin diagnostica problema
+        de configuração sozinho, pelo inbox do painel.</p>
+      </div>
+      <div class="card">
+        <h3>Deduplicação em 3 camadas</h3>
+        <p>Fila com jobId determinístico, advisory lock do Postgres e índice único parcial:
+        mesmo com o Kuma reenviando ou dois workers concorrendo, nunca nasce um segundo
+        incidente aberto pro mesmo monitor.</p>
+      </div>
+      <div class="card">
+        <h3>Canal Android "criticos" antes do token</h3>
+        <p>O canal com importância máxima e exceção ao Não Perturbe é criado no primeiro boot,
+        antes do registro do aparelho — ordem obrigatória no Android pra garantir que o
+        primeiro push já chegue com comportamento de alerta.</p>
+      </div>
+      <div class="card">
+        <h3>Walkthrough anti economia de bateria</h3>
+        <p>Detecta Xiaomi, Samsung e Huawei e guia a pessoa, em português, pelos menus de cada
+        fabricante pra tirar o app das listas que matam notificação em segundo plano.</p>
+      </div>
+      <div class="card">
+        <h3>Recibos de entrega e tokens que se limpam</h3>
+        <p>Cada push tem um recibo conferido depois do envio: entregas confirmadas ficam
+        registradas e aparelhos desinstalados são desativados automaticamente da base.</p>
+      </div>
+      <div class="card">
+        <h3>Autenticação com revogação em família</h3>
+        <p>Login por convite de uso único, refresh tokens rotacionados a cada uso e detecção de
+        reuso que revoga todos os dispositivos do usuário — sessão roubada não sobrevive.</p>
+      </div>
+      <div class="card">
+        <h3>Painel web em português</h3>
+        <p>Criação de equipe, integrações com secret revelável e regenerável, instruções de
+        configuração do Kuma passo a passo e inbox dos últimos webhooks recebidos.</p>
+      </div>
+      <div class="card">
+        <h3>Operação em VM única</h3>
+        <p>Docker Compose sobe Postgres, Redis com persistência AOF travada, API, worker e painel.
+        Backup diário automatizado com restore verificado, logs estruturados com redação de secrets.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="roadmap">
+  <div class="wrap">
+    <h2><span class="num">06</span>Roadmap</h2>
+    <p class="sec-sub">Construído "spine-first": primeiro o caminho de ponta a ponta, depois a lógica temporal por cima da espinha validada.</p>
+    <div class="phases">
+      <div class="phase"><span class="tag tag-done">feito</span><p><strong>1 · Fundação</strong> — monorepo, Docker Compose, Redis com AOF, backups diários, logs com redação.</p></div>
+      <div class="phase"><span class="tag tag-done">feito</span><p><strong>2 · Auth e identidade</strong> — convites de uso único, refresh rotacionado com revogação em família, reset de senha.</p></div>
+      <div class="phase"><span class="tag tag-done">feito</span><p><strong>3 · Ingestão de webhooks</strong> — endpoint Kuma com secret em tempo constante, auditoria bruta, painel de integrações e inbox.</p></div>
+      <div class="phase"><span class="tag tag-done">feito</span><p><strong>4 · Ciclo de vida do incidente</strong> — auto-cadastro de serviço, dedup em 3 camadas, máquina de estado com timeline append-only.</p></div>
+      <div class="phase"><span class="tag tag-doing">em curso</span><p><strong>5 · Push e espinha mobile</strong> — Expo Push em lotes com recibos, app com login, canal crítico Android, telas de incidentes e ack.</p></div>
+      <div class="phase"><span class="tag tag-next">planejado</span><p><strong>6 · Motor de escalonamento</strong> — jobs atrasados por nível A → B → C, cancelamento determinístico no ack, broadcast com teto, snooze de monitor.</p></div>
+      <div class="phase"><span class="tag tag-next">planejado</span><p><strong>7 · Gestão de equipe no mobile</strong> — convidar, promover, reordenar a cadeia de plantão com os delays de cada nível.</p></div>
+      <div class="phase"><span class="tag tag-next">planejado</span><p><strong>8 · Histórico e hardening</strong> — 90 dias de histórico com filtros, retenção automática e self-monitoring do próprio monitor.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="stack">
+  <div class="wrap">
+    <h2><span class="num">07</span>Stack</h2>
+    <div class="pills">
+      <span class="pill">Node.js 22</span>
+      <span class="pill">TypeScript</span>
+      <span class="pill">Express 5</span>
+      <span class="pill">Prisma 7</span>
+      <span class="pill">PostgreSQL 16</span>
+      <span class="pill">Redis 7 · AOF</span>
+      <span class="pill">BullMQ 5</span>
+      <span class="pill">Expo SDK 55 · React Native</span>
+      <span class="pill">Vite 8 + React 19</span>
+      <span class="pill">Zod</span>
+      <span class="pill">Docker Compose</span>
+      <span class="pill">pnpm + Turborepo</span>
+      <span class="pill">Vitest</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap footer-grid">
+    <div class="footer-note">Um projeto da <a href="https://expertintegrado.com.br">Expert Integrado</a> — IA aplicada a negócios.</div>
+    <div class="footer-note"><a href="https://github.com/Expert-Integrado/ExpertMonitor">Código no GitHub</a> (repositório privado)</div>
+  </div>
+</footer>
+
+</body>
+</html>
