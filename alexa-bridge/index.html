@@ -4,7 +4,7 @@
 <title>Jarvis — como funciona</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Como o Jarvis funciona na Alexa: assistente de voz com a memória do Expert Brain, tarefas e notas por voz, Instagram e WhatsApp ao vivo, dossiês no Telegram e fila de pedidos com executor próprio.">
+<meta name="description" content="Como o Jarvis funciona na Alexa: assistente de voz com a memória do Expert Brain, tarefas e notas por voz, Instagram e WhatsApp ao vivo, envio de WhatsApp ditado com confirmação falada, dossiês no Telegram e fila de pedidos com executor próprio.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2338bdf8'/%3E%3Cstop offset='1' stop-color='%236366f1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='38' fill='none' stroke='url(%23g)' stroke-width='9'/%3E%3Ccircle cx='50' cy='50' r='14' fill='url(%23g)'/%3E%3C/svg%3E">
 
 <style>
@@ -152,7 +152,8 @@
         <p class="tagline">
           Um assistente de voz que <strong>conhece o dono</strong>: responde com a memória do
           <strong>Expert Brain</strong>, cria e conclui tarefas por voz, lê o
-          <strong>Instagram e o WhatsApp ao vivo</strong>, manda <strong>dossiês no Telegram</strong> e tem um
+          <strong>Instagram e o WhatsApp ao vivo</strong>, <strong>envia WhatsApp ditado</strong> com
+          confirmação falada, manda <strong>dossiês no Telegram</strong> e tem um
           <strong>executor próprio</strong> que resolve sozinho os pedidos de consulta da fila.
         </p>
         <div class="hero-badges">
@@ -214,8 +215,8 @@
       </div>
       <div class="card">
         <h3>Instagram e WhatsApp ao vivo</h3>
-        <p>No Instagram: conversas esperando resposta, comentários e menções. No WhatsApp: quem espera resposta e o que alguém mandou — com áudio já transcrito. Responder ou postar continua exigindo aprovação.</p>
-        <div class="ex"><code>tem novidade no instagram?</code> <code>quem tá esperando resposta no zap?</code> <code>o que fulano mandou no whatsapp?</code></div>
+        <p>No Instagram: conversas esperando resposta, comentários e menções — inclusive por pessoa ("o que a fulana comentou?"). No WhatsApp: quem espera resposta e o que alguém mandou, com áudio já transcrito. Postar e responder comentário continuam exigindo aprovação.</p>
+        <div class="ex"><code>tem novidade no instagram?</code> <code>o que a fulana comentou?</code> <code>o que fulano mandou no whatsapp?</code></div>
       </div>
       <div class="card">
         <h3>Memória pessoal</h3>
@@ -241,7 +242,7 @@
     <div class="section-head">
       <p class="eyebrow">Ações por voz</p>
       <h2>O que ele executa</h2>
-      <p class="section-sub">Consulta responde na hora. Escrita no Brain executa com eco de confirmação e desfazer. Ação externa vira pedido na fila — consulta a fila resolve sozinha, ação espera aprovação.</p>
+      <p class="section-sub">Consulta responde na hora. Escrita no Brain executa com eco de confirmação e desfazer. WhatsApp ditado envia de verdade — depois de FALAR a mensagem de volta e ouvir o "pode mandar". O resto das ações externas vira pedido na fila, onde consulta resolve sozinha e ação espera aprovação.</p>
     </div>
     <table>
       <thead><tr><th>Você fala</th><th>O que acontece</th></tr></thead>
@@ -263,18 +264,28 @@
           <td class="r">Salva a nota/insight no Expert Brain. Confirma por voz.</td>
         </tr>
         <tr>
+          <td><code>adia a tarefa X pra sexta</code><br><code>passa a X pro notebook</code> <code>reabre a X</code></td>
+          <td class="r">Muda a tarefa por voz: prazo, responsável, prioridade e reabertura — com a mesma segurança da conclusão (ambiguidade pergunta, nome fraco recusa).</td>
+        </tr>
+        <tr>
+          <td><code>manda um whatsapp pra fulano<br>dizendo que tô chegando</code></td>
+          <td class="r"><b>Envio real com confirmação falada</b>: ele resolve o contato, FALA a mensagem de volta ("Mando no WhatsApp pra Fulano: tô chegando. Posso mandar?") e só envia depois do seu "pode mandar". Mudou de assunto, expirou 2 minutos ou falou "não" — o envio morre. Destino só pode ser conversa que já existe.</td>
+        </tr>
+        <tr>
           <td><code>verifica ...</code> <code>resumo de ...</code><br><span class="r" style="font-size:.85em">(consulta que a voz não cobre)</span></td>
           <td class="r">Vai pra fila e o <b>executor</b> resolve sozinho: um Claude Code na VPS, com ferramentas só de leitura, executa e responde no Telegram em poucos minutos.</td>
         </tr>
         <tr>
-          <td><code>manda mensagem ...</code> <code>liga ...</code><br><code>responde o comentário ...</code></td>
-          <td class="r">Ação externa de verdade: entra na fila, o dono é avisado no Telegram e <b>nada é enviado sem aprovação</b>. O gate humano é inegociável.</td>
+          <td><code>manda no telegram / por e-mail ...</code><br><code>liga ...</code> <code>responde o comentário ...</code></td>
+          <td class="r">Demais ações externas: entra na fila, o dono é avisado no Telegram e <b>nada é enviado sem aprovação</b>. O gate humano segue valendo pra tudo que não é o WhatsApp ditado.</td>
         </tr>
       </tbody>
     </table>
     <div class="callout blue">
       <b>Na dúvida, é ação.</b> A classificação consulta × ação é determinística (regex, não
-      opinião de modelo): qualquer verbo de envio, publicação ou alteração trava no gate humano.
+      opinião de modelo). Verbo de envio, publicação ou alteração nunca executa em silêncio:
+      WhatsApp ditado trava na <b>confirmação falada</b> (read-back obrigatório); todo o resto
+      trava no <b>gate humano</b> da fila.
     </div>
   </div>
 </section>
@@ -294,6 +305,10 @@
       <div class="msg fred"><div class="bubble">Mandei o dossiê completo no seu Telegram.</div></div>
       <div class="msg me"><div class="bubble">o que o Marcos mandou no whatsapp?</div></div>
       <div class="msg fred"><div class="bubble">Última mensagem de Marcos: Fechado, pode agendar pra terça. Quer a conversa no seu Telegram?</div></div>
+      <div class="msg me"><div class="bubble">manda um whatsapp pro Marcos dizendo que terça às 10 tá fechado</div></div>
+      <div class="msg fred"><div class="bubble">Mando no WhatsApp pra Marcos: Terça às 10 tá fechado. Posso mandar?</div></div>
+      <div class="msg me"><div class="bubble">pode mandar</div></div>
+      <div class="msg fred"><div class="bubble">Mandei pra Marcos.</div></div>
       <div class="msg me"><div class="bubble">cria uma tarefa de responder a Ana amanhã às 9 pro notebook</div></div>
       <div class="msg fred"><div class="bubble">Criei a tarefa: Responder a Ana, pra 13 de julho às 9 horas, atribuída ao notebook.</div></div>
       <p class="label">E se o pedido for uma consulta que a voz não cobre</p>
@@ -344,8 +359,8 @@
 
           <rect x="530" y="176" width="180" height="64" rx="12" fill="#121927" stroke="#223047"/>
           <text x="620" y="199" fill="#e8eef7" font-size="14" font-weight="700" text-anchor="middle">Instagram + WhatsApp</text>
-          <text x="620" y="217" fill="#75839b" font-size="11" text-anchor="middle">agentes sociais · leitura</text>
-          <text x="620" y="231" fill="#75839b" font-size="11" text-anchor="middle">ao vivo (MCP)</text>
+          <text x="620" y="217" fill="#75839b" font-size="11" text-anchor="middle">leitura ao vivo (MCP) · envio de</text>
+          <text x="620" y="231" fill="#75839b" font-size="11" text-anchor="middle">WhatsApp com confirmação falada</text>
 
           <rect x="530" y="290" width="180" height="64" rx="12" fill="#121927" stroke="#f2b866"/>
           <text x="620" y="316" fill="#e8eef7" font-size="14" font-weight="700" text-anchor="middle">Fila do Fred</text>
@@ -374,7 +389,7 @@
           <text x="866" y="230" fill="#818cf8" font-size="11" text-anchor="middle" transform="rotate(90 866 230)"></text>
           <text x="590" y="122" fill="#75839b" font-size="11" text-anchor="middle"></text>
           <text x="600" y="94" fill="#75839b" font-size="0" text-anchor="middle"></text>
-          <text x="595" y="392" fill="#75839b" font-size="11" text-anchor="start">— consulta: executor resolve e responde no Telegram · ação: espera aprovação do dono</text>
+          <text x="595" y="392" fill="#75839b" font-size="11" text-anchor="start">— consulta: executor resolve e responde no Telegram · ação: espera aprovação (exceção: WhatsApp ditado, confirmado por voz)</text>
           <text x="595" y="412" fill="#75839b" font-size="11" text-anchor="start">— linha pontilhada fina: dossiê confirmado por voz ("sim") vai direto pro Telegram</text>
         </g>
       </svg>
@@ -387,7 +402,7 @@
       </div>
       <div class="card">
         <h3>Executor com gate</h3>
-        <p>O executor da fila roda com whitelist de ferramentas somente de leitura. Enviar mensagem, postar ou alterar qualquer sistema exige aprovação humana, sempre.</p>
+        <p>O executor da fila roda com whitelist de ferramentas somente de leitura. Postar, alterar sistemas ou enviar por outros canais exige aprovação humana — a única exceção é o WhatsApp ditado, que exige a confirmação falada do dono.</p>
       </div>
       <div class="card">
         <h3>Privacidade por padrão</h3>
@@ -403,7 +418,7 @@
       </div>
       <div class="card">
         <h3>Sem alucinação</h3>
-        <p>Fato pessoal só vindo da memória; conclusão de tarefa exige que o nome bata de verdade; bateria de regressão de ~25 casos roda em produção a cada mudança.</p>
+        <p>Fato pessoal só vindo da memória; conclusão de tarefa exige que o nome bata de verdade; trava anti-mentira: alegar envio sem ter enviado vira escalação real. Bateria de regressão de 30+ casos roda em produção a cada mudança.</p>
       </div>
     </div>
   </div>
@@ -411,7 +426,7 @@
 
 <footer>
   <div class="wrap">
-    Jarvis na Alexa · projeto pessoal de Eric Luciano · atualizado em 12/07/2026
+    Jarvis na Alexa · projeto pessoal de Eric Luciano · atualizado em 13/07/2026
   </div>
 </footer>
 
