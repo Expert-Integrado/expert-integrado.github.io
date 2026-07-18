@@ -2,6 +2,8 @@
 
 Hub de páginas públicas dos projetos da Expert Integrado (GitHub Pages da org).
 
+Open source, criado por **Eric Luciano** na **Mentoria Automações Inteligentes** (Expert Integrado).
+
 ## Padrão
 
 - Projeto com **repo público** hospeda a própria página no `docs/` dele (ex.: [expert-brain](https://expert-integrado.github.io/expert-brain/)).
