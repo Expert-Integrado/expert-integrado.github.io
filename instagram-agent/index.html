@@ -4,7 +4,7 @@
 <title>Instagram Agent — como funciona</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Como o Instagram Agent funciona: Direct, comentários, menções, curtidas e métricas do Instagram como ferramentas do Claude, com memória completa, guardrails de voz e ponte para o WhatsApp.">
+<meta name="description" content="Como o Instagram Agent funciona: Direct, comentários, menções, curtidas, métricas, espião de perfis públicos e vault de contatos — o Instagram como ferramentas do Claude, com memória completa, guardrails de voz e ponte para o WhatsApp.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f472b6'/%3E%3Cstop offset='1' stop-color='%23a78bfa'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='12' y='12' width='76' height='76' rx='22' fill='none' stroke='url(%23g)' stroke-width='9'/%3E%3Ccircle cx='50' cy='50' r='17' fill='none' stroke='url(%23g)' stroke-width='9'/%3E%3Ccircle cx='71' cy='29' r='6' fill='%23f472b6'/%3E%3C/svg%3E">
 
 <style>
@@ -292,6 +292,8 @@
       <a href="#leads">Leads</a>
       <a href="#alem-do-direct">Além do Direct</a>
       <a href="#manychat">ManyChat</a>
+      <a href="#espiao">Espião público</a>
+      <a href="#vault">Vault</a>
       <a href="#whatsapp">WhatsApp</a>
     </div>
   </div>
@@ -305,9 +307,10 @@
       <p class="tagline">
         O Instagram inteiro como <strong>ferramenta do agente</strong>. O Claude lê, busca,
         responde e transfere conversas do Direct; acompanha, responde e curte
-        <strong>comentários e menções</strong>; e enxerga as métricas de cada post — com
-        <strong>memória completa</strong>, a voz do dono verificada antes de qualquer envio,
-        e confirmação humana onde importa.
+        <strong>comentários e menções</strong>; enxerga as métricas de cada post; espia
+        <strong>qualquer perfil público</strong>; e reconhece quem está no
+        <strong>vault de contatos</strong> do dono — com memória completa, a voz do dono
+        verificada antes de qualquer envio, e confirmação humana onde importa.
       </p>
       <p class="hero-org">Um projeto da <a href="https://expertintegrado.com.br">Expert Integrado</a>.</p>
       <div class="cta-row">
@@ -320,6 +323,8 @@
         <span class="badge">MCP HTTP · OAuth 2.1</span>
         <span class="badge">Meta Graph API</span>
         <span class="badge">Whisper · áudio</span>
+        <span class="badge">Apify · espião público</span>
+        <span class="badge">Vault de contatos</span>
       </div>
     </div>
     <div class="orb-panel reveal">
@@ -482,7 +487,7 @@
     </div>
     <div class="legend-item">
       <h4><span class="dot" style="background:#a78bfa"></span>Gateway MCP</h4>
-      <p>Mais de 20 ferramentas expostas por HTTP com autenticação própria: inbox, leitura, busca, envio, perfil, reação, transferência e ações administrativas.</p>
+      <p>39 ferramentas expostas por HTTP com autenticação própria: inbox, leitura, busca, envio, perfil, comentários, métricas, espião público e vault. A lista é dinâmica — conector desligado, ferramentas fora da lista.</p>
     </div>
     <div class="legend-item">
       <h4><span class="dot" style="background:#a78bfa"></span>ig-proxy (saída)</h4>
@@ -537,6 +542,16 @@
       <span class="f-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M20 12a8 8 0 11-2.3-5.6M20 4v4h-4" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       <h4>Tokens que se renovam</h4>
       <p>Um cron semanal renova os tokens de longa duração da Meta antes de expirarem. Sem surpresa de credencial morta.</p>
+    </div>
+    <div class="feat">
+      <span class="f-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2" stroke="#f472b6" stroke-width="1.6"/><path d="M8 10V7a4 4 0 018 0v3M12 14v3" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+      <h4>Porta interna trancada</h4>
+      <p>As funções internas de envio e scraping exigem um segredo próprio do servidor. Nenhuma chave pública do projeto alcança uma ação de envio por fora do gateway.</p>
+    </div>
+    <div class="feat">
+      <span class="f-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h10M4 18h6" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round"/><path d="M17 15l2 2 3-3" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <h4>Lista dinâmica de ferramentas</h4>
+      <p>Conector desligado = ferramentas fora da lista. O agente nunca enxerga um botão que não funciona — menos superfície, menos erro.</p>
     </div>
   </div>
 </section>
@@ -689,9 +704,85 @@
   </div>
 </section>
 
+<section id="espiao" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">07 · Conector Apify <span style="font-family:var(--mono); font-size:.72rem; color:var(--warn); border:1px solid rgba(242,184,102,.35); background:rgba(242,184,102,.08); padding:3px 9px; border-radius:999px; letter-spacing:.06em; margin-left:10px;">MÓDULO OPCIONAL</span></div>
+    <h2>O que a API oficial não mostra, o espião público enxerga</h2>
+    <p class="section-sub">A API da Meta só revela o perfil de quem já conversou com a conta — e nunca a bio, os posts ou os seguidores de terceiros. O conector Apify espia qualquer perfil público do Instagram, direto da conversa com o agente.</p>
+  </div>
+  <div class="card-grid reveal">
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="6.5" stroke="#f472b6" stroke-width="1.6"/><path d="M16 16l4.5 4.5" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Espiar antes de responder</h3>
+      <p>Bio, link da bio, verificado, conta business, últimos posts e reels de qualquer perfil público — mesmo sem conversa aberta. É o terceiro degrau da cascata de perfil: API oficial, ManyChat e, por fim, o espião.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="7" height="7" rx="2" stroke="#f472b6" stroke-width="1.6"/><rect x="13" y="4" width="7" height="7" rx="2" stroke="#f472b6" stroke-width="1.6"/><rect x="4" y="13" width="7" height="7" rx="2" stroke="#f472b6" stroke-width="1.6"/><rect x="13" y="13" width="7" height="7" rx="2" stroke="#f472b6" stroke-width="1.6"/></svg>
+      </div>
+      <h3>Catálogo de 9 ferramentas</h3>
+      <p>Perfil, posts com comentários, reels com views, todos os comentários de um post, contagem e lista de seguidores, busca por palavra-chave, posts marcados e hashtags. Ferramenta nova = uma entrada no registro, sem mexer no banco.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 4a4 4 0 100 8 4 4 0 000-8z" stroke="#f472b6" stroke-width="1.6"/><path d="M4 20a7 7 0 0111-5.7M17 15l2 2 3-3" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>Prospecção ativa</h3>
+      <p>Busca de perfis por palavra-chave, quem marca a conta e quem comenta nos posts do nicho — leads que nunca mandaram DM entram no radar com dados públicos de verdade.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M7 8c0-2 2.2-3 5-3s5 1 5 3-2.2 3-5 3-5 1-5 3 2.2 3 5 3 5-1 5-3" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Custo sob controle</h3>
+      <p>Cache de 7 dias por consulta, limite de execuções por minuto e por dia, e preço por item (frações de centavo). Consulta repetida sai do cache — não roda scraping novo por acidente.</p>
+    </div>
+  </div>
+</section>
+
+<section id="vault" class="wrap">
+  <div class="section-head reveal">
+    <div class="eyebrow">08 · Vault de contatos <span style="font-family:var(--mono); font-size:.72rem; color:var(--warn); border:1px solid rgba(242,184,102,.35); background:rgba(242,184,102,.08); padding:3px 9px; border-radius:999px; letter-spacing:.06em; margin-left:10px;">MÓDULO OPCIONAL</span></div>
+    <h2>Atrás do @ tem uma pessoa que o dono já conhece</h2>
+    <p class="section-sub">Conexão ao vivo com o vault de contatos do dono: o agente reconhece quem está mandando DM — categoria, empresa, histórico de relação — e grava descobertas novas com regras duras de identidade.</p>
+  </div>
+  <div class="card-grid reveal">
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="3" stroke="#f472b6" stroke-width="1.6"/><path d="M8 9h8M8 13h5" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round"/><circle cx="16.5" cy="15.5" r="1.2" fill="#f472b6"/></svg>
+      </div>
+      <h3>Dossiê no perfil</h3>
+      <p>Quando a pessoa existe no vault, o perfil do Direct vem com o dossiê ao vivo: categoria, empresa e cargo, linha do tempo recente e conexões. Se o vault não responde, o perfil funciona igual — o dossiê nunca quebra a conversa.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 5v10M7 10l5 5 5-5" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19h14" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Escrita por intenção</h3>
+      <p>Pesquisou uma pessoa a pedido do dono? Uma ferramenta grava no vault: perfil novo entra como “mapeado” (só nome, @ e foto) e a pesquisa vira nota datada na linha do tempo. Varredura em massa não escreve — nunca.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 4a4 4 0 100 8 4 4 0 000-8zM5 20a7 7 0 0114 0" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Curadoria é humana</h3>
+      <p>O agente enriquece, mas não recategoriza: nome e categoria de um contato existente nunca mudam por escrita automática. Virar lead, cliente ou parceiro é decisão do dono, no painel dele.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" stroke="#f472b6" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 11.5h6M12 8.5v6" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Identidade blindada</h3>
+      <p>O identificador imutável do Instagram é a chave — o @ muda de dono e recicla. Vínculo durável só nasce de match forte, e tentativa de reapontar um vínculo existente é recusada por padrão.</p>
+    </div>
+  </div>
+</section>
+
 <section id="whatsapp" class="wrap">
   <div class="section-head reveal">
-    <div class="eyebrow">07 · Handoff pro WhatsApp</div>
+    <div class="eyebrow">09 · Handoff pro WhatsApp</div>
     <h2>O Direct qualifica. O WhatsApp fecha.</h2>
     <p class="section-sub">O passo que transforma conversa de Instagram em pipeline de verdade — sem digitar número na mão e sem perder o contexto.</p>
   </div>
