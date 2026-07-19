@@ -383,7 +383,7 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 6h16v10H9l-5 4V6z" stroke="#f472b6" stroke-width="1.6" stroke-linejoin="round"/></svg>
       </div>
       <h3>Inbox operável</h3>
-      <p>O agente vê quem está esperando resposta, lê a conversa inteira, busca por significado e responde — tudo por ferramentas MCP, de qualquer sessão do Claude.</p>
+      <p>O agente vê quem está esperando resposta, lê a conversa inteira, busca em todo o histórico (texto e nome, transcrições incluídas) e responde — tudo por ferramentas MCP, de qualquer sessão do Claude.</p>
     </div>
     <div class="card">
       <div class="card-icon">
@@ -511,7 +511,7 @@
     </div>
     <div class="legend-item">
       <h4><span class="dot" style="background:#a78bfa"></span>Gateway MCP</h4>
-      <p>39 ferramentas expostas por HTTP com autenticação própria: inbox, leitura, busca, envio, perfil, comentários, métricas, espião público e vault. A lista é dinâmica — conector desligado, ferramentas fora da lista.</p>
+      <p>40 ferramentas expostas por HTTP com autenticação própria: inbox, leitura, busca, envio, perfil, comentários, métricas, ranking de leads, espião público e vault. A lista é dinâmica — conector desligado, ferramentas fora da lista.</p>
     </div>
     <div class="legend-item">
       <h4><span class="dot" style="background:#a78bfa"></span>ig-proxy (saída)</h4>
@@ -761,7 +761,7 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M7 8c0-2 2.2-3 5-3s5 1 5 3-2.2 3-5 3-5 1-5 3 2.2 3 5 3 5-1 5-3" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round"/></svg>
       </div>
       <h3>Custo sob controle</h3>
-      <p>Cache de 7 dias por consulta, limite de execuções por minuto e por dia, e preço por item (frações de centavo). Consulta repetida sai do cache — não roda scraping novo por acidente.</p>
+      <p>Cache de 1 a 7 dias por consulta (conforme a ferramenta), limite de execuções por minuto e por dia, e preço por item (frações de centavo). Consulta repetida sai do cache — não roda scraping novo por acidente.</p>
     </div>
   </div>
 </section>
