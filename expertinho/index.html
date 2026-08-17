@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<title>Expertinho CS — como funciona</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Como funciona o agente de Customer Success da Mentoria Automações Inteligentes: um agente de IA que atende alunos pelo WhatsApp com base de conhecimento curada, identificação de aluno, aprovação humana e calibração em sombra.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='14' y='14' width='72' height='60' rx='14' fill='none' stroke='%237aa2ff' stroke-width='8'/%3E%3Cpath d='M38 74 30 90l26-16' fill='%237aa2ff'/%3E%3Ccircle cx='38' cy='44' r='7' fill='%236ee7c4'/%3E%3Ccircle cx='62' cy='44' r='7' fill='%236ee7c4'/%3E%3C/svg%3E">
+
+<style>
+  :root{
+    --bg: #0b0f14; --bg-raised: #10161d; --bg-card: #131a22;
+    --line: #212b36; --line-soft: #1a232c;
+    --ink: #e7edf3; --ink-dim: #a7b3bf; --ink-faint: #6b7885;
+    --accent: #6ee7c4; --accent-dim: #3fae8c;
+    --accent-2: #7aa2ff; --accent-2-dim: #4f6bc4;
+    --warn: #f2b866; --radius: 14px; --maxw: 1080px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0; background: var(--bg); color: var(--ink); font-family: var(--font);
+    line-height: 1.55; -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(1200px 600px at 15% -10%, rgba(122,162,255,.08), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(110,231,196,.07), transparent 55%);
+    background-repeat: no-repeat;
+  }
+  ::selection{ background: rgba(122,162,255,.28); color:#fff; }
+  a{ color: var(--accent); text-decoration: none; }
+  a:hover{ text-decoration: underline; }
+  .wrap{ max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+  section{ padding: 84px 0; border-top: 1px solid var(--line-soft); }
+  section:first-of-type{ border-top:none; }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px; font-size:12.5px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--accent-2); font-weight:700; margin:0 0 14px;
+  }
+  .eyebrow::before{ content:""; width:7px; height:7px; border-radius:50%; background:var(--accent-2); box-shadow:0 0 0 4px rgba(122,162,255,.15); }
+  h1,h2,h3{ font-weight:750; letter-spacing:-.02em; margin:0; }
+  h2{ font-size: clamp(1.7rem, 3vw, 2.35rem); }
+  h3{ font-size: 1.06rem; margin-bottom: 8px; }
+  .section-sub{ color:var(--ink-dim); max-width:680px; margin:14px 0 0; font-size:1.05rem; }
+  .section-head{ margin-bottom: 44px; }
+  code{ font-family: var(--mono); background: rgba(122,162,255,.1); color: var(--accent-2); padding:.12em .42em; border-radius:6px; font-size:.92em; }
+  .grid{ display:grid; gap:18px; }
+  .g2{ grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .g3{ grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .card{
+    background: var(--bg-card); border:1px solid var(--line); border-radius: var(--radius);
+    padding: 22px 22px 20px;
+  }
+  .card p{ color:var(--ink-dim); margin: 6px 0 0; font-size:.97rem; }
+  .tag{ display:inline-block; font-size:11.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    padding:3px 10px; border-radius:999px; border:1px solid var(--line); color:var(--ink-faint); margin-bottom:10px; }
+  .tag.ok{ color:var(--accent); border-color: rgba(110,231,196,.35); }
+  .tag.warn{ color:var(--warn); border-color: rgba(242,184,102,.35); }
+  .tag.blue{ color:var(--accent-2); border-color: rgba(122,162,255,.35); }
+
+  /* hero */
+  header{ padding: 96px 0 72px; }
+  .hero-badge{ display:inline-flex; gap:8px; align-items:center; font-size:13px; color:var(--ink-dim);
+    border:1px solid var(--line); border-radius:999px; padding:6px 14px; margin-bottom:22px; }
+  .hero-badge b{ color:var(--accent); font-weight:700; }
+  h1{ font-size: clamp(2rem, 4.6vw, 3.1rem); line-height:1.12; max-width: 820px; }
+  h1 em{ font-style:normal; color:var(--accent); }
+  .lede{ color:var(--ink-dim); font-size:1.14rem; max-width:700px; margin:20px 0 0; }
+  .cta-row{ display:flex; flex-wrap:wrap; gap:12px; margin-top:30px; }
+  .btn{ display:inline-block; padding:11px 20px; border-radius:10px; font-weight:650; font-size:.98rem; }
+  .btn.primary{ background:var(--accent); color:#06231b; }
+  .btn.primary:hover{ background:#8df0d3; text-decoration:none; }
+  .btn.ghost{ border:1px solid var(--line); color:var(--ink); }
+  .btn.ghost:hover{ border-color:var(--accent-2); text-decoration:none; }
+
+  /* fluxo (diagrama) */
+  .flow{ display:flex; flex-wrap:wrap; align-items:stretch; gap:10px; margin-top:8px; }
+  .flow .node{
+    flex:1 1 180px; background:var(--bg-raised); border:1px solid var(--line); border-radius:12px;
+    padding:16px 16px 14px; min-width:170px;
+  }
+  .flow .node b{ display:block; font-size:.95rem; margin-bottom:4px; }
+  .flow .node span{ color:var(--ink-faint); font-size:.85rem; }
+  .flow .arrow{ align-self:center; color:var(--accent-2); font-size:1.3rem; padding:0 2px; }
+  .subflow{ margin-top:14px; padding:14px 16px; border:1px dashed var(--line); border-radius:12px; color:var(--ink-dim); font-size:.93rem; }
+
+  /* timeline */
+  .steps{ list-style:none; margin:0; padding:0; counter-reset: s; }
+  .steps li{
+    counter-increment: s; position:relative; padding: 0 0 26px 56px;
+  }
+  .steps li::before{
+    content: counter(s); position:absolute; left:0; top:-2px; width:36px; height:36px;
+    display:flex; align-items:center; justify-content:center; border-radius:50%;
+    background:var(--bg-raised); border:1px solid var(--line); color:var(--accent-2); font-weight:750;
+  }
+  .steps li:not(:last-child)::after{
+    content:""; position:absolute; left:17.5px; top:38px; bottom:4px; width:1px; background:var(--line);
+  }
+  .steps b{ display:block; margin-bottom:4px; }
+  .steps p{ color:var(--ink-dim); margin:0; font-size:.97rem; }
+
+  .quote{
+    border-left:3px solid var(--accent); background:var(--bg-raised); border-radius:0 12px 12px 0;
+    padding:16px 20px; color:var(--ink-dim); font-size:.98rem; margin:18px 0 0;
+  }
+  .quote b{ color:var(--ink); }
+
+  footer{ border-top:1px solid var(--line-soft); padding:44px 0 60px; color:var(--ink-faint); font-size:.92rem; }
+  footer a{ color:var(--ink-dim); }
+  @media (max-width:640px){ .flow .arrow{ display:none; } section{ padding:64px 0; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="hero-badge">Expert Integrado · <b>Expertinho CS</b> · agente de IA em produção controlada</div>
+    <h1>Um agente de IA que cuida do aluno da mentoria pelo WhatsApp — <em>sem inventar nada</em>.</h1>
+    <p class="lede">O Expertinho CS é o agente de Customer Success da <b>Mentoria Automações Inteligentes</b>. Ele identifica quem é aluno, responde dúvidas do programa a partir de uma base de conhecimento curada, encaminha pra equipe o que não é dele e registra tudo com aprovação humana no circuito. Foi construído, testado e calibrado por um agente de IA (Claude Code) em par com o CEO.</p>
+    <div class="cta-row">
+      <a class="btn primary" href="#como-funciona">Como funciona</a>
+      <a class="btn ghost" href="#treinamento">Como foi calibrado</a>
+      <a class="btn ghost" href="https://expertintegrado.com.br" rel="noopener">Expert Integrado ↗</a>
+    </div>
+  </div>
+</header>
+
+<section id="o-que-faz">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">O que ele faz</p>
+      <h2>Atendimento de ponta a ponta, com fronteiras claras</h2>
+      <p class="section-sub">O agente resolve o que é dele e encaminha o resto — nunca promete o que as ferramentas não executam.</p>
+    </div>
+    <div class="grid g3">
+      <div class="card"><span class="tag ok">responde</span><h3>Dúvidas do programa</h3><p>Aulas, trilhas, agenda dos encontros, bônus, acesso ao portal e primeiros passos — sempre a partir da base de conhecimento, citando a fonte quando existe.</p></div>
+      <div class="card"><span class="tag ok">identifica</span><h3>Quem é aluno — e o nível</h3><p>Antes de pensar, o sistema consulta o portal do aluno: titular e segunda cadeira têm níveis diferentes. Conteúdo individual do titular (diagnóstico, plano de ação) nunca é revelado à equipe dele.</p></div>
+      <div class="card"><span class="tag blue">encaminha</span><h3>O que não é dele</h3><p>Renovação, preço, cancelamento, reclamação séria e exceções de regra vão pra equipe humana, com contexto registrado e SLA comunicado.</p></div>
+      <div class="card"><span class="tag ok">encerra</span><h3>Conversa com começo e fim</h3><p>Quando o aluno confirma que está atendido, o agente se despede e fecha a conversa no sistema — nada fica pendurado.</p></div>
+      <div class="card"><span class="tag warn">nunca</span><h3>Inventa resposta</h3><p>Regra de ouro: se a base não cobre, ele diz com franqueza que vai acionar a equipe — e aciona. Prazo, valor, política e cláusula nunca saem de improviso.</p></div>
+      <div class="card"><span class="tag warn">nunca</span><h3>Fala com quem não é aluno</h3><p>Identificação em modo fail-closed: na dúvida (ou em qualquer erro), a pessoa NÃO é tratada como aluna e o agente não assume a conversa.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="como-funciona">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Arquitetura</p>
+      <h2>O caminho de uma mensagem</h2>
+      <p class="section-sub">Uma mensagem no WhatsApp da empresa percorre este circuito em segundos:</p>
+    </div>
+    <div class="flow">
+      <div class="node"><b>WhatsApp</b><span>Aluno escreve no número central da Expert</span></div>
+      <div class="arrow">→</div>
+      <div class="node"><b>Roteador de webhooks</b><span>Distribui o mesmo evento pra todos os sistemas interessados (fan-out), sem um atrapalhar o outro</span></div>
+      <div class="arrow">→</div>
+      <div class="node"><b>Motor do agente</b><span>Serviço em Rust, multi-agente: cada agente tem persona, ferramentas e base próprias</span></div>
+      <div class="arrow">→</div>
+      <div class="node"><b>Resposta sugerida</b><span>Gravada com máquina de estados: sugerida → aprovada → agendada → enviada</span></div>
+    </div>
+    <div class="subflow">
+      <b>Ferramentas do agente:</b> <code>buscar_base</code> (busca semântica no corpus curado), <code>transferir_para_humano</code> (encaminha com contexto), <code>encerrar_conversa</code> (fecha o ciclo) e a identificação de aluno, que consulta o portal por trás dos panos com credencial dedicada.
+    </div>
+    <div class="grid g3" style="margin-top:22px">
+      <div class="card"><h3>Modos por conversa</h3><p><code>desligado</code> (não age), <code>sombra</code> (pensa e registra, não envia) e <code>produção</code> (responde de verdade). A promoção é sempre decisão humana, conversa a conversa.</p></div>
+      <div class="card"><h3>Aprovação humana por design</h3><p>O motor registra a sugestão e para. O envio é uma etapa separada, auditável — ninguém aprova a própria resposta.</p></div>
+      <div class="card"><h3>Persona viva</h3><p>O comportamento do agente é um prompt versionado no banco, relido a cada turno. Ajustar tom ou regra não exige deploy: edita, testa, mede.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="treinamento">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Como foi "treinado"</p>
+      <h2>Sem fine-tuning: engenharia de contexto + calibração com testes reais</h2>
+      <p class="section-sub">O agente não passou por treinamento de modelo. O conhecimento vem de três camadas construídas e refinadas com método:</p>
+    </div>
+    <ol class="steps">
+      <li><b>Corpus curado (a memória)</b><p>35 documentos / 273 trechos indexados com embeddings: FAQ construída a partir de perguntas reais de alunos, playbook interno de operação, contrato e entregáveis, e documentos de política. Cada documento pertence ao agente — nada vaza entre agentes ou produtos.</p></li>
+      <li><b>Persona versionada (o comportamento)</b><p>Da v1 à v6 em uma semana de calibração: regra de ouro anti-invenção, fronteiras do que é e não é do agente, política de ferramentas da casa e uma camada de conversação de WhatsApp de verdade — bolhas curtas, sem listas por padrão, variação de abertura e fechamento.</p></li>
+      <li><b>Sombra antes de produção (a prova)</b><p>O agente rodou dias em modo sombra: pensava a resposta inteira e registrava sem enviar. A sombra pegou um bug de contrato entre sistemas logo na primeira mensagem real — o tipo de erro que teste isolado não pega.</p></li>
+      <li><b>Testes reais com correção de causa raiz</b><p>Com respostas reais ligadas só para a bancada de teste, cada resposta errada virou investigação: o que a busca retornou? O que a persona mandou fazer? A correção vai na FONTE (documento, persona ou código), nunca em remendo.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section id="licoes">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Lições da calibração</p>
+      <h2>O que esse projeto ensina sobre agentes de IA</h2>
+      <p class="section-sub">Quatro aprendizados pagos com investigação real — válidos pra qualquer agente com base de conhecimento:</p>
+    </div>
+    <div class="grid g2">
+      <div class="card"><h3>1. Handshake real antes da virada</h3><p>Dois componentes da mesma obra, cada um com teste próprio verde, divergiam num detalhe de contrato — e o erro era silencioso por design (fail-closed). A lição: antes de ligar a chave, provar UMA chamada cruzada real entre os componentes vivos.</p></div>
+      <div class="card"><h3>2. Política sensível exige documento dedicado</h3><p>"Meu sócio vê meu diagnóstico?" — a resposta certa existia, mas enterrada num trecho misto da FAQ que a busca não rankeava. Um documento pequeno e focado, só sobre essa política, passou a ser o primeiro resultado e o agente acertou. Regra: pergunta crítica de política = doc próprio no corpus.</p></div>
+      <div class="card"><h3>3. A base vence o histórico</h3><p>Modelos tendem à coerência: se o agente errou uma vez na conversa, tende a sustentar o erro. A persona ganhou uma regra explícita — se a busca da rodada contradisser o que o próprio agente disse antes, ele se corrige com naturalidade e segue a base.</p></div>
+      <div class="card"><h3>4. Fonte única, contradição zero</h3><p>O erro do sócio tinha uma segunda causa: o playbook interno usava um termo ambíguo ("segundo titular") que contradizia a FAQ. Corpus é sistema: corrigir a resposta sem corrigir a fonte só adia o próximo erro.</p></div>
+    </div>
+    <div class="quote"><b>Bordão da casa:</b> automação nova na Expert Integrado nasce em código (Claude Code, Codex ou G4 OS) — "n8n, assim como faziam os Incas e os Maias". Quem já tem fluxo rodando em integrador visual migra sem urgência; coisa nova, só na rota de código. O agente aprendeu — e explica — essa política.</div>
+  </div>
+</section>
+
+<section id="estado">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Estado atual</p>
+      <h2>Produção controlada, liberação gradual</h2>
+    </div>
+    <div class="grid g3">
+      <div class="card"><span class="tag ok">no ar</span><h3>Bancada de teste real</h3><p>Respostas reais ligadas apenas pra conversas de teste autorizadas. Conteúdo, tom, encerramento e encaminhamento a humano provados de ponta a ponta.</p></div>
+      <div class="card"><span class="tag warn">próximo</span><h3>Áudio e despacho nativo</h3><p>Mensagens de voz já chegam e ficam registradas, mas ainda não são transcritas. O envio aprovado ainda usa uma ponte de despacho — a versão nativa vem no app de gestão.</p></div>
+      <div class="card"><span class="tag blue">depois</span><h3>Alunos reais</h3><p>Liberação gradual, conversa a conversa, depois de desativar os gatilhos automáticos legados do canal e concluir a validação da segunda cadeira.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Expertinho CS é um projeto da <a href="https://expertintegrado.com.br" rel="noopener">Expert Integrado</a> — agentes de IA e automações para empresas. Construído com Claude Code, Rust e engenharia de contexto. Repositório privado da organização; acesso mediante convite.
+  </div>
+</footer>
+
+</body>
+</html>
