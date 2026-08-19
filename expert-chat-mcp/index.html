@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<title>Expert Chat MCP — como funciona a permissão por usuário</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Como um agente de IA opera o painel de atendimento da Expert Integrado com a identidade e as permissões de um usuário real — chave pessoal, regras no servidor e revogação em um clique.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='12' y='18' width='76' height='52' rx='14' fill='none' stroke='%236ee7c4' stroke-width='8'/%3E%3Ccircle cx='38' cy='44' r='6' fill='%236ee7c4'/%3E%3Ccircle cx='62' cy='44' r='6' fill='%236ee7c4'/%3E%3C/svg%3E">
+
+<style>
+  :root{
+    --bg: #0b0f14;
+    --bg-card: #131a22;
+    --line: #212b36;
+    --ink: #e7edf3;
+    --ink-dim: #a7b3bf;
+    --ink-faint: #6b7885;
+    --accent: #6ee7c4;
+    --blue: #7aa2ff;
+    --warn: #f0876a;
+    --gold: #f2b866;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(1000px 500px at 20% -10%, rgba(110,231,196,.07), transparent 60%),
+      radial-gradient(800px 450px at 100% 0%, rgba(122,162,255,.06), transparent 55%);
+    background-repeat: no-repeat;
+  }
+  a{ color: var(--accent); text-decoration:none; }
+  a:hover{ text-decoration: underline; }
+  .wrap{ max-width: 880px; margin: 0 auto; padding: 0 24px; }
+
+  header{ padding: 90px 0 30px; }
+  .kicker{ color: var(--accent); font-size: .85rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; margin: 0 0 14px; }
+  h1{ font-size: clamp(1.7rem, 4.5vw, 2.6rem); line-height: 1.2; margin: 0 0 14px; }
+  .sub{ color: var(--ink-dim); font-size: 1.06rem; max-width: 60ch; margin: 0; }
+  .byline{ margin-top: 18px; color: var(--ink-faint); font-size: .92rem; }
+  .byline a{ color: var(--ink-dim); }
+
+  h2{ font-size: 1.35rem; margin: 56px 0 8px; }
+  h2 .n{ color: var(--accent); font-family: var(--mono); font-size: 1rem; margin-right: 10px; }
+  .lead{ color: var(--ink-dim); max-width: 66ch; margin: 0 0 22px; }
+
+  .cards{ display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 22px 0; }
+  .card{ background: var(--bg-card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 18px 16px; }
+  .card h3{ margin: 0 0 6px; font-size: 1.02rem; }
+  .card p{ margin: 0; color: var(--ink-dim); font-size: .93rem; }
+  .card .tag{ display:inline-block; font-family: var(--mono); font-size: .72rem; color: var(--bg); background: var(--accent); border-radius: 6px; padding: 1px 8px; margin-bottom: 10px; font-weight: 700; }
+  .card.blue .tag{ background: var(--blue); }
+  .card.gold .tag{ background: var(--gold); }
+  .card.warn .tag{ background: var(--warn); }
+
+  ol.passos{ counter-reset: p; list-style: none; padding: 0; margin: 22px 0; display: grid; gap: 10px; }
+  ol.passos li{
+    background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 16px 14px 54px; position: relative; color: var(--ink-dim);
+  }
+  ol.passos li b{ color: var(--ink); }
+  ol.passos li::before{
+    counter-increment: p; content: counter(p);
+    position: absolute; left: 16px; top: 14px;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: rgba(110,231,196,.12); color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-weight: 700; font-size: .85rem;
+  }
+
+  .diagrama{ background: var(--bg-card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin: 26px 0; overflow-x: auto; }
+  .diagrama svg{ display: block; min-width: 640px; width: 100%; height: auto; }
+  .legenda{ color: var(--ink-faint); font-size: .85rem; margin: 10px 4px 0; }
+
+  .tools{ display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin: 22px 0; }
+  .tools .grupo{ background: var(--bg-card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+  .tools h3{ margin: 0 0 10px; font-size: .95rem; color: var(--ink-dim); text-transform: uppercase; letter-spacing: .08em; font-size: .8rem; }
+  .tools ul{ list-style: none; margin: 0; padding: 0; }
+  .tools li{ font-family: var(--mono); font-size: .84rem; color: var(--ink); padding: 4px 0; border-bottom: 1px dashed var(--line); }
+  .tools li:last-child{ border-bottom: 0; }
+  .tools li span{ font-family: var(--font); color: var(--ink-faint); font-size: .82rem; }
+
+  .quadro{ background: rgba(122,162,255,.07); border: 1px solid rgba(122,162,255,.25); border-radius: 14px; padding: 16px 20px; margin: 22px 0; color: var(--ink-dim); }
+  .quadro b{ color: var(--ink); }
+  .quadro.verde{ background: rgba(110,231,196,.06); border-color: rgba(110,231,196,.25); }
+
+  footer{ margin-top: 80px; padding: 28px 0 46px; border-top: 1px solid var(--line); color: var(--ink-faint); font-size: .9rem; }
+  footer a{ color: var(--ink-dim); }
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <p class="kicker">Expert Chat MCP</p>
+  <h1>O painel de atendimento nas mãos dos agentes — com a permissão de um usuário, não de um robô onipotente</h1>
+  <p class="sub">Um MCP que deixa o Claude operar o painel de atendimento da Expert Integrado: ler conversas, responder, organizar. A regra de ouro: o agente entra <em>como uma pessoa do time</em>, e o servidor confere cada pedido como se fosse ela clicando na tela.</p>
+  <p class="byline">Um projeto <a href="https://expertintegrado.com.br">Expert Integrado</a> · <a href="../">todos os projetos</a></p>
+</header>
+
+<main class="wrap">
+
+  <h2><span class="n">01</span>A ideia central</h2>
+  <p class="lead">O painel já tem um sistema de permissões completo: cada usuário enxerga só as conversas do seu recorte. Em vez de criar regras novas para os agentes de IA, o MCP <b>pega emprestada a identidade de um usuário real</b>. Se aquele usuário não pode ver uma conversa, o agente também não pode — automaticamente, sem nenhuma regra duplicada.</p>
+
+  <div class="quadro verde">
+    <b>Por que isso importa:</b> permissão duplicada é permissão que diverge. Aqui existe UM lugar onde a regra mora (o servidor do painel) e todo mundo — tela, celular, agente de IA — passa pelo mesmo porteiro.
+  </div>
+
+  <h2><span class="n">02</span>A chave pessoal</h2>
+  <p class="lead">Cada agente recebe uma chave de API amarrada a um usuário do painel. É como um crachá com foto: identifica <em>quem</em> está pedindo.</p>
+
+  <ol class="passos">
+    <li><b>Um super admin gera a chave</b> no painel, escolhendo de qual usuário ela será. A chave aparece <b>uma única vez</b> — depois disso, nem o sistema consegue mostrá-la de novo.</li>
+    <li><b>No banco fica só a "impressão digital"</b> da chave (um hash). Quem roubar o banco não rouba a chave.</li>
+    <li><b>O agente apresenta a chave em cada pedido.</b> O servidor reconhece a impressão digital, descobre o dono e responde como se fosse ele.</li>
+    <li><b>Revogar é um clique.</b> A chave desativada para de valer em até um minuto — sem trocar senha de ninguém, sem afetar as outras chaves.</li>
+  </ol>
+
+  <h2><span class="n">03</span>O que o servidor confere em cada pedido</h2>
+  <p class="lead">Quatro camadas de regra, as mesmas que valem para uma pessoa logada na tela:</p>
+
+  <div class="cards">
+    <div class="card">
+      <span class="tag">BU</span>
+      <h3>Unidade de negócio</h3>
+      <p>Usuário vinculado a uma ou mais BUs (ex.: Super SDR, Alunos) só enxerga as conversas daquele universo. O vínculo é feito pelo admin e imposto no servidor.</p>
+    </div>
+    <div class="card blue">
+      <span class="tag">Visibilidade</span>
+      <h3>Regra por conversa</h3>
+      <p>Uma conversa pode ser restrita a pessoas ou departamentos específicos. Quem está fora da lista não a vê — nem sabe que ela existe.</p>
+    </div>
+    <div class="card gold">
+      <span class="tag">Escopo</span>
+      <h3>Próprias, do time ou todas</h3>
+      <p>Cada perfil tem um alcance: só as conversas sob sua responsabilidade, as do seu departamento, ou todas. O agente herda exatamente o alcance do dono da chave.</p>
+    </div>
+    <div class="card warn">
+      <span class="tag">Pool</span>
+      <h3>Encerradas liberadas</h3>
+      <p>Conversa concluída fica visível para reabordagem (respeitando a BU) — e quem responder assume a conversa. Vale igual para gente e para agente.</p>
+    </div>
+  </div>
+
+  <h2><span class="n">04</span>O caminho de um pedido</h2>
+  <div class="diagrama">
+    <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagrama: agente com chave passa pelo servidor do painel, que identifica o dono, aplica as regras e devolve dados ou bloqueia com 403">
+      <defs>
+        <marker id="seta" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+          <path d="M0 0 L8 4.5 L0 9 z" fill="#3a4756"/>
+        </marker>
+        <marker id="setaVerde" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+          <path d="M0 0 L8 4.5 L0 9 z" fill="#6ee7c4"/>
+        </marker>
+        <marker id="setaVerm" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+          <path d="M0 0 L8 4.5 L0 9 z" fill="#f0876a"/>
+        </marker>
+      </defs>
+
+      <!-- agente -->
+      <rect x="20" y="100" width="180" height="100" rx="14" fill="#131a22" stroke="#212b36"/>
+      <text x="110" y="138" fill="#e7edf3" font-size="15" font-weight="600" text-anchor="middle" font-family="system-ui">Agente Claude</text>
+      <text x="110" y="160" fill="#a7b3bf" font-size="12" text-anchor="middle" font-family="system-ui">PC · notebook · VPS</text>
+      <rect x="52" y="170" width="116" height="20" rx="6" fill="rgba(110,231,196,.12)"/>
+      <text x="110" y="184" fill="#6ee7c4" font-size="11" text-anchor="middle" font-family="monospace">chave pessoal eck_…</text>
+
+      <!-- seta 1 -->
+      <line x1="200" y1="150" x2="285" y2="150" stroke="#3a4756" stroke-width="1.6" marker-end="url(#seta)"/>
+      <text x="242" y="138" fill="#6b7885" font-size="11" text-anchor="middle" font-family="system-ui">pedido</text>
+
+      <!-- servidor -->
+      <rect x="290" y="45" width="270" height="210" rx="14" fill="#131a22" stroke="#212b36"/>
+      <text x="425" y="76" fill="#e7edf3" font-size="15" font-weight="600" text-anchor="middle" font-family="system-ui">Servidor do painel</text>
+      <text x="425" y="95" fill="#6b7885" font-size="11" text-anchor="middle" font-family="system-ui">o único porteiro</text>
+      <rect x="310" y="110" width="230" height="28" rx="7" fill="rgba(122,162,255,.1)"/>
+      <text x="425" y="129" fill="#7aa2ff" font-size="12" text-anchor="middle" font-family="system-ui">1 · identifica o dono da chave</text>
+      <rect x="310" y="146" width="230" height="28" rx="7" fill="rgba(122,162,255,.1)"/>
+      <text x="425" y="165" fill="#7aa2ff" font-size="12" text-anchor="middle" font-family="system-ui">2 · aplica BU · visibilidade · escopo</text>
+      <rect x="310" y="182" width="230" height="28" rx="7" fill="rgba(122,162,255,.1)"/>
+      <text x="425" y="201" fill="#7aa2ff" font-size="12" text-anchor="middle" font-family="system-ui">3 · decide: dentro ou fora do recorte?</text>
+      <text x="425" y="238" fill="#6b7885" font-size="11" text-anchor="middle" font-family="system-ui">mesmas regras da tela — nada duplicado</text>
+
+      <!-- ramo permitido -->
+      <line x1="560" y1="115" x2="660" y2="90" stroke="#6ee7c4" stroke-width="1.6" marker-end="url(#setaVerde)"/>
+      <rect x="665" y="55" width="195" height="70" rx="14" fill="#131a22" stroke="rgba(110,231,196,.4)"/>
+      <text x="762" y="84" fill="#6ee7c4" font-size="14" font-weight="600" text-anchor="middle" font-family="system-ui">dentro do recorte</text>
+      <text x="762" y="105" fill="#a7b3bf" font-size="12" text-anchor="middle" font-family="system-ui">dados voltam pro agente</text>
+
+      <!-- ramo bloqueado -->
+      <line x1="560" y1="195" x2="660" y2="220" stroke="#f0876a" stroke-width="1.6" marker-end="url(#setaVerm)"/>
+      <rect x="665" y="185" width="195" height="70" rx="14" fill="#131a22" stroke="rgba(240,135,106,.45)"/>
+      <text x="762" y="214" fill="#f0876a" font-size="14" font-weight="600" text-anchor="middle" font-family="system-ui">fora do recorte</text>
+      <text x="762" y="235" fill="#a7b3bf" font-size="12" text-anchor="middle" font-family="system-ui">bloqueado (403) — por desenho</text>
+    </svg>
+    <p class="legenda">O MCP não tem regra própria de permissão: ele só pede. Quem decide, sempre, é o servidor — o mesmo que atende a tela do time.</p>
+  </div>
+
+  <h2><span class="n">05</span>Guardrails além da permissão</h2>
+  <div class="cards">
+    <div class="card">
+      <span class="tag">Envio</span>
+      <h3>Mensagem só com confirmação</h3>
+      <p>Enviar mensagem a alguém exige uma confirmação explícita do dono da sessão do agente. Sem ela, o MCP recusa antes mesmo de falar com o servidor.</p>
+    </div>
+    <div class="card blue">
+      <span class="tag">Conteúdo</span>
+      <h3>Conversa é dado, não ordem</h3>
+      <p>O que clientes escrevem nas conversas é material para analisar — nunca instrução para o agente obedecer. Pedido embutido numa mensagem não autoriza nada.</p>
+    </div>
+    <div class="card gold">
+      <span class="tag">Alçada</span>
+      <h3>Zero ferramentas de admin</h3>
+      <p>O MCP cobre só a operação de atendimento. Criar usuários, mudar permissões, mexer em configurações: nada disso existe nele — é ação de admin, na tela, com login e dois fatores.</p>
+    </div>
+  </div>
+
+  <h2><span class="n">06</span>As 14 ferramentas</h2>
+  <div class="tools">
+    <div class="grupo">
+      <h3>Ler</h3>
+      <ul>
+        <li>listar_conversas <span>· com filtros</span></li>
+        <li>ler_mensagens</li>
+        <li>buscar</li>
+        <li>ler_ficha <span>· dados do contato</span></li>
+        <li>listar_atendentes</li>
+        <li>listar_etiquetas</li>
+      </ul>
+    </div>
+    <div class="grupo">
+      <h3>Organizar</h3>
+      <ul>
+        <li>mudar_status</li>
+        <li>atribuir_responsavel</li>
+        <li>remover_responsavel</li>
+        <li>definir_etiquetas <span>· só do catálogo</span></li>
+        <li>marcar_lida</li>
+      </ul>
+    </div>
+    <div class="grupo">
+      <h3>Agir</h3>
+      <ul>
+        <li>enviar_mensagem <span>· com confirmação</span></li>
+        <li>criar_nota <span>· anotação interna</span></li>
+        <li>atualizar_ficha</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2><span class="n">07</span>Uma chave por máquina</h2>
+  <p class="lead">Cada agente da frota tem a sua própria chave — nunca compartilhada. Se uma máquina for comprometida, revoga-se aquela chave e as outras seguem funcionando. E como cada chave tem dono, dá para responder sempre a pergunta: <b>quem fez o quê?</b></p>
+
+  <div class="quadro">
+    <b>Exemplo prático:</b> um agente com a chave de um atendente vinculado à BU "Alunos" listou as conversas e recebeu só o recorte de alunos. Tentou ler e responder uma conversa de outra BU: <b>bloqueado nas duas</b>, com o mesmo 403 que a tela daria. Foi assim que o sistema foi testado antes de entrar em produção.
+  </div>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Feito pela <a href="https://expertintegrado.com.br">Expert Integrado</a> — agentes de IA e automações para empresas. · <a href="../">todos os projetos</a>
+  </div>
+</footer>
+
+</body>
+</html>
