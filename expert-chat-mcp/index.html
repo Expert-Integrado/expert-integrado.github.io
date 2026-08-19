@@ -116,10 +116,10 @@
   <p class="lead">Cada agente recebe uma chave de API amarrada a um usuário do painel. É como um crachá com foto: identifica <em>quem</em> está pedindo.</p>
 
   <ol class="passos">
-    <li><b>Um super admin gera a chave</b> no painel, escolhendo de qual usuário ela será. A chave aparece <b>uma única vez</b> — depois disso, nem o sistema consegue mostrá-la de novo.</li>
+    <li><b>Cada um gera a própria chave</b> no painel, em <em>Meu perfil → Chave de agente de IA</em>. A chave aparece <b>uma única vez</b> — depois disso, nem o sistema consegue mostrá-la de novo, então copie na hora.</li>
     <li><b>No banco fica só a "impressão digital"</b> da chave (um hash). Quem roubar o banco não rouba a chave.</li>
     <li><b>O agente apresenta a chave em cada pedido.</b> O servidor reconhece a impressão digital, descobre o dono e responde como se fosse ele.</li>
-    <li><b>Revogar é um clique.</b> A chave desativada para de valer em até um minuto — sem trocar senha de ninguém, sem afetar as outras chaves.</li>
+    <li><b>Revogar é um clique</b>, na mesma tela. A chave desativada para de valer em até um minuto — sem trocar senha de ninguém, sem afetar as outras chaves. Uma chave por máquina: some com a comprometida e as outras seguem.</li>
   </ol>
 
   <h2><span class="n">03</span>O que o servidor confere em cada pedido</h2>
