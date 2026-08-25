@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Central de Ajuda — Chat Expert</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Como usar o painel de atendimento da Expert Integrado, menu por menu — e como conectar seu agente de IA (MCP).">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='12' y='18' width='76' height='52' rx='14' fill='none' stroke='%2325a07f' stroke-width='8'/%3E%3Ccircle cx='38' cy='44' r='6' fill='%2325a07f'/%3E%3Ccircle cx='62' cy='44' r='6' fill='%2325a07f'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#f6f8fa; --panel:#fff; --line:#e3e8ee; --ink:#1a2430; --dim:#5b6774;
+    --faint:#8b97a4; --accent:#12866a; --accent-soft:#e5f5ef; --blue:#2f6fed;
+    --gold:#b9781a; --red:#c0392b;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0d1218; --panel:#151c25; --line:#242f3b; --ink:#e7edf3; --dim:#a7b3bf;
+      --faint:#6b7885; --accent:#4fd0a8; --accent-soft:#122a24; --blue:#7aa2ff; --gold:#e0a94e; }
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:var(--font); line-height:1.6; -webkit-font-smoothing:antialiased; }
+  a{ color:var(--accent); }
+  code{ font-family:var(--mono); font-size:.86em; background:var(--accent-soft); color:var(--accent); padding:1px 6px; border-radius:5px; }
+
+  header{ background:linear-gradient(140deg,#0f6f58,#12866a 60%,#1a9c7c); color:#fff; padding:44px 20px 40px; }
+  .wrap{ max-width:1080px; margin:0 auto; }
+  header h1{ margin:0 0 8px; font-size:clamp(1.5rem,4vw,2.2rem); }
+  header p{ margin:0; opacity:.92; max-width:60ch; }
+  header .tag{ display:inline-block; font-size:.75rem; letter-spacing:.12em; text-transform:uppercase; font-weight:700; opacity:.85; margin-bottom:14px; }
+
+  .layout{ display:grid; grid-template-columns:230px 1fr; gap:34px; max-width:1080px; margin:0 auto; padding:0 20px 70px; }
+  @media (max-width:820px){ .layout{ grid-template-columns:1fr; } nav.menu{ position:static !important; } }
+
+  nav.menu{ position:sticky; top:20px; align-self:start; margin-top:-26px; }
+  nav.menu .box{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px; box-shadow:0 6px 20px rgba(0,0,0,.05); }
+  nav.menu p{ margin:6px 10px; font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--faint); font-weight:700; }
+  nav.menu a{ display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:9px; color:var(--dim); text-decoration:none; font-size:.9rem; font-weight:500; }
+  nav.menu a:hover{ background:var(--accent-soft); color:var(--accent); }
+  nav.menu a .ic{ width:18px; text-align:center; }
+
+  section{ margin-top:34px; scroll-margin-top:16px; }
+  section > h2{ font-size:1.25rem; margin:0 0 4px; display:flex; align-items:center; gap:10px; }
+  section > .intro{ color:var(--dim); margin:0 0 14px; }
+  .faq{ background:var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  details{ border-top:1px solid var(--line); }
+  details:first-child{ border-top:0; }
+  summary{ cursor:pointer; padding:15px 18px; font-weight:600; list-style:none; display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  summary::-webkit-details-marker{ display:none; }
+  summary .chev{ color:var(--faint); transition:transform .2s; flex-shrink:0; }
+  details[open] summary .chev{ transform:rotate(90deg); }
+  details[open] summary{ color:var(--accent); }
+  .answer{ padding:0 18px 16px; color:var(--dim); }
+  .answer p{ margin:0 0 10px; }
+  .answer ol,.answer ul{ margin:8px 0; padding-left:22px; }
+  .answer li{ margin:5px 0; }
+  .answer strong{ color:var(--ink); }
+  .pill{ display:inline-block; font-size:.72rem; font-weight:700; border-radius:6px; padding:1px 8px; margin-left:8px; vertical-align:middle; }
+  .pill.admin{ background:var(--accent-soft); color:var(--accent); }
+
+  .callout{ border-radius:12px; padding:14px 16px; margin:12px 0; border:1px solid; font-size:.92rem; }
+  .callout.info{ background:rgba(47,111,237,.08); border-color:rgba(47,111,237,.3); }
+  .callout.warn{ background:rgba(185,120,26,.1); border-color:rgba(185,120,26,.35); }
+  .callout b{ color:var(--ink); }
+
+  .steps{ counter-reset:s; list-style:none; padding:0; margin:10px 0; }
+  .steps li{ counter-increment:s; position:relative; padding:4px 0 12px 40px; }
+  .steps li::before{ content:counter(s); position:absolute; left:0; top:2px; width:26px; height:26px; border-radius:50%; background:var(--accent-soft); color:var(--accent); font-weight:700; font-family:var(--mono); font-size:.82rem; display:flex; align-items:center; justify-content:center; }
+
+  footer{ border-top:1px solid var(--line); background:var(--panel); padding:24px 20px; color:var(--faint); font-size:.88rem; text-align:center; }
+  footer a{ color:var(--dim); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <span class="tag">Chat Expert · Central de Ajuda</span>
+    <h1>Como usar o painel de atendimento</h1>
+    <p>Um guia rápido, menu por menu, de tudo que dá pra fazer no chat da empresa — e como conectar seu agente de IA pra operar junto com você.</p>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="menu">
+    <div class="box">
+      <p>Menus</p>
+      <a href="#comecar"><span class="ic">🔑</span> Entrar</a>
+      <a href="#lista"><span class="ic">💬</span> Lista de conversas</a>
+      <a href="#conversar"><span class="ic">✉️</span> Conversar</a>
+      <a href="#organizar"><span class="ic">🗂️</span> Organizar</a>
+      <a href="#ficha"><span class="ic">📇</span> Ficha do contato</a>
+      <a href="#perfil"><span class="ic">👤</span> Meu perfil</a>
+      <a href="#agente"><span class="ic">🤖</span> Conectar o agente</a>
+      <a href="#admin"><span class="ic">⚙️</span> Só admin</a>
+    </div>
+  </nav>
+
+  <main>
+
+    <section id="comecar">
+      <h2>🔑 Entrar no painel</h2>
+      <p class="intro">O primeiro acesso e a segurança da sua conta.</p>
+      <div class="faq">
+        <details open>
+          <summary>Como eu entro?<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>Acesse <a href="https://chat.expertintegrado.com.br" target="_blank" rel="noopener">chat.expertintegrado.com.br</a> e entre com o mesmo e-mail e senha que você usa no Meeting Hub — é o mesmo login.</p>
+          </div>
+        </details>
+        <details>
+          <summary>O que é a verificação em duas etapas (2FA)?<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>É uma camada extra de segurança: além da senha, o painel pede um código de 6 dígitos do seu app autenticador (Google Authenticator, 1Password, Authy). Você ativa em <strong>Meu perfil</strong>. Recomendado pra todo mundo.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Por que eu não vejo todas as conversas?<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>Cada pessoa enxerga só o seu recorte: as conversas da sua área (BU), as que são suas ou do seu departamento, e as que estão sem dono. Isso é definido pelo admin — é assim que cada time vê só o que é dele.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section id="lista">
+      <h2>💬 A lista de conversas</h2>
+      <p class="intro">A coluna da esquerda, onde ficam todos os atendimentos.</p>
+      <div class="faq">
+        <details>
+          <summary>Como encontro uma conversa específica?<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>Use a busca no topo da lista (<em>Buscar conversa ou grupo</em>) — dá pra procurar por nome do contato ou número.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Como filtro por status ou por não lidas?<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>Nos filtros acima da lista você separa por <strong>status</strong> (aberto, em atendimento, aguardando, concluído), por <strong>canal</strong>, e mostra só as <strong>não lidas</strong> ou as <strong>arquivadas</strong>. Some com os filtros pra ver tudo de novo.</p>
+          </div>
+        </details>
+        <details>
+          <summary>O que é a "Visão" no topo?<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>É o recorte da lista por contexto/área. Quando você tem mais de uma área, dá pra alternar entre elas. Se aparecer <em>"Sua visão está travada pelo admin"</em>, significa que seu acesso já está fixado no recorte certo — é o esperado.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section id="conversar">
+      <h2>✉️ Conversar</h2>
+      <p class="intro">Tudo que dá pra fazer dentro de uma conversa aberta.</p>
+      <div class="faq">
+        <details>
+          <summary>Enviar, responder, editar e apagar mensagem<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>Digite no campo de baixo e envie. Passando o mouse na mensagem aparecem as opções: <strong>responder</strong> (cita a mensagem), <strong>editar</strong>, <strong>apagar</strong> e <strong>encaminhar</strong> pra outra conversa.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Mandar arquivo, foto e áudio<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>O clipe (📎) anexa arquivo ou imagem; o microfone grava áudio; o emoji abre a lista de figurinhas. Tudo no rodapé da conversa.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Respostas rápidas (atalhos)<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>Digite <code>/</code> no campo de mensagem pra usar um texto pronto. As <strong>suas</strong> só você vê; as <strong>globais</strong> valem pra equipe toda (só o admin cria as globais). Você cria as suas em <strong>Configurações → Respostas rápidas</strong>.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Agendar uma mensagem pra depois<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>No menu de opções do envio dá pra <em>agendar</em> a mensagem pra sair num horário futuro, em vez de mandar na hora.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section id="organizar">
+      <h2>🗂️ Organizar o atendimento</h2>
+      <p class="intro">Status, responsáveis, etiquetas e notas — o que mantém a fila em ordem.</p>
+      <div class="faq">
+        <details>
+          <summary>Mudar o status da conversa<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>Cada conversa tem um status: <strong>aberto</strong>, <strong>em atendimento</strong>, <strong>aguardando</strong> e <strong>concluído</strong>. Mude conforme o andamento — é assim que o time sabe o que ainda precisa de ação.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Assumir uma conversa / atribuir responsável<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>Dá pra atribuir uma conversa a uma <strong>pessoa</strong> ou a um <strong>departamento</strong> (pode ser mais de um). Uma conversa sem dono fica visível pra todos; quando alguém responde, assume a conversa automaticamente.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Conversa encerrada volta pra fila<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>Conversa <strong>concluída</strong> fica visível pra todo o time (dentro da sua área), mesmo que fosse de outra pessoa. Se você responder, ela reabre e passa a ser sua. É assim que dá pra reabordar um cliente antigo.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Etiquetas<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>Marque a conversa com etiquetas pra classificar (ex.: "orçamento", "suporte"). Você escolhe da lista pronta; criar etiqueta nova é ação do admin.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Notas internas<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>A nota interna é um recado que fica na conversa mas <strong>o cliente não vê</strong> — serve pra registrar contexto pro time. Use <code>@nome</code> pra avisar um colega, que recebe a notificação no sininho.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Arquivar e arquivamento automático<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>Arquivar tira a conversa da lista principal sem apagar nada (ela volta se o cliente escrever de novo, ou pelo filtro de arquivadas). Algumas conversas têm <em>arquivamento automático</em> ligado — se conclui, arquiva sozinha.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Visibilidade restrita<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>Uma conversa pode ser restrita a pessoas ou departamentos específicos. Quem está fora da lista não a vê. O ícone de cadeado indica que a conversa tem visibilidade restrita.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section id="ficha">
+      <h2>📇 A ficha do contato</h2>
+      <p class="intro">Os dados da pessoa do outro lado.</p>
+      <div class="faq">
+        <details>
+          <summary>Onde vejo e edito a ficha?<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>No cabeçalho da conversa tem <em>Ver ficha do contato</em>. Ali ficam os campos do contato (os campos padrão são definidos pelo admin) e você pode preencher/atualizar o que souber.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section id="perfil">
+      <h2>👤 Meu perfil</h2>
+      <p class="intro">Sua conta — no canto inferior esquerdo, clicando no seu nome.</p>
+      <div class="faq">
+        <details>
+          <summary>Trocar a senha e ativar o 2FA<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>Em <strong>Meu perfil</strong> você troca a senha e ativa a verificação em duas etapas (2FA). A senha vale pro login compartilhado (Meeting Hub também).</p>
+          </div>
+        </details>
+        <details>
+          <summary>Tema claro ou escuro<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>No menu do seu perfil dá pra alternar entre tema claro e escuro, do seu jeito.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Gerar minha chave de agente de IA (MCP)<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>Em <strong>Meu perfil → Chave de agente de IA (MCP)</strong> você gera a sua chave pessoal pra conectar o Claude. Ela aparece <strong>uma vez só</strong> — copie na hora. Na mesma tela dá pra revogar quando quiser. Passo a passo de instalação logo abaixo.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section id="agente">
+      <h2>🤖 Conectar o seu agente de IA (MCP)</h2>
+      <p class="intro">Isso deixa o Claude ler e operar o painel com <strong>as suas permissões</strong> — nada além do que você já vê.</p>
+      <div class="faq">
+        <details open>
+          <summary>Como conecto? (passo a passo)<span class="chev">›</span></summary>
+          <div class="answer">
+            <ol class="steps">
+              <li><strong>Gere sua chave</strong> no painel: clique no seu nome (canto inferior esquerdo) → <em>Meu perfil</em> → seção <em>Chave de agente de IA (MCP)</em> → <em>Gerar chave</em>. Copie na hora (aparece uma vez só).</li>
+              <li><strong>Baixe a ferramenta</strong>: no GitHub, o repositório <code>Expert-Integrado/expert-chat-mcp</code> (todo mundo do time já tem acesso). O README tem o passo a passo de instalação no Claude.</li>
+              <li><strong>Cole a chave</strong> na configuração, como o README indica.</li>
+              <li><strong>Pronto</strong>: agora é só pedir em linguagem natural — "lista minhas conversas em aberto", "muda o status da conversa X", "responde o fulano".</li>
+            </ol>
+            <div class="callout warn"><b>Envio sempre pede confirmação.</b> O agente só manda mensagem pra cliente depois que você confirmar — nunca sozinho.</div>
+          </div>
+        </details>
+        <details>
+          <summary>O agente vê mais do que eu?<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>Não. Ele entra com a <strong>sua</strong> identidade: vê e faz exatamente o que você pode. Fora do seu recorte, é bloqueado igual você seria.</p>
+          </div>
+        </details>
+        <details>
+          <summary>Perdi a chave / ela vazou. E agora?<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>Vá em <strong>Meu perfil</strong> e clique em <em>Revogar</em> na chave. Ela para de valer em até 1 minuto, sem afetar suas outras chaves. Depois é só gerar uma nova. Dica: uma chave por máquina (ex.: "meu notebook").</p>
+          </div>
+        </details>
+        <details>
+          <summary>Quero entender por dentro<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>Tem uma página visual explicando como funciona: <a href="https://expert-integrado.github.io/expert-chat-mcp/" target="_blank" rel="noopener">expert-integrado.github.io/expert-chat-mcp</a>.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section id="admin">
+      <h2>⚙️ Só para administradores<span class="pill admin">admin</span></h2>
+      <p class="intro">A área de Configurações, que aparece só pra quem é super admin.</p>
+      <div class="faq">
+        <details>
+          <summary>O que tem em Configurações?<span class="chev">›</span></summary>
+          <div class="answer">
+            <ul>
+              <li><strong>Usuários e permissões</strong> — quem acessa, qual área (BU) e qual escopo cada um tem.</li>
+              <li><strong>Departamentos</strong> — criar times e adicionar pessoas.</li>
+              <li><strong>Ficha</strong> — quais campos aparecem na ficha do contato.</li>
+              <li><strong>Automação</strong> — regras automáticas (ex.: arquivar ao concluir).</li>
+              <li><strong>Relatório</strong> — números do atendimento.</li>
+              <li><strong>Respostas rápidas globais</strong> — os atalhos que valem pra equipe toda.</li>
+            </ul>
+          </div>
+        </details>
+        <details>
+          <summary>Como dou uma chave de MCP pra um agente da operação?<span class="chev">›</span></summary>
+          <div class="answer">
+            <p>Cada pessoa gera a própria chave no perfil dela. Pra agentes de máquina (frota), o admin também consegue provisionar — mas o caminho normal é o autoatendimento em <em>Meu perfil</em>.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <a href="https://expertintegrado.com.br" target="_blank" rel="noopener">Expert Integrado</a> · Central de Ajuda do Chat Expert · dúvida que não está aqui? chama no grupo da equipe.
+</footer>
+
+</body>
+</html>
