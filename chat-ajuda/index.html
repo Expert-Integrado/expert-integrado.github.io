@@ -271,14 +271,15 @@
       <p class="intro">Isso deixa o Claude ler e operar o painel com <strong>as suas permissões</strong> — nada além do que você já vê.</p>
       <div class="faq">
         <details open>
-          <summary>Como conecto? (passo a passo)<span class="chev">›</span></summary>
+          <summary>Como conecto? (não precisa instalar nada)<span class="chev">›</span></summary>
           <div class="answer">
             <ol class="steps">
-              <li><strong>Gere sua chave</strong> no painel: clique no seu nome (canto inferior esquerdo) → <em>Meu perfil</em> → seção <em>Chave de agente de IA (MCP)</em> → <em>Gerar chave</em>. Copie na hora (aparece uma vez só).</li>
-              <li><strong>Baixe a ferramenta</strong>: no GitHub, o repositório <code>Expert-Integrado/expert-chat-mcp</code> (todo mundo do time já tem acesso). O README tem o passo a passo de instalação no Claude.</li>
-              <li><strong>Cole a chave</strong> na configuração, como o README indica.</li>
-              <li><strong>Pronto</strong>: agora é só pedir em linguagem natural — "lista minhas conversas em aberto", "muda o status da conversa X", "responde o fulano".</li>
+              <li><strong>Gere sua chave</strong> no painel: clique no seu nome (canto inferior esquerdo), vá em <em>Meu perfil</em>, seção <em>Chave de agente de IA (MCP)</em>, e clique em <em>Gerar chave</em>.</li>
+              <li><strong>Copie o comando pronto</strong> que aparece ali (já vem com a URL e a sua chave). Ele aparece uma vez só.</li>
+              <li><strong>Cole no Claude</strong> (no terminal do Claude Code) e dê enter. Ele conecta sozinho — sem baixar nada, sem repositório.</li>
+              <li><strong>Pronto</strong>: agora é só pedir em linguagem natural, tipo "lista minhas conversas em aberto", "muda o status da conversa X", "responde o fulano".</li>
             </ol>
+            <div class="callout info"><b>O comando é assim</b> (a sua chave entra no lugar de <code>eck_...</code>):<br><code style="display:block;margin-top:8px;white-space:normal;word-break:break-all">claude mcp add --transport http expert-chat https://chat.expertintegrado.com.br/api/mcp/mcp --header "x-api-key: eck_..."</code></div>
             <div class="callout warn"><b>Envio sempre pede confirmação.</b> O agente só manda mensagem pra cliente depois que você confirmar — nunca sozinho.</div>
           </div>
         </details>
