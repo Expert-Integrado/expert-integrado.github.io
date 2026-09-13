@@ -31,3 +31,5 @@ Hub de paginas publicas dos projetos da Expert Integrado, servido pelo GitHub Pa
 - O GitHub Pages serve direto da branch `main`, raiz do repo — push na main JA E publicacao. Nao existe preview: conferir o HTML localmente no navegador antes do push.
 - Cache do Pages leva alguns minutos pra propagar apos o push.
 - Os cards da raiz usam CSS por slug (`.proj-<slug>:hover` e `.proj-<slug> .go`): card novo sem essas 2 regras fica sem identidade de cor.
+
+- **Repositorio canonico:** `github.com/Expert-Integrado/expert-integrado.github.io`. Orgs: `Expert-Integrado` = produto vendido; `Expert-Integrado-Ferramentas` = software interno; `Expert-Integrado-Alunos` = copias e material do aluno.
