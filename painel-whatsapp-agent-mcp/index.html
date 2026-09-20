@@ -100,11 +100,14 @@
 <header class="wrap">
   <p class="kicker">PainelWhatsAppAgent MCP</p>
   <h1>O painel de atendimento nas mãos dos agentes — com a permissão de um usuário, não de um robô onipotente</h1>
-  <p class="sub">Um MCP que deixa o Claude operar o PainelWhatsAppAgent, o painel de atendimento WhatsApp da sua empresa: ler conversas, responder, organizar. A regra de ouro: o agente entra <em>como uma pessoa do time</em>, e o servidor confere cada pedido como se fosse ela clicando na tela.</p>
+  <p class="sub">Um MCP que deixa o Claude operar o PainelWhatsAppAgent, o painel de atendimento WhatsApp da sua empresa: ler conversas, responder, organizar. A regra de ouro: o agente entra <em>como uma pessoa do time</em>, e o servidor confere cada pedido como se fosse ela clicando na tela. Desde a versão 1.5 do painel o MCP vem <b>embutido</b>: nada para instalar.</p>
   <p class="byline">Um projeto <a href="https://expertintegrado.com.br">Expert Integrado</a> · <a href="../">todos os projetos</a></p>
 </header>
 
 <main class="wrap">
+  <div class="quadro verde">
+    <b>Atualização de 20/09/2026.</b> O MCP faz parte do próprio painel (<code>/api/mcp/mcp</code>, transporte HTTP): o usuário gera a chave em <em>Meu perfil → Chave de agente de IA</em>, copia o comando que a tela mostra e cola no Claude. O cliente separado (repositório <code>painel-whatsapp-agent-mcp</code>) foi <b>arquivado</b>. Na versão 1.6.0 o MCP embutido passou a ser a porta única do time: além de texto, envia imagem, áudio e arquivo, agenda e cancela mensagens e devolve anexos, sempre dentro do recorte do usuário. Guia completo: <a href="https://github.com/Expert-Integrado-Alunos/painel-whatsapp-agent/blob/main/docs/mcp.md">docs/mcp.md</a>.
+  </div>
 
   <h2><span class="n">01</span>A ideia central</h2>
   <p class="lead">O painel já tem um sistema de permissões completo: cada usuário enxerga só as conversas do seu recorte. Em vez de criar regras novas para os agentes de IA, o MCP <b>pega emprestada a identidade de um usuário real</b>. Se aquele usuário não pode ver uma conversa, o agente também não pode — automaticamente, sem nenhuma regra duplicada.</p>
@@ -207,7 +210,7 @@
     <div class="card">
       <span class="tag">Envio</span>
       <h3>Mensagem só com confirmação</h3>
-      <p>Enviar mensagem a alguém exige uma confirmação explícita do dono da sessão do agente. Sem ela, o MCP recusa antes mesmo de falar com o servidor.</p>
+      <p>Enviar texto, imagem, áudio ou arquivo, agendar ou cancelar uma mensagem: tudo exige confirmação explícita do dono da sessão do agente. Sem ela, o MCP recusa antes mesmo de falar com o servidor.</p>
     </div>
     <div class="card blue">
       <span class="tag">Conteúdo</span>
@@ -221,7 +224,7 @@
     </div>
   </div>
 
-  <h2><span class="n">06</span>As 14 ferramentas</h2>
+  <h2><span class="n">06</span>As 21 ferramentas</h2>
   <div class="tools">
     <div class="grupo">
       <h3>Ler</h3>
@@ -232,6 +235,8 @@
         <li>ler_ficha <span>· dados do contato</span></li>
         <li>listar_atendentes</li>
         <li>listar_etiquetas</li>
+        <li>listar_agendamentos</li>
+        <li>baixar_anexo <span>· URL da mídia de uma mensagem</span></li>
       </ul>
     </div>
     <div class="grupo">
@@ -250,6 +255,11 @@
         <li>enviar_mensagem <span>· com confirmação</span></li>
         <li>criar_nota <span>· anotação interna</span></li>
         <li>atualizar_ficha</li>
+        <li>enviar_imagem <span>· com confirmação</span></li>
+        <li>enviar_audio <span>· com confirmação</span></li>
+        <li>enviar_arquivo <span>· com confirmação</span></li>
+        <li>agendar_mensagem <span>· com confirmação</span></li>
+        <li>cancelar_agendamento <span>· com confirmação</span></li>
       </ul>
     </div>
   </div>
@@ -258,7 +268,7 @@
   <p class="lead">Cada agente da frota tem a sua própria chave — nunca compartilhada. Se uma máquina for comprometida, revoga-se aquela chave e as outras seguem funcionando. E como cada chave tem dono, dá para responder sempre a pergunta: <b>quem fez o quê?</b></p>
 
   <div class="quadro">
-    <b>Exemplo prático:</b> um agente com a chave de um atendente vinculado à BU "Alunos" listou as conversas e recebeu só o recorte de alunos. Tentou ler e responder uma conversa de outra BU: <b>bloqueado nas duas</b>, com o mesmo 403 que a tela daria. Foi assim que o sistema foi testado antes de entrar em produção.
+    <b>Exemplo prático:</b> um agente com a chave de um atendente vinculado à BU "Alunos" listou as conversas e recebeu só o recorte de alunos. Tentou ler e responder uma conversa de outra BU: <b>bloqueado nas duas</b>, com o mesmo 403 que a tela daria. Foi assim que o sistema foi testado antes de entrar em produção. Regra que sustenta o desenho: <b>atendente só recebe chave do painel</b>; a chave do dono do número fica no servidor e nunca vai pro assistente de um atendente.
   </div>
 
 </main>
