@@ -78,7 +78,7 @@
 <div class="wrap">
   <nav>
     <div class="marca">vps-<span>inteligente</span></div>
-    <div class="links"><a href="#como">Como funciona</a><a href="#bloco">O bloco</a><a href="#prova">O que já foi provado</a><a href="#casa">Casa e porta</a><a href="https://github.com/Expert-Integrado-Ferramentas/vps-inteligente">README</a></div>
+    <div class="links"><a href="#como">Como funciona</a><a href="#bloco">O bloco</a><a href="#contratar">Fora da VPS</a><a href="#prova">O que já foi provado</a><a href="#casa">Casa e porta</a><a href="https://github.com/Expert-Integrado-Ferramentas/vps-inteligente">README</a></div>
   </nav>
 
   <header class="hero">
@@ -163,10 +163,11 @@ admin → todos
         <span class="num">4</span>
         <h3>A memória da empresa: o cérebro</h3>
         <ul>
-          <li><b>Pasta versionada em git</b> (repositório privado da empresa): uma parte comum, lida por todos e escrita só pelo admin; uma pasta por área, onde o agente lê e escreve.</li>
-          <li><b>O agente acorda zerado</b> a cada turno: só sobrevive o que foi gravado. Correção vira lição na hora; decisão vira linha com o porquê.</li>
-          <li><b>Curadoria semanal</b> revisa o que parou, funde duplicatas e promove o que importa.</li>
-          <li>Dois ramos: <b>.md puro</b> (padrão) ou <b>Expert Brain</b>. Mesmos conceitos.</li>
+          <li><b>É a memória dos agentes, não das pessoas.</b> Uma pasta na VPS com arquivos de texto que o agente lê antes de responder e onde grava o que aprende. O agente acorda zerado: só sobrevive o que foi gravado.</li>
+          <li><b>Uma parte comum</b> (empresa, produtos, equipe, decisões): todo agente lê, só o admin escreve. <b>Uma pasta por área</b> (contexto, tarefas, lições, diário, skills): só o agente daquela área lê e escreve. A separação é o que cada container monta, não uma instrução.</li>
+          <li><b>As pessoas não abrem o cérebro:</b> falam com o agente da área, e ele responde com a memória dela. O administrador técnico vê tudo por SSH e git.</li>
+          <li><b>"Versionado em git"</b> = toda mudança registrada (o quê, quando), dá pra voltar atrás e auditar; e uma cópia vai pra um repositório privado da empresa, fora da VPS.</li>
+          <li>Quem já usa o <b>Expert Brain</b> pode ligá-lo como memória semântica; é opcional, os conceitos são os mesmos.</li>
         </ul>
         <p class="onde">Onde está: <code>cerebro/</code> · <code>cerebro/RAMOS.md</code></p>
       </div>
@@ -181,7 +182,8 @@ admin → todos
           <li><b>Cópia diária cifrada</b> de cérebro, estado dos agentes e auditoria para um bucket externo. Sucesso é o código de retorno, nunca só a existência do arquivo.</li>
           <li><b>Teste de restauração mensal</b>, automático, em pasta separada.</li>
           <li><b>Restaurar do zero</b> é um comando: a VPS nova sobe em quarentena, sem responder, até o admin liberar.</li>
-          <li><b>Monitor externo</b> avisa se o backup não rodou ou se a VPS sumiu.</li>
+          <li><b>As cópias ficam fora da VPS</b> (bucket Cloudflare R2 ou Backblaze B2). A VPS inteira pode morrer: VPS nova + um comando = tudo de volta.</li>
+          <li><b>Quem avisa que a VPS morreu não mora nela:</b> a VPS manda "estou viva" a cada 5 min pra um serviço de fora (healthchecks.io ou um Uptime Kuma em outra máquina). Silêncio = alerta no celular. O backup manda um segundo sinal ao terminar.</li>
         </ul>
         <p class="onde">Onde está: <code>backup/</code> · <code>bin/restaurar.sh</code> · <code>observabilidade/</code></p>
       </div>
@@ -210,10 +212,27 @@ admin → todos
     <div class="grade">
       <div class="card"><span class="tag ok">fixo</span><h4>Segurança do host</h4><p>Firewall, fail2ban, atualizações automáticas, SSH só por chave, Docker fechado em 127.0.0.1. Instalado antes de qualquer agente.</p></div>
       <div class="card"><span class="tag ok">fixo</span><h4>Router do Telegram</h4><p>1 bot, 1 processo, sem root, 256 MB. Autoriza, encaminha e audita. Vem do repositório da porta, em versão marcada.</p></div>
-      <div class="card"><span class="tag ok">fixo</span><h4>Apoio</h4><p>Uptime Kuma (monitor), Dozzle (logs ao vivo) e um proxy do Docker: os painéis nunca tocam o Docker direto. Nada exposto.</p></div>
+      <div class="card"><span class="tag ok">fixo</span><h4>Apoio (3 containers, dentro da VPS)</h4><p><b>Uptime Kuma</b>: monitor de dentro, 1 por container; agente caiu = aviso no Telegram. Não vê a VPS morrer. <b>Dozzle</b>: logs ao vivo, só leitura. <b>Proxy do Docker</b>: o porteiro; os dois só podem listar e ler, nunca parar ou executar. Não é contratação: vem no template, ~350 MB.</p></div>
       <div class="card"><span class="tag ok">fixo</span><h4>Cérebro</h4><p>Pasta versionada: comum (só leitura para os agentes) e uma por área. Curadoria semanal.</p></div>
-      <div class="card"><span class="tag ok">fixo</span><h4>Backup e quarentena</h4><p>Restic cifrado para R2 ou B2, teste mensal, restauração que sobe muda até o admin liberar.</p></div>
+      <div class="card"><span class="tag ok">fixo</span><h4>Backup e quarentena</h4><p>Roda de dentro, mas as cópias moram <b>fora</b> (bucket R2 ou B2, contratado pelo cliente). Teste mensal; restauração sobe muda até o admin liberar. Sinal "VPS viva" pra um monitor de fora.</p></div>
       <div class="card"><span class="tag pend">cresce</span><h4>Agentes</h4><p>1 por área, 1 por container, com teto de memória. O primeiro nasce na instalação; os próximos com um comando, até o orçamento da RAM.</p></div>
+    </div>
+  </section>
+
+  <section id="contratar">
+    <p class="kicker">Fora da VPS</p>
+    <h2>O que o cliente contrata além da VPS</h2>
+    <p class="lead">A VPS é o único servidor. O resto é conta em serviço externo, quase tudo grátis. Nada de domínio, servidor web, banco gerenciado ou e-mail.</p>
+    <div class="grade">
+      <div class="card"><span class="tag ok">obrigatório</span><h4>VPS Ubuntu 24.04, 8 GB</h4><p>Hostinger, Hetzner, Contabo. R$ 44 a 78 por mês. O bloco inteiro roda aqui.</p></div>
+      <div class="card"><span class="tag ok">obrigatório</span><h4>Bot do Telegram</h4><p>Grátis, criado no @BotFather na conta do dono. É a porta da equipe. Nunca reaproveitar um bot em uso.</p></div>
+      <div class="card"><span class="tag ok">obrigatório</span><h4>Conta Claude ou chave de API</h4><p>É o que o agente usa para pensar. Um login por agente. Assinatura do dono da área ou consumo na Anthropic.</p></div>
+      <div class="card"><span class="tag ok">para ter backup</span><h4>Bucket fora da VPS</h4><p>Cloudflare R2 (10 GB grátis) ou Backblaze B2. R$ 0 a 5 por mês. Sem ele o backup fica desligado e o relatório cobra.</p></div>
+      <div class="card"><span class="tag pend">recomendado</span><h4>Monitor externo "VPS viva"</h4><p>healthchecks.io (grátis) ou um Uptime Kuma em outra máquina. O único jeito de saber que a VPS inteira caiu.</p></div>
+      <div class="card"><span class="tag pend">recomendado</span><h4>Repositório privado pro cérebro</h4><p>GitHub da empresa, grátis. Segunda cópia da memória, fora da VPS, com histórico.</p></div>
+      <div class="card"><span class="tag nao">opcional</span><h4>Cofre de segredos</h4><p>1Password Business ou Teams. Sem ele, sops+age (grátis) ou arquivo protegido só no primeiro boot.</p></div>
+      <div class="card"><span class="tag nao">opcional</span><h4>Tailscale</h4><p>Rede privada. Só se quiser abrir os painéis de fora ou fechar a porta 22 pública. Grátis pessoal; pago por usuário em empresa.</p></div>
+      <div class="card"><span class="tag nao">não precisa</span><h4>Domínio, site, banco, e-mail</h4><p>Nada disso entra. O painel é o Telegram; os painéis técnicos ficam fechados dentro da VPS.</p></div>
     </div>
   </section>
 
