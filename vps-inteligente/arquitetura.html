@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VPS Inteligente — como funciona</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1b1f24; --mute:#5f6b7a; --line:#d7dce3; --azul:#1f5fbf; --verde:#1f8a4c; --ambar:#b7791f; --cinza:#8a94a3; --roxo:#6b46c1; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family: Inter, "Segoe UI", system-ui, sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width:1180px; margin:0 auto; padding:28px 20px 48px; }
+  h1 { font-size:26px; margin:0 0 4px; }
+  .sub { color:var(--mute); margin:0 0 22px; font-size:15px; }
+  .grid { display:grid; grid-template-columns: 220px 1fr 220px; gap:18px; align-items:stretch; }
+  .col { display:flex; flex-direction:column; gap:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  .card h3 { margin:0 0 6px; font-size:14px; letter-spacing:.02em; text-transform:uppercase; color:var(--mute); }
+  .card p { margin:0; font-size:14px; line-height:1.45; }
+  .porta { border-left:5px solid var(--azul); }
+  .porta.ssh { border-left-color:var(--cinza); }
+  .vps { background:#eef3fb; border:2px solid var(--azul); border-radius:16px; padding:16px; }
+  .vps > h2 { margin:0 0 4px; font-size:18px; }
+  .vps > .sub { margin-bottom:14px; font-size:13px; }
+  .linha { display:grid; gap:12px; margin-bottom:12px; }
+  .l1 { grid-template-columns: 1fr; }
+  .l2 { grid-template-columns: repeat(3, 1fr); }
+  .l3 { grid-template-columns: 1fr 1fr; }
+  .box { background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+  .box b { display:block; font-size:14px; margin-bottom:3px; }
+  .box small { color:var(--mute); font-size:12.5px; line-height:1.4; display:block; }
+  .router { border-top:4px solid var(--azul); }
+  .agente { border-top:4px solid var(--verde); }
+  .agente.novo { border-style:dashed; background:#f9fdf9; }
+  .apoio { border-top:4px solid var(--cinza); }
+  .cerebro { border-top:4px solid var(--roxo); }
+  .backup { border-top:4px solid var(--ambar); }
+  .seta { text-align:center; color:var(--mute); font-size:12.5px; margin:6px 0; }
+  .tag { display:inline-block; font-size:11px; padding:2px 7px; border-radius:999px; background:#eef0f3; color:var(--mute); margin-right:4px; }
+  .tag.ok { background:#e3f4ea; color:var(--verde); }
+  .tag.pend { background:#fdf1dc; color:var(--ambar); }
+  .regras { margin-top:22px; display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; }
+  .regras .card h3 { color:var(--ink); text-transform:none; font-size:15px; letter-spacing:0; }
+  .regras li { font-size:13.5px; line-height:1.45; margin-bottom:4px; }
+  .regras ul { margin:6px 0 0; padding-left:18px; }
+  footer { margin-top:22px; color:var(--mute); font-size:12.5px; }
+  @media (max-width: 900px) { .grid, .regras, .l2, .l3 { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>VPS Inteligente — como funciona</h1>
+  <p class="sub">Uma VPS de empresa organizada como um bloco de containers. A equipe fala com os agentes pelo Telegram; o admin opera por SSH. Estado real: primeira instalação em cliente, 20/09/2026.</p>
+
+  <div class="grid">
+    <!-- Coluna esquerda: quem entra -->
+    <div class="col">
+      <div class="card porta">
+        <h3>Porta 1 · Telegram</h3>
+        <p><b>Equipe da empresa.</b> Cada pessoa é cadastrada com um papel (leitor, operador, admin) e as áreas que pode acessar. Fala com <b>1 bot</b>; o bot entrega pro agente certo.</p>
+      </div>
+      <div class="card porta ssh">
+        <h3>Porta 2 · SSH</h3>
+        <p><b>Só o admin técnico.</b> Entra por chave (senha e root desligados). Instala, atualiza, adiciona agente e pessoa, olha os painéis.</p>
+      </div>
+      <div class="card">
+        <h3>Fora da VPS</h3>
+        <p>Cofre de segredos (1Password ou arquivo protegido), bucket de backup (Cloudflare R2 / B2) e monitor externo que avisa se a VPS sumir.</p>
+      </div>
+    </div>
+
+    <!-- Centro: o bloco -->
+    <div class="vps">
+      <h2>O bloco: 1 VPS Ubuntu, Docker, tudo em containers</h2>
+      <p class="sub">Firewall, fail2ban, atualizações automáticas e acesso só por chave são instalados antes de qualquer agente.</p>
+
+      <div class="linha l1">
+        <div class="box router">
+          <b>Router (motor Telegram Multi-Session) <span class="tag ok">instalado</span> <span class="tag pend">aguarda bot</span></b>
+          <small>1 bot = 1 router. Recebe toda mensagem, confere quem é a pessoa, qual papel tem e qual área pediu, e só então encaminha ao agente. Tudo fica na auditoria: quem pediu, o quê, pra qual agente, quando.</small>
+        </div>
+      </div>
+      <div class="seta">encaminha por área e papel ↓</div>
+
+      <div class="linha l2">
+        <div class="box agente">
+          <b>Agente "assistente" <span class="tag ok">no ar</span></b>
+          <small>Área geral · perfil operação · 1 login do Claude · teto 2 GB. Não é root, não vê o Docker, só enxerga a memória da sua área.</small>
+        </div>
+        <div class="box agente novo">
+          <b>Agente 2 (ex.: comercial)</b>
+          <small>Adicionado com 1 comando quando a empresa precisar. Mesma regra: 1 área, 1 perfil, 1 container, teto próprio.</small>
+        </div>
+        <div class="box agente novo">
+          <b>Agente N</b>
+          <small>Quantos cabem é conta de memória: 4 GB = 1 agente · 8 GB = 2 · 16 GB = 4. O instalador recusa passar do teto.</small>
+        </div>
+      </div>
+
+      <div class="linha l3">
+        <div class="box cerebro">
+          <b>Cérebro (memória da empresa) <span class="tag ok">criado</span></b>
+          <small>Pasta versionada em git. Uma parte comum (empresa, produtos, equipe, decisões), só leitura para os agentes. Uma pasta por área, onde o agente da área lê e escreve.</small>
+        </div>
+        <div class="box apoio">
+          <b>Apoio (3 containers fixos) <span class="tag ok">no ar</span></b>
+          <small>Uptime Kuma (monitor), Dozzle (logs ao vivo), proxy do Docker (os painéis nunca tocam o Docker direto). Nada exposto na internet.</small>
+        </div>
+      </div>
+
+      <div class="linha l1">
+        <div class="box backup">
+          <b>Backup diário + teste mensal de restauração <span class="tag pend">aguarda credencial do bucket</span></b>
+          <small>Copia cérebro, estado dos agentes e auditoria pro bucket externo. Restauração roda em quarentena: nada volta a falar no Telegram até o admin liberar.</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Coluna direita: regras do bloco -->
+    <div class="col">
+      <div class="card">
+        <h3>Por que 1 agente por container</h3>
+        <p>Isolamento: o agente do financeiro não enxerga o do comercial. Um estourar memória não derruba os outros. Permissões (ferramentas, pastas) aplicadas por fora do modelo, não por prompt.</p>
+      </div>
+      <div class="card">
+        <h3>O que cresce com a necessidade</h3>
+        <p>Número de agentes, áreas, pessoas e papéis. O bloco (segurança, router, apoio, backup) é fixo e igual em toda instalação.</p>
+      </div>
+      <div class="card">
+        <h3>Licenças</h3>
+        <p>Cada agente roda com 1 login do Claude (assinatura). Com vários agentes: 1 assinatura compartilhada ou 1 por agente. Decisão comercial e de termos de uso, ainda em aberto.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="regras">
+    <div class="card">
+      <h3>Como instala</h3>
+      <ul>
+        <li>1 arquivo de configuração (empresa, admin, motor, primeiro agente) + 1 arquivo de pessoas.</li>
+        <li>1 comando. 12 fases, cada uma reexecutável sem refazer o que já está pronto.</li>
+        <li>Relatório no fim com o que ficou pendente e com quem ("Fica com você").</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>O que já foi provado (primeira instalação real)</h3>
+      <ul>
+        <li>Instalação completa em VPS virgem; agente no ar em 15 min.</li>
+        <li>Acesso só por chave; root e senha recusados; firewall e fail2ban ativos.</li>
+        <li>Segunda execução sem mudanças (idempotente).</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>O que ainda não foi provado</h3>
+      <ul>
+        <li>3 pessoas com papéis diferentes falando com o bot (depende do bot).</li>
+        <li>Backup e restauração do zero em VPS real.</li>
+        <li>Aluno não-dev instalando sozinho pelo caminho assistido.</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>Repositório: Expert-Integrado-Ferramentas/vps-inteligente · decisões em <code>docs/decisoes.md</code> (D1–D44) · custos em <code>docs/custos.md</code> · testes reais em <code>docs/testes-reais.md</code>.</footer>
+</main>
+</body>
+</html>

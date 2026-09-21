@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VPS Inteligente</title>
+<meta name="description" content="A VPS de uma empresa organizada como um bloco de containers: agentes de IA no Telegram com níveis de acesso, segundo cérebro versionado e backup que se prova.">
+<style>
+  :root{
+    --bg:#FCFBF8; --ink:#1b1b1b; --ink-2:#4a4a4a; --mute:#7a7770; --line:#e6e2da; --card:#ffffff;
+    --azul:#575ECF; --azul-2:#eef0fb; --laranja:#FE7B02; --laranja-2:#fff1e3; --rosa:#F858BC; --rosa-2:#fde9f5; --verde:#1f8a4c; --verde-2:#e6f4ea;
+    --r:18px; --shadow:0 12px 40px rgba(27,27,27,.08);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,"Segoe UI",system-ui,-apple-system,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--azul);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  nav{display:flex;justify-content:space-between;align-items:center;padding:22px 0}
+  nav .marca{font-weight:700;letter-spacing:-.01em;font-size:17px}
+  nav .marca span{color:var(--azul)}
+  nav .links{display:flex;gap:22px;font-size:14px;color:var(--ink-2)}
+  nav .links a{color:var(--ink-2)}
+  .hero{display:grid;grid-template-columns:1.05fr 1fr;gap:44px;align-items:center;padding:36px 0 40px}
+  .hero h1{font-size:clamp(34px,4.6vw,54px);line-height:1.06;letter-spacing:-.025em;margin:0 0 18px;font-weight:800}
+  .hero h1 em{font-style:normal;color:var(--azul)}
+  .hero p{font-size:18px;color:var(--ink-2);margin:0 0 22px;max-width:52ch}
+  .chips{display:flex;flex-wrap:wrap;gap:10px}
+  .chip{font-size:13.5px;font-weight:600;padding:8px 13px;border-radius:999px;background:var(--azul-2);color:var(--azul)}
+  .chip.l{background:var(--laranja-2);color:#b35400}
+  .chip.r{background:var(--rosa-2);color:#b8288a}
+  .hero img,.passo img{width:100%;height:auto;border-radius:var(--r);box-shadow:var(--shadow);background:#fff}
+  .faixa{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:8px 0 0}
+  .faixa div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .faixa b{display:block;font-size:26px;letter-spacing:-.02em;color:var(--azul)}
+  .faixa small{color:var(--mute);font-size:13.5px}
+  section{padding:64px 0 8px}
+  .kicker{font-size:12.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--laranja);margin:0 0 8px}
+  h2{font-size:clamp(26px,3.2vw,36px);letter-spacing:-.02em;line-height:1.12;margin:0 0 10px;font-weight:800}
+  .lead{font-size:17px;color:var(--ink-2);max-width:70ch;margin:0 0 34px}
+  .passo{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center;padding:34px 0;border-top:1px solid var(--line)}
+  .passo:first-of-type{border-top:0}
+  .passo.inv .txt{order:2}
+  .passo .num{display:inline-flex;width:34px;height:34px;border-radius:50%;background:var(--azul);color:#fff;font-weight:800;align-items:center;justify-content:center;font-size:15px;margin-bottom:12px}
+  .passo h3{font-size:24px;letter-spacing:-.015em;margin:0 0 10px;line-height:1.2}
+  .passo ul{margin:0 0 14px;padding-left:18px;color:var(--ink-2)}
+  .passo li{margin-bottom:7px}
+  .passo li b{color:var(--ink)}
+  .onde{font-size:13px;color:var(--mute)}
+  .onde code{background:#f1efe9;padding:2px 6px;border-radius:6px;font-size:12.5px;color:var(--ink-2)}
+  .router{background:var(--ink);color:#dcdad5;border-radius:var(--r);padding:26px 28px;font-family:ui-monospace,Consolas,monospace;font-size:14px;line-height:1.7;overflow:auto;box-shadow:var(--shadow)}
+  .router .k{color:#9aa0ff}.router .o{color:#ffb266}.router .p{color:#ff9ad8}.router .g{color:#7fd39a}
+  .grade{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px 22px 18px}
+  .card h4{margin:0 0 8px;font-size:17px;letter-spacing:-.01em}
+  .card p,.card li{color:var(--ink-2);font-size:14.5px;margin:0}
+  .card ul{margin:6px 0 0;padding-left:18px}
+  .card li{margin-bottom:5px}
+  .tag{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;margin-bottom:10px}
+  .ok{background:var(--verde-2);color:var(--verde)} .pend{background:var(--laranja-2);color:#b35400} .nao{background:#f1efe9;color:var(--mute)}
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .duo .card{border-top:5px solid var(--azul)} .duo .card.porta{border-top-color:var(--laranja)}
+  .contrato{margin-top:16px;background:var(--azul-2);border-radius:var(--r);padding:18px 22px;color:var(--ink-2);font-size:15px}
+  .contrato b{color:var(--azul)}
+  footer{margin:70px 0 40px;padding-top:22px;border-top:1px solid var(--line);color:var(--mute);font-size:13.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  @media (max-width:880px){
+    .hero,.passo,.duo{grid-template-columns:1fr}
+    .passo.inv .txt{order:0}
+    .faixa,.grade{grid-template-columns:1fr 1fr}
+    nav .links{display:none}
+    section{padding:48px 0 8px}
+  }
+  @media (max-width:520px){.faixa,.grade{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <div class="marca">vps-<span>inteligente</span></div>
+    <div class="links"><a href="#como">Como funciona</a><a href="#bloco">O bloco</a><a href="#prova">O que já foi provado</a><a href="#casa">Casa e porta</a><a href="https://github.com/Expert-Integrado-Ferramentas/vps-inteligente">README</a></div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <h1>A VPS da sua empresa, organizada como <em>um bloco</em>.</h1>
+      <p>A equipe fala com agentes de IA pelo Telegram, cada pessoa com o seu nível de acesso. O administrador opera por SSH. A memória da empresa fica num segundo cérebro versionado. O backup se prova restaurável. Tudo instalado em fases, numa VPS limpa, com um relatório que diz o que ficou com você.</p>
+      <div class="chips"><span class="chip">Telegram por papel e área</span><span class="chip l">1 agente por container</span><span class="chip r">Backup que se prova</span><span class="chip">Idempotente</span></div>
+    </div>
+    <img src="img/01-bloco.jpg" alt="O bloco: agentes isolados em compartimentos, duas portas de entrada, cérebro no topo e cofre de backup">
+  </header>
+
+  <div class="faixa">
+    <div><b>2</b><small>arquivos de entrada: quem é a empresa e quem é quem</small></div>
+    <div><b>1</b><small>comando; 12 fases que podem rodar de novo sem refazer nada</small></div>
+    <div><b>3</b><small>papéis (admin, operador, leitor) x 3 perfis de agente</small></div>
+    <div><b>0</b><small>portas de aplicação abertas na internet</small></div>
+  </div>
+
+  <section id="como">
+    <p class="kicker">Como funciona</p>
+    <h2>O protocolo em seis passos</h2>
+    <p class="lead">Cada passo é uma decisão de desenho que o instalador aplica sozinho. O "onde está" aponta a pasta do repositório que faz aquilo.</p>
+
+    <article class="passo">
+      <div class="txt">
+        <span class="num">1</span>
+        <h3>Duas portas, e só duas</h3>
+        <ul>
+          <li><b>Telegram, para a equipe.</b> Cada pessoa é cadastrada pelo número dela com um papel e as áreas que pode acessar. Fala com um bot; o bot entrega pro agente certo e nega o resto.</li>
+          <li><b>SSH, só para o administrador técnico.</b> Entra por chave; senha e root ficam desligados desde a segunda fase.</li>
+          <li><b>Não existe porta 3.</b> Nenhum painel exposto. Os painéis técnicos abrem só pela rede privada.</li>
+        </ul>
+        <p class="onde">Onde está: <code>seguranca/</code> · <code>bin/adicionar-pessoa.sh</code></p>
+      </div>
+      <img src="img/02-portas.jpg" alt="Porta larga para a equipe com celulares e crachás; porta estreita de metal para o técnico com a chave">
+    </article>
+
+    <article class="passo inv">
+      <div class="txt">
+        <span class="num">2</span>
+        <h3>Um agente por container, com teto</h3>
+        <ul>
+          <li><b>Um agente = uma área + um perfil</b> (leitura, operação ou admin), sozinho num container: usuário comum, sem acesso ao Docker, limite de memória próprio.</li>
+          <li><b>O financeiro não enxerga o comercial.</b> Um estourar memória não derruba os outros. As permissões valem por fora do modelo, não por prompt.</li>
+          <li><b>Quantos cabem é conta</b>: 4 GB = 1 agente; 8 GB = 2; 16 GB = 4. Passou do teto, o instalador recusa.</li>
+          <li><b>Identidade e skills</b> por área, montadas só leitura, no padrão do Claude Code.</li>
+        </ul>
+        <p class="onde">Onde está: <code>compose/</code> · <code>bin/adicionar-agente.sh</code> · decisões D25, D30, D35, D46</p>
+      </div>
+      <img src="img/03-agentes.jpg" alt="Três cabines de vidro isoladas, uma por área, cada uma com o seu medidor de memória">
+    </article>
+
+    <article class="passo">
+      <div class="txt">
+        <span class="num">3</span>
+        <h3>O router decide quem fala com quem</h3>
+        <ul>
+          <li><b>1 bot = 1 router</b>, único processo que fala com o Telegram. Lê a lista de pessoas e a de agentes e fala com cada agente por um canal privado com senha própria.</li>
+          <li><b>Interseção com negação por padrão:</b> pessoa ativa, área do agente entre as dela, perfil do agente dentro do papel. Falhou uma, negado e auditado.</li>
+          <li><b>Revogar vale na hora</b>, mesmo em conversa aberta. Turno interrompido vira "incerto", nunca "feito".</li>
+        </ul>
+        <p class="onde">Onde está: <code>motores/multi-session/</code> · <code>docs/contrato-motor.md</code></p>
+      </div>
+      <div class="router">
+<span class="p">pessoa</span> (Telegram) ──► <span class="k">router</span> ──► confere 3 coisas ──► <span class="o">agente da área</span> ──► resposta<br>
+<br>
+&nbsp;&nbsp;pessoa ativa?<br>
+&nbsp;&nbsp;área do agente está nas áreas dela?<br>
+&nbsp;&nbsp;perfil do agente cabe no papel dela?<br>
+<br>
+&nbsp;&nbsp;<span class="g">3 sim</span> → entrega, registra na auditoria<br>
+&nbsp;&nbsp;<span class="o">1 não</span> → nega, registra na auditoria<br>
+<br>
+leitor → só agente <span class="k">leitura</span><br>
+operador → <span class="k">leitura</span> e <span class="k">operacao</span><br>
+admin → todos
+      </div>
+    </article>
+
+    <article class="passo inv">
+      <div class="txt">
+        <span class="num">4</span>
+        <h3>A memória da empresa: o cérebro</h3>
+        <ul>
+          <li><b>Pasta versionada em git</b> (repositório privado da empresa): uma parte comum, lida por todos e escrita só pelo admin; uma pasta por área, onde o agente lê e escreve.</li>
+          <li><b>O agente acorda zerado</b> a cada turno: só sobrevive o que foi gravado. Correção vira lição na hora; decisão vira linha com o porquê.</li>
+          <li><b>Curadoria semanal</b> revisa o que parou, funde duplicatas e promove o que importa.</li>
+          <li>Dois ramos: <b>.md puro</b> (padrão) ou <b>Expert Brain</b>. Mesmos conceitos.</li>
+        </ul>
+        <p class="onde">Onde está: <code>cerebro/</code> · <code>cerebro/RAMOS.md</code></p>
+      </div>
+      <img src="img/04-cerebro.jpg" alt="Biblioteca circular com cérebro no centro, prateleira comum e prateleiras por área">
+    </article>
+
+    <article class="passo">
+      <div class="txt">
+        <span class="num">5</span>
+        <h3>Backup que se prova, e quarentena ao voltar</h3>
+        <ul>
+          <li><b>Cópia diária cifrada</b> de cérebro, estado dos agentes e auditoria para um bucket externo. Sucesso é o código de retorno, nunca só a existência do arquivo.</li>
+          <li><b>Teste de restauração mensal</b>, automático, em pasta separada.</li>
+          <li><b>Restaurar do zero</b> é um comando: a VPS nova sobe em quarentena, sem responder, até o admin liberar.</li>
+          <li><b>Monitor externo</b> avisa se o backup não rodou ou se a VPS sumiu.</li>
+        </ul>
+        <p class="onde">Onde está: <code>backup/</code> · <code>bin/restaurar.sh</code> · <code>observabilidade/</code></p>
+      </div>
+      <img src="img/05-backup.jpg" alt="Cofre com cópias indo para a nuvem; área de quarentena com robô em pausa">
+    </article>
+
+    <article class="passo inv">
+      <div class="txt">
+        <span class="num">6</span>
+        <h3>Instala em fases e diz o que ficou com você</h3>
+        <ul>
+          <li><b>2 arquivos e 1 comando.</b> 12 fases, cada uma reexecutável: rodar de novo não refaz o que está pronto. Falhou no meio, corrige e roda de novo.</li>
+          <li><b>Relatório no fim</b> com a lista "Fica com você": o que só a pessoa pode fazer (criar o bot, colar a credencial). Enquanto faltar algo, diz <b>PENDENTE</b>, nunca "sucesso".</li>
+          <li><b>A porta SSH só fecha</b> depois que a segunda conexão é comprovada, e volta sozinha em 10 minutos se não for.</li>
+        </ul>
+        <p class="onde">Onde está: <code>instalar.sh</code> · <code>onboarding/SETUP.md</code> · <code>lib/comum.sh</code></p>
+      </div>
+      <img src="img/06-instalar.jpg" alt="Linha de montagem em doze estações; as últimas ficam amarelas até a pessoa completar">
+    </article>
+  </section>
+
+  <section id="bloco">
+    <p class="kicker">O bloco</p>
+    <h2>Fixo em toda instalação. Cresce só onde a empresa precisa.</h2>
+    <p class="lead">Segurança, router, apoio, cérebro e backup são iguais em toda VPS. O que cresce é o número de agentes, áreas, pessoas e papéis.</p>
+    <div class="grade">
+      <div class="card"><span class="tag ok">fixo</span><h4>Segurança do host</h4><p>Firewall, fail2ban, atualizações automáticas, SSH só por chave, Docker fechado em 127.0.0.1. Instalado antes de qualquer agente.</p></div>
+      <div class="card"><span class="tag ok">fixo</span><h4>Router do Telegram</h4><p>1 bot, 1 processo, sem root, 256 MB. Autoriza, encaminha e audita. Vem do repositório da porta, em versão marcada.</p></div>
+      <div class="card"><span class="tag ok">fixo</span><h4>Apoio</h4><p>Uptime Kuma (monitor), Dozzle (logs ao vivo) e um proxy do Docker: os painéis nunca tocam o Docker direto. Nada exposto.</p></div>
+      <div class="card"><span class="tag ok">fixo</span><h4>Cérebro</h4><p>Pasta versionada: comum (só leitura para os agentes) e uma por área. Curadoria semanal.</p></div>
+      <div class="card"><span class="tag ok">fixo</span><h4>Backup e quarentena</h4><p>Restic cifrado para R2 ou B2, teste mensal, restauração que sobe muda até o admin liberar.</p></div>
+      <div class="card"><span class="tag pend">cresce</span><h4>Agentes</h4><p>1 por área, 1 por container, com teto de memória. O primeiro nasce na instalação; os próximos com um comando, até o orçamento da RAM.</p></div>
+    </div>
+  </section>
+
+  <section id="prova">
+    <p class="kicker">Nível de prova</p>
+    <h2>O que já foi provado e o que ainda não foi</h2>
+    <p class="lead">Primeira instalação real em 20/09/2026 (Hostinger KVM 2, 8 GB, Ubuntu 24.04 virgem). O template ainda não está liberado para cliente ou aluno: dos dez gates de liberação passou meio.</p>
+    <div class="grade">
+      <div class="card"><span class="tag ok">provado</span><h4>Instalação completa em VPS limpa</h4><ul><li>Fases 0 a 9 em 8 minutos de parede, 3 execuções</li><li>Agente no ar e saudável em menos de 60 s após a credencial</li><li>Segunda execução: 0 mudanças</li></ul></div>
+      <div class="card"><span class="tag ok">provado</span><h4>Acesso seguro</h4><ul><li>Root e senha recusados por SSH; admin só por chave</li><li>Firewall com limite de tentativas e fail2ban ativos</li><li>Hardening 35 de 38 itens</li></ul></div>
+      <div class="card"><span class="tag ok">provado</span><h4>Versão marcada do router</h4><ul><li>Deploy leva o clone até a versão escolhida</li><li>Skills da área visíveis dentro do container</li></ul></div>
+      <div class="card"><span class="tag pend">pendente</span><h4>Três pessoas, três papéis</h4><p>Leitor barrado em agente de operação, operador barrado fora da área, revogação no meio da conversa. Depende do bot real.</p></div>
+      <div class="card"><span class="tag pend">pendente</span><h4>Backup e restauração do zero</h4><p>Existem no código com testes; nunca rodaram em VPS real com bucket real e cronômetro.</p></div>
+      <div class="card"><span class="tag nao">fora por enquanto</span><h4>Rede privada (Tailscale)</h4><p>Instalado, não conectado. A porta 22 fica aberta, só com chave. Decisão de 20/09: sai da frente até virar necessidade.</p></div>
+    </div>
+  </section>
+
+  <section id="casa">
+    <p class="kicker">Dois repositórios</p>
+    <h2>A casa e a porta</h2>
+    <p class="lead">Este template é a casa: igual para todo cliente. O router do Telegram é a porta: varia por cliente. O que une os dois é um contrato de uma página.</p>
+    <div class="duo">
+      <div class="card"><h4>Casa: vps-inteligente</h4><ul><li>Segurança do host, pastas padrão, cérebro, 1 container por agente, backup, painéis, instalador</li><li>Escreve <code>pessoas.yaml</code> e <code>agentes.yaml</code></li><li>Instala uma versão marcada da porta e nunca avança sozinha</li></ul></div>
+      <div class="card porta"><h4>Porta: telegram-multi-session</h4><ul><li>Tudo que é Telegram: 1 bot ou vários, grupos, pareamento, comandos, formato das respostas</li><li>Só lê as duas listas; fala com cada agente pelo protocolo do executor</li><li>Publica versão quando muda comportamento visível</li></ul></div>
+    </div>
+    <div class="contrato"><b>Contrato:</b> formato das duas listas, protocolo do executor (versão 1), caminhos em <code>/run/agentes</code> e da auditoria, variáveis do compose do router. Mudou um item, muda a versão nos dois lados. Texto completo em <code>docs/contrato-motor.md</code>.</div>
+  </section>
+
+  <footer>
+    <div>vps-inteligente · <a href="https://expertintegrado.com.br">Expert Integrado</a> · MIT · repositório privado: peça acesso ao mantenedor</div>
+    <div><a href="https://github.com/Expert-Integrado-Ferramentas/vps-inteligente">README</a> · <a href="arquitetura.html">esquema técnico</a> · <a href="https://github.com/Expert-Integrado-Ferramentas/vps-inteligente/blob/main/docs/contrato-motor.md">contrato casa x porta</a> · <a href="https://github.com/Expert-Integrado-Ferramentas/vps-inteligente/blob/main/docs/decisoes.md">decisões</a> · <a href="https://github.com/Expert-Integrado-Ferramentas/vps-inteligente/blob/main/docs/testes-reais.md">testes reais</a></div>
+  </footer>
+</div>
+</body>
+</html>
