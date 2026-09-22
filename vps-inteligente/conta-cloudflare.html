@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VPS Inteligente — conta Cloudflare da empresa</title>
+<meta name="description" content="Passo a passo de 10 minutos para a empresa criar a própria conta Cloudflare (grátis), usada pelo backup e pelo vigia da VPS Inteligente.">
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1b1f24; --mute:#5f6b7a; --line:#d7dce3; --azul:#1f5fbf; --verde:#1f8a4c; --ambar:#b7791f; --cinza:#8a94a3; --roxo:#6b46c1; --laranja:#f38020; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family: Inter, "Segoe UI", system-ui, sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width:860px; margin:0 auto; padding:28px 20px 48px; }
+  h1 { font-size:26px; margin:0 0 4px; }
+  h2 { font-size:18px; margin:26px 0 10px; }
+  .sub { color:var(--mute); margin:0 0 22px; font-size:15px; line-height:1.5; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:12px; }
+  .card h3 { margin:0 0 6px; font-size:14px; letter-spacing:.02em; text-transform:uppercase; color:var(--mute); }
+  .card p, .card li { margin:0; font-size:14.5px; line-height:1.5; }
+  .card ul { margin:6px 0 0; padding-left:18px; }
+  .passo { border-left:5px solid var(--laranja); }
+  .passo .n { display:inline-block; min-width:26px; height:26px; line-height:26px; text-align:center; border-radius:999px; background:var(--laranja); color:#fff; font-weight:700; font-size:13px; margin-right:8px; }
+  .passo b.t { font-size:15px; }
+  .passo small { display:block; color:var(--mute); font-size:13px; margin-top:6px; line-height:1.45; }
+  .cam { display:inline-block; font-family: ui-monospace, Consolas, monospace; font-size:13px; background:#eef0f3; border-radius:6px; padding:1px 7px; }
+  .aviso { border-left:5px solid var(--ambar); background:#fffaf0; }
+  .ok { border-left:5px solid var(--verde); }
+  .grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+  .tag { display:inline-block; font-size:11px; padding:2px 7px; border-radius:999px; background:#eef0f3; color:var(--mute); margin-left:6px; vertical-align:middle; }
+  .tag.gratis { background:#e3f4ea; color:var(--verde); }
+  footer { margin-top:26px; color:var(--mute); font-size:12.5px; line-height:1.5; }
+  a { color:var(--azul); }
+  @media (max-width: 700px) { .grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Conta Cloudflare da empresa <span class="tag gratis">grátis</span></h1>
+  <p class="sub">Passo a passo de uns 10 minutos, feito por alguém da empresa (sócio, financeiro ou quem cuida das contas). A VPS Inteligente usa essa conta para duas coisas que precisam viver <b>fora</b> da VPS: a cópia de segurança (backup) e o vigia que avisa se a VPS parar. A conta é da empresa: ela é dona dos dados e pode remover o acesso do administrador técnico a qualquer momento.</p>
+
+  <div class="grid">
+    <div class="card">
+      <h3>O que vai rodar aqui</h3>
+      <ul>
+        <li><b>Backup diário</b> no Cloudflare R2 (armazenamento). Plano grátis: 10 GB por mês, sem cobrança de tráfego de saída.</li>
+        <li><b>Vigia</b> num Cloudflare Worker (um programinha que recebe o "estou viva" da VPS e avisa no Telegram quando o sinal para). Plano grátis: 100 mil chamadas por dia.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Antes de começar, tenha à mão</h3>
+      <ul>
+        <li>Um <b>e-mail da empresa</b> (nunca o pessoal de alguém). Vai ser o dono da conta.</li>
+        <li>O celular de quem vai criar, para a verificação em duas etapas.</li>
+        <li>Um <b>cartão da empresa</b>: a ativação do R2 pede uma forma de pagamento cadastrada, mesmo ficando dentro do plano grátis. No uso do backup não há cobrança.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Os 5 passos</h2>
+
+  <div class="card passo">
+    <span class="n">1</span><b class="t">Criar a conta</b>
+    <small>Abra <span class="cam">dash.cloudflare.com/sign-up</span>, informe o e-mail da empresa e uma senha forte (guarde no cofre de senhas da empresa, nunca em mensagem). Confirme o e-mail pelo link que chega na caixa de entrada.</small>
+  </div>
+
+  <div class="card passo">
+    <span class="n">2</span><b class="t">Ligar a verificação em duas etapas</b>
+    <small>No canto superior direito, ícone da conta <span class="cam">My Profile</span> → <span class="cam">Authentication</span> → <span class="cam">Two-Factor Authentication</span>. Use um aplicativo autenticador (Google Authenticator, Authy, 1Password). Guarde os códigos de recuperação no cofre da empresa.</small>
+  </div>
+
+  <div class="card passo">
+    <span class="n">3</span><b class="t">Ativar o R2 (armazenamento do backup)</b>
+    <small>No menu da esquerda: <span class="cam">Storage &amp; databases</span> → <span class="cam">R2</span> → <span class="cam">Overview</span>. Clique para ativar e complete o checkout: é aqui que o Cloudflare pede a forma de pagamento. Não precisa criar nenhum "bucket": o administrador técnico cria pela API, com o nome certo.</small>
+  </div>
+
+  <div class="card passo">
+    <span class="n">4</span><b class="t">Convidar o administrador técnico como membro</b>
+    <small>No menu da esquerda: <span class="cam">Manage Account</span> → <span class="cam">Members</span> → <span class="cam">Invite</span>. Informe o e-mail que o administrador técnico passou a vocês, escolha o papel <span class="cam">Administrator</span> (acessa a conta e as assinaturas, mas <b>não</b> gerencia membros nem cobrança) e confirme. Ele recebe um e-mail e entra na conta de vocês sem precisar da senha.</small>
+  </div>
+
+  <div class="card passo">
+    <span class="n">5</span><b class="t">Avisar que terminou</b>
+    <small>Mande uma mensagem ao administrador técnico dizendo que a conta está criada e o convite enviado. A partir daí é com ele: cria o espaço do backup e o vigia, coloca as chaves na VPS e confirma que o primeiro backup rodou. Nenhuma senha de vocês passa por ele.</small>
+  </div>
+
+  <h2>O que não fazer</h2>
+  <div class="card aviso">
+    <ul>
+      <li>Não mande senha, código ou cartão por WhatsApp, Telegram ou e-mail. Senha fica no cofre da empresa; o técnico entra por convite.</li>
+      <li>Não crie a conta com e-mail pessoal: quando a pessoa sai da empresa, o backup vai junto.</li>
+      <li>Não dê o papel <span class="cam">Super Administrator</span> ao técnico. <span class="cam">Administrator</span> basta, e vocês continuam donos de membros e cobrança.</li>
+    </ul>
+  </div>
+
+  <h2>Quando estiver pronto</h2>
+  <div class="card ok">
+    <p>A VPS ganha duas coisas no mesmo dia: o <b>backup diário</b> com teste mensal de restauração e o <b>vigia</b> que avisa no Telegram se a VPS ou o backup pararem. Custo esperado dentro do plano grátis: zero. Se um dia a empresa passar de 10 GB de backup, o R2 cobra por GB excedente e o técnico avisa antes.</p>
+  </div>
+
+  <footer>Parte da documentação do template <b>VPS Inteligente</b> (Expert Integrado). Como o sistema funciona: <a href="./index.html">página do projeto</a> · <a href="./arquitetura.html">arquitetura em uma tela</a>. Os nomes de menu são os do painel do Cloudflare em setembro de 2026 e podem mudar de lugar; a lógica dos 5 passos não muda.</footer>
+</main>
+</body>
+</html>
