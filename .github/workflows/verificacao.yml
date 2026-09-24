@@ -1,0 +1,45 @@
+name: Verificação
+# 24/09/2026 (regra da org de Produto): roda em TODA PR, sem filtro de caminho.
+# O job "verificacao" é check obrigatório pra mergear na principal.
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: verificacao-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  verificacao:
+    name: verificacao
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Links locais das páginas
+        if: ${{ !cancelled() }}
+        run: |
+          python3 - <<'PY'
+          import os, re, sys
+          ruins = []
+          for raiz, dirs, arqs in os.walk('.'):
+              dirs[:] = [d for d in dirs if d != '.git']
+              for a in arqs:
+                  if not a.endswith('.html'):
+                      continue
+                  p = os.path.join(raiz, a)
+                  t = open(p, encoding='utf-8', errors='replace').read()
+                  for m in re.finditer(r'(?:href|src)=["\']([^"\'#?]*)', t):
+                      u = m.group(1).strip()
+                      if not u or re.match(r'^(https?:|mailto:|tel:|data:|javascript:|//|\{|\$)', u):
+                          continue
+                      base = '.' if u.startswith('/') else raiz
+                      alvo = os.path.normpath(os.path.join(base, u.lstrip('/')))
+                      if os.path.isdir(alvo):
+                          alvo = os.path.join(alvo, 'index.html')
+                      if not os.path.exists(alvo):
+                          ruins.append(f'{p}: {u}')
+          print('\n'.join(ruins))
+          print(f'{len(ruins)} link(s) local(is) quebrado(s)')
+          sys.exit(1 if ruins else 0)
+          PY
