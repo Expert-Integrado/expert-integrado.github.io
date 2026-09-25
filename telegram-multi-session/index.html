@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>telegram-multi-session — como funciona</title>
-<meta name="description" content="Um bot do Telegram com várias sessões do Claude Code, como as abas do VS Code: texto, áudio, foto e arquivo, perguntas com botão, autorização, rotinas agendadas, grupo, equipe com papéis e um bot por pessoa na mesma VPS.">
+<meta name="description" content="Um bot do Telegram com várias sessões do Claude Code, como as abas do VS Code: texto, áudio, foto e arquivo, perguntas com botão, autorização, rotinas agendadas, grupo e equipe com papéis: um agente para todos, um agente por área ou um bot por pessoa na mesma VPS.">
 <meta property="og:title" content="telegram-multi-session — várias sessões do Claude Code num bot do Telegram">
 <meta property="og:description" content="Cada sessão é uma conversa isolada do Claude Code no seu servidor. Fala por texto ou áudio, pergunta com botão, pede autorização, manda arquivo de volta e trabalha sozinho no horário marcado.">
 <meta property="og:type" content="website">
@@ -77,6 +77,7 @@
   .grid{ display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
   .grid.two{ grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
   .grid.three{ grid-template-columns: repeat(3, 1fr); }
+  .grid.b4{ grid-template-columns: 1fr 1fr; }
   .card{ background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; min-width: 0; }
   .card p, .card li{ color: var(--ink-dim); font-size: .93rem; }
   .card ul{ padding-left: 18px; margin-top: 6px; }
@@ -200,7 +201,41 @@
   .footer-grid{ display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px 24px; }
   .footer-note{ color: var(--ink-faint); font-size: .86rem; }
 
+  /* EQUIPE: abas (sem JavaScript, as três aparecem em sequência, cada uma com o próprio título) */
+  .tabs{ display: none; flex-wrap: wrap; gap: 8px; margin: 4px 0 26px; }
+  .js .tabs{ display: flex; }
+  .tabs [role="tab"]{ font: inherit; font-size: .92rem; color: var(--ink-dim); background: var(--bg-raised); border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; cursor: pointer; }
+  .tabs [role="tab"]:hover{ color: var(--ink); border-color: var(--accent-dim); }
+  .tabs [role="tab"][aria-selected="true"]{ color: var(--bg); background: var(--accent); border-color: var(--accent); font-weight: 600; }
+  .tabs [role="tab"]:focus-visible, .tabpanel:focus-visible{ outline: 2px solid var(--blue); outline-offset: 3px; }
+  .tabpanel + .tabpanel{ margin-top: 44px; }
+  .js .tabpanel + .tabpanel{ margin-top: 0; }
+  .js .tabpanel[hidden]{ display: none; }
+  .ptitle{ font-size: 1.15rem; margin-bottom: 14px; color: var(--accent); }
+  .js .ptitle{ display: none; }
+  .quando{ margin-top: 22px; padding: 12px 16px; border-left: 3px solid var(--accent-dim); background: var(--bg-raised); border-radius: 0 12px 12px 0; color: var(--ink-dim); font-size: .94rem; }
+  .mdiag{ display: grid; grid-template-columns: auto auto auto auto minmax(0, 1fr); align-items: center; gap: 12px; margin: 0 0 24px; }
+  .mdiag > *{ min-width: 0; }
+  .mdiag .ppl{ display: flex; flex-direction: column; gap: 6px; }
+  .mdiag .p{ font-family: var(--mono); font-size: .8rem; padding: 4px 11px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg-raised); color: var(--ink-dim); text-align: center; white-space: nowrap; }
+  .mdiag .mbot{ font-family: var(--mono); font-size: .84rem; padding: 10px 14px; border: 1px solid var(--blue); border-radius: 12px; color: var(--blue); background: rgba(124,196,255,.06); white-space: nowrap; }
+  .mdiag .marr{ display: flex; justify-content: center; }
+  .mdiag .boxes{ display: grid; gap: 8px; max-width: 460px; }
+  .mdiag .box{ border: 1px dashed var(--accent-dim); border-radius: 12px; padding: 9px 14px; background: var(--bg-card); }
+  .mdiag .box b{ display: block; font-family: var(--mono); font-size: .84rem; font-weight: 600; }
+  .mdiag .box span{ display: block; font-size: .84rem; color: var(--ink-faint); }
+
+  @media print{
+    .tabs{ display: none !important; }
+    .js .tabpanel[hidden]{ display: block !important; }
+    .js .ptitle{ display: block !important; }
+  }
+
   @media (max-width: 900px){
+    .mdiag{ grid-template-columns: 1fr; justify-items: start; }
+    .mdiag .ppl{ flex-direction: row; flex-wrap: wrap; }
+    .mdiag .marr svg{ transform: rotate(90deg); }
+    .mdiag .boxes{ width: 100%; }
     .hero{ grid-template-columns: 1fr; gap: 34px; }
     .arch{ grid-template-columns: 1fr; }
     .arrow svg{ transform: rotate(90deg); }
@@ -293,7 +328,7 @@
     <a href="#rotinas">Rotinas</a>
     <a href="#grupos">Grupos</a>
     <a href="#pessoas">Pessoas</a>
-    <a href="#varios-bots">Vários bots</a>
+    <a href="#equipe">Equipe</a>
     <a href="#confianca">Confiança</a>
     <a href="#comecar">Começar</a>
   </div>
@@ -376,7 +411,7 @@
       </div>
       <div class="fstep">
         <div class="fn">4</div>
-        <div class="fbody"><h3>Fila da sessão</h3><p>O pedido entra na fila da sessão ativa (ou do tópico). Por padrão, até duas sessões trabalham ao mesmo tempo; as outras esperam a vez sem perder nada.</p></div>
+        <div class="fbody"><h3>Fila da sessão</h3><p>O pedido entra na fila da sessão ativa (ou do tópico). Por padrão, até duas sessões trabalham ao mesmo tempo; as outras esperam a vez sem perder nada. Com agente num container, ele atende um pedido por vez: veja <a href="#equipe">Equipe</a>.</p></div>
       </div>
       <div class="fstep">
         <div class="fn">5</div>
@@ -581,17 +616,106 @@ Pedido: me mande o resumo dos pedidos de ontem; se não houver novidade, respond
     <ul class="list" style="margin-top:24px">
       <li><b>Desativar alguém vale a partir da próxima mensagem,</b> inclusive com a sessão aberta: marque a pessoa como inativa no arquivo, que é conferido em cada mensagem e em cada pedido. Isso vale mesmo para quem também está na lista de administradores da configuração; apagar a linha do arquivo só tira o acesso de quem não está nessa lista.</li>
       <li><b>Trilha de auditoria:</b> cada pedido, recusa, pergunta, arquivo e rotina vira uma linha com quem, quando e o custo do pedido, sem segredo e com o texto cortado.</li>
-      <li><b>Papéis abaixo de admin exigem montar um container por agente:</b> sem isso, o bot nem sobe com operador ou leitor na lista. O template <a href="https://expert-integrado.github.io/vps-inteligente/">VPS Inteligente</a> já monta desse jeito.</li>
+      <li><b>Papéis abaixo de admin exigem montar um container por agente:</b> sem isso, o bot nem sobe com operador ou leitor na lista. O template <a href="https://expert-integrado.github.io/vps-inteligente/">VPS Inteligente</a> já monta desse jeito. <a href="#equipe">Veja os jeitos de montar.</a></li>
       <li><b>Papel não protege segredo.</b> Ele limita botões e comandos, não o que o agente alcança. <a href="#confianca">Leia Confiança</a> antes de dar acesso a outra pessoa.</li>
     </ul>
   </div>
 </section>
 
-<section id="varios-bots">
+<section id="equipe">
   <div class="wrap">
-    <div class="eyebrow">08 · modo empresa</div>
-    <h2>Vários bots na mesma VPS, um por pessoa</h2>
-    <p class="intro">Numa equipe, cada pessoa precisa das próprias pastas, da própria conta do Claude e das próprias sessões. O modo empresa faz isso com a separação mais barata que existe: cada bot no seu container, na mesma máquina.</p>
+    <div class="eyebrow">08 · equipe</div>
+    <h2>Para uma equipe: um agente para todos, um por área ou um bot por pessoa</h2>
+    <p class="intro">O bot é a porta de entrada; quem trabalha é o agente. Numa equipe, cada agente fica num <b>container</b>: um compartimento isolado do servidor, com as pastas, as chaves e as conexões daquele agente. Uma pergunta decide o desenho: <b>o que o agente alcança pode ser usado por todo mundo que fala com ele?</b> Escolha o jeito e veja o que fica junto e o que fica separado.</p>
+
+    <div class="tabs" role="tablist" aria-label="Jeitos de montar o bot para uma equipe">
+      <button type="button" role="tab" id="modo-geral" aria-controls="p-geral" aria-selected="true">Um agente para todos</button>
+      <button type="button" role="tab" id="modo-area" aria-controls="p-area" aria-selected="false" tabindex="-1">Um agente por área</button>
+      <button type="button" role="tab" id="modo-bot" aria-controls="varios-bots" aria-selected="false" tabindex="-1">Um bot por pessoa</button>
+    </div>
+
+    <div class="tabpanel" role="tabpanel" id="p-geral" aria-labelledby="modo-geral" tabindex="0">
+      <h3 class="ptitle">Um agente para todos</h3>
+      <div class="mdiag" role="img" aria-label="Três pessoas falam com o mesmo bot, que leva os pedidos de todas para um único agente, num único container">
+        <div class="ppl"><span class="p">Ana</span><span class="p">Bruno</span><span class="p">Carla</span></div>
+        <div class="marr" aria-hidden="true"><svg width="28" height="14" viewBox="0 0 28 14"><path d="M1 7h24M19 1l6 6-6 6" stroke="#3fae8c" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="mbot">um bot</div>
+        <div class="marr" aria-hidden="true"><svg width="28" height="14" viewBox="0 0 28 14"><path d="M1 7h24M19 1l6 6-6 6" stroke="#3fae8c" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="boxes"><div class="box"><b>container · agente de todos</b><span>regras, conhecimento, conexões e conta do Claude</span></div></div>
+      </div>
+      <div class="grid two">
+        <div class="card">
+          <span class="tag">junto</span>
+          <h3>O que é de todos</h3>
+          <ul>
+            <li>As regras do agente (o arquivo de instruções dele).</li>
+            <li>O conhecimento que ele consulta: documentos e base da empresa.</li>
+            <li>Tudo o que estiver ligado nele. Por isso, ligue aqui só o que todos podem ver e usar: CRM, WhatsApp da empresa e financeiro vão para o agente da área.</li>
+            <li>A pasta de trabalho, os arquivos que chegam e o histórico gravado das conversas de todos.</li>
+            <li>A conta do Claude e o limite dela: quem usa muito gasta o limite de todos. Dividir uma conta entre pessoas depende dos termos de uso da Anthropic: confira antes.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="tag new">separado</span>
+          <h3>O que cada pessoa vê separado</h3>
+          <p>Separado é o que cada um vê no Telegram, não o que o agente alcança.</p>
+          <ul>
+            <li>As conversas: no chat privado com o bot, cada pessoa vê e troca só as dela. No grupo, cada tópico é uma conversa só, de todos que estão nele.</li>
+            <li>A busca nas conversas antigas, quando o servidor oferece (o VPS Inteligente oferece): traz só as conversas da própria pessoa. No grupo, a busca é da sala, não de cada pessoa.</li>
+          </ul>
+        </div>
+      </div>
+      <ul class="list" style="margin-top:22px">
+        <li><b>A separação é do bot, não do container.</b> O agente é um só e alcança tudo o que está nele: se alguém pedir em português, ele pode abrir o arquivo ou ler a conversa de outra pessoa.</li>
+        <li><b>Liberar alguém é um comando e não refaz nada:</b> a pessoa recebe a área do agente (por exemplo, <code>geral</code>) e o que você ligou nele já vale para ela; no chat privado, a sessão dela já nasce ligada ao agente. No grupo, cada tópico escolhe o agente uma vez com <code>/agente</code> e o nome. Agente sem área só atende administrador.</li>
+        <li><b>Um pedido por vez:</b> nesta versão, o agente atende um pedido de cada vez. Se duas pessoas pedirem juntas, a segunda recebe erro em vez de esperar. Enquanto isso não muda, deixe o bot rodando um pedido por vez (<code>ROUTER_MAX_PARALLEL=1</code>): aí quem chega depois espera na fila.</li>
+        <li><b>Tudo fica numa trilha única do bot,</b> com o nome de quem pediu cada coisa.</li>
+        <li>O template <a href="https://expert-integrado.github.io/vps-inteligente/">VPS Inteligente</a> monta este jeito e o próximo.</li>
+      </ul>
+      <div class="quando"><b>Quando usar:</b> para começar, e enquanto o agente só tem conhecimento e ferramentas que qualquer pessoa da equipe pode usar.</div>
+    </div>
+
+    <div class="tabpanel" role="tabpanel" id="p-area" aria-labelledby="modo-area" tabindex="0">
+      <h3 class="ptitle">Um agente por área</h3>
+      <div class="mdiag" role="img" aria-label="Três pessoas falam com o mesmo bot; cada pedido vai para o agente da área da pessoa, cada agente no seu container, com as próprias conexões">
+        <div class="ppl"><span class="p">Ana · comercial, geral</span><span class="p">Bruno · financeiro, geral</span><span class="p">Carla · comercial, geral</span></div>
+        <div class="marr" aria-hidden="true"><svg width="28" height="14" viewBox="0 0 28 14"><path d="M1 7h24M19 1l6 6-6 6" stroke="#3fae8c" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="mbot">um bot</div>
+        <div class="marr" aria-hidden="true"><svg width="28" height="14" viewBox="0 0 28 14"><path d="M1 7h24M19 1l6 6-6 6" stroke="#3fae8c" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="boxes">
+          <div class="box"><b>container · comercial</b><span>CRM e WhatsApp da empresa</span></div>
+          <div class="box"><b>container · financeiro</b><span>planilhas do caixa</span></div>
+          <div class="box"><b>container · geral</b><span>conhecimento da empresa, área que todos recebem</span></div>
+        </div>
+      </div>
+      <p class="intro" style="margin-bottom:22px">O mesmo bot, com um agente por área, cada um no seu container. A pessoa só fala com um agente se estiver ativa, se a área do agente estiver entre as dela e se o perfil do agente couber no papel dela: o leitor fala só com agentes de perfil leitura, o operador trabalha nas áreas dele e o administrador fala com todos. Perfil leitura tira do agente o terminal e a edição de arquivo, mas as conexões ligadas nele funcionam inteiras, inclusive as que gravam e enviam.</p>
+      <div class="grid three">
+        <div class="card">
+          <h3>Cada área com as próprias conexões</h3>
+          <p>O CRM entra só no agente do comercial; a planilha do caixa, só no do financeiro. O que está num container não aparece no outro.</p>
+        </div>
+        <div class="card">
+          <h3>A pessoa escolhe o agente</h3>
+          <p>No chat privado, com um agente disponível, a sessão já nasce nele. Com dois ou mais, e em cada tópico de grupo, ela escolhe no <code>/agente</code> (quem só consulta digita <code>/agente</code> e o nome do agente), e o cartão da sessão mostra com quem está falando.</p>
+        </div>
+        <div class="card">
+          <h3>Cada agente é um container</h3>
+          <p>Com teto próprio de memória da máquina; processador e disco são divididos. A conta do Claude pode ser uma por agente ou a mesma para todos (dividir entre pessoas: confira os termos de uso da Anthropic).</p>
+        </div>
+      </div>
+      <ul class="list" style="margin-top:22px">
+        <li><b>Dentro de cada área vale o jeito anterior:</b> no chat privado, cada pessoa vê só as próprias conversas, mas tudo o que está no container da área, inclusive o histórico das conversas, fica ao alcance de todos daquela área.</li>
+        <li><b>No grupo, a regra decide quem pode pedir, não quem lê:</b> a resposta do agente do financeiro aparece para todos da sala.</li>
+        <li><b>Um pedido por vez em cada agente,</b> como no jeito anterior: com <code>ROUTER_MAX_PARALLEL=1</code> ninguém recebe erro, mas as áreas também passam a esperar umas pelas outras.</li>
+        <li><b>Um agente por pessoa, no mesmo bot, também é possível</b> (uma área para cada pessoa), mas cada um ocupa um container inteiro. Se a pessoa precisa das próprias ferramentas e da própria conta do Claude, o jeito é o próximo: um bot por pessoa.</li>
+        <li>O template <a href="https://expert-integrado.github.io/vps-inteligente/">VPS Inteligente</a> já monta desse jeito.</li>
+      </ul>
+      <div class="quando"><b>Quando usar:</b> quando entra no agente um sistema que grava (CRM, envio de mensagem) ou um dado que nem todos podem ver (financeiro, pessoal). Ele vai só para o agente da área, nunca para o agente de todos.</div>
+    </div>
+
+    <div class="tabpanel" role="tabpanel" id="varios-bots" aria-labelledby="modo-bot" tabindex="0">
+      <h3 class="ptitle">Um bot por pessoa</h3>
+    <p class="intro">Quando cada pessoa precisa das próprias pastas, da própria conta do Claude e das próprias sessões, cada uma ganha o seu bot, no seu container, na mesma máquina. É a separação mais forte sem comprar outra máquina.</p>
 
     <div class="split">
       <div>
@@ -599,7 +723,7 @@ Pedido: me mande o resumo dos pedidos de ontem; se não houver novidade, respond
 ./instalar.sh
 
 <span class="c"># cada pessoa nova (os bots que já estão de pé não reiniciam)</span>
-./novo-bot.sh vendas
+./novo-bot.sh bruno
 
 <span class="c"># uma linha por bot: no ar, desde quando, conta, último erro</span>
 ./status.sh</pre>
@@ -609,7 +733,7 @@ Pedido: me mande o resumo dos pedidos de ontem; se não houver novidade, respond
           <li>Recusa chave de bot repetida e pasta que alcance a de outro bot.</li>
         </ul>
       </div>
-      <div class="grid two" style="grid-template-columns:1fr 1fr">
+      <div class="grid two b4">
         <div class="card"><div class="lvl">B0</div><h3>Vários processos</h3><p>Mesmo usuário. Para uma pessoa só com vários agentes.</p></div>
         <div class="card"><div class="lvl">B1</div><h3>Um usuário por bot</h3><p>Separa arquivos e chaves por permissão, sem Docker.</p></div>
         <div class="card hl"><div class="lvl">B2</div><h3>Um container por bot</h3><p>O padrão: é o que o instalador monta.</p></div>
@@ -623,13 +747,15 @@ Pedido: me mande o resumo dos pedidos de ontem; se não houver novidade, respond
         <p>A chave nasce no computador de cada pessoa, logada na conta dela, e fica só no bot dela. A mesma chave em dois bots funciona, mas os dois dividem o mesmo limite.</p>
       </div>
       <div class="card">
-        <h3>Memória com teto por bot</h3>
+        <h3>Teto de memória da máquina por bot</h3>
         <p>2 GB por bot por padrão, ajustável. Processador e disco são da máquina inteira: um agente pesado deixa todos mais lentos.</p>
       </div>
       <div class="card">
         <h3>Não protege de quem é dono da máquina</h3>
-        <p>O modo empresa separa as pessoas que usam os bots, não o administrador do servidor: quem entra como root lê tudo.</p>
+        <p>Um bot por pessoa separa as pessoas que usam os bots, não quem administra o servidor: o administrador da máquina lê tudo.</p>
       </div>
+    </div>
+      <div class="quando"><b>Quando usar:</b> quando cada pessoa trabalha com as próprias ferramentas, pastas e conta do Claude, e o que uma faz não pode passar pelo agente da outra.</div>
     </div>
   </div>
 </section>
@@ -714,5 +840,39 @@ bash boot-router.sh        <span class="c"># fica no ar, com reinício automáti
   </div>
 </footer>
 
+<script>
+/* Abas da seção Equipe. Sem JavaScript, as três aparecem em sequência. #varios-bots (endereço antigo) abre "Um bot por pessoa". */
+(function () {
+  var tabs = [].slice.call(document.querySelectorAll('#equipe [role="tab"]'));
+  if (!tabs.length) return;
+  document.documentElement.classList.add('js');
+  function escolher(t, foco, url) {
+    tabs.forEach(function (x) {
+      var on = x === t;
+      x.setAttribute('aria-selected', on ? 'true' : 'false');
+      x.tabIndex = on ? 0 : -1;
+      document.getElementById(x.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (foco) t.focus();
+    if (url) { try { history.replaceState(null, '', '#' + t.id); } catch (e) {} }
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { escolher(t, false, true); });
+    t.addEventListener('keydown', function (e) {
+      var j = { ArrowRight: (i + 1) % tabs.length, ArrowLeft: (i - 1 + tabs.length) % tabs.length, Home: 0, End: tabs.length - 1 }[e.key];
+      if (j === undefined) return;
+      e.preventDefault(); escolher(tabs[j], true, true);
+    });
+  });
+  function pelaUrl() {
+    var h = location.hash.slice(1);
+    var t = tabs.filter(function (x) { return x.id === h || x.getAttribute('aria-controls') === h; })[0];
+    if (t) { escolher(t); document.getElementById('equipe').scrollIntoView(); }
+    return t;
+  }
+  if (!pelaUrl()) escolher(tabs[0]);
+  window.addEventListener('hashchange', pelaUrl);
+})();
+</script>
 </body>
 </html>
