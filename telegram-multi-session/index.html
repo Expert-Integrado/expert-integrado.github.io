@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>telegram-multi-session — como funciona</title>
+<meta name="description" content="Um bot do Telegram com várias sessões do Claude Code, como as abas do VS Code: texto, áudio, foto e arquivo, perguntas com botão, autorização, rotinas agendadas, grupo, equipe com papéis e um bot por pessoa na mesma VPS.">
+<meta property="og:title" content="telegram-multi-session — várias sessões do Claude Code num bot do Telegram">
+<meta property="og:description" content="Cada sessão é uma conversa isolada do Claude Code no seu servidor. Fala por texto ou áudio, pergunta com botão, pede autorização, manda arquivo de volta e trabalha sozinho no horário marcado.">
+<meta property="og:type" content="website">
+<style>
+  /* Tokens oficiais Expert Integrado (referência canônica: expert-brain/docs/index.html) */
+  :root{
+    --bg: #0b0f14;
+    --bg-raised: #10161d;
+    --bg-card: #131a22;
+    --line: #212b36;
+    --line-soft: #1a232c;
+    --ink: #e7edf3;
+    --ink-dim: #a7b3bf;
+    --ink-faint: #7d8a97;
+    --accent: #6ee7c4;
+    --accent-dim: #3fae8c;
+    --warn: #f2b866;
+    --blue: #7cc4ff;
+    --radius: 14px;
+    --maxw: 1080px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    /* maquete do Telegram (tema escuro) */
+    --tg-bg: #0e1621;
+    --tg-in: #182533;
+    --tg-out: #2b5278;
+    --tg-btn: #1e2c3a;
+    --tg-ok: #1f5c3d;
+    --tg-ok-ink: #c6f3d8;
+    --tg-no: #5c2626;
+    --tg-no-ink: #ffd6d6;
+  }
+  *{ box-sizing: border-box; margin: 0; padding: 0; }
+  html{ -webkit-text-size-adjust: 100%; }
+  body{ background: var(--bg); color: var(--ink); font-family: var(--font); line-height: 1.6; overflow-wrap: break-word; }
+  .wrap{ max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+  a{ color: var(--accent); text-decoration: none; }
+  a:hover{ text-decoration: underline; }
+  code, .mono{ font-family: var(--mono); font-size: .88em; }
+  p code, li code{ background: var(--bg-raised); border: 1px solid var(--line-soft); border-radius: 5px; padding: 1px 5px; color: var(--ink); }
+  b, strong{ color: var(--ink); }
+
+  /* HERO */
+  header{ padding: 64px 0 52px; border-bottom: 1px solid var(--line-soft); }
+  .hero{ display: grid; grid-template-columns: 1.15fr .85fr; gap: 44px; align-items: center; }
+  .kicker{ font-family: var(--mono); font-size: .8rem; color: var(--accent); letter-spacing: .08em; text-transform: uppercase; }
+  h1{ font-size: clamp(1.9rem, 4.2vw, 2.75rem); line-height: 1.18; margin: 12px 0 16px; letter-spacing: -.01em; }
+  .lead{ color: var(--ink-dim); font-size: 1.08rem; max-width: 40rem; }
+  .lead + .lead{ margin-top: 12px; }
+  .chips{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .chip{ font-family: var(--mono); font-size: .76rem; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg-raised); color: var(--ink-dim); }
+  .chip.new{ border-color: var(--accent-dim); color: var(--accent); }
+
+  /* NAV */
+  nav.toc{ border-bottom: 1px solid var(--line-soft); padding: 14px 0; }
+  nav.toc .wrap{ display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .88rem; }
+  nav.toc a{ color: var(--ink-dim); }
+  nav.toc a:hover{ color: var(--accent); }
+
+  /* SEÇÕES */
+  section{ padding: 60px 0; border-bottom: 1px solid var(--line-soft); }
+  .eyebrow{ font-family: var(--mono); color: var(--accent); font-size: .8rem; letter-spacing: .06em; }
+  h2{ font-size: clamp(1.35rem, 2.6vw, 1.7rem); line-height: 1.25; margin: 6px 0 14px; max-width: 46rem; }
+  .intro{ color: var(--ink-dim); max-width: 46rem; margin-bottom: 28px; }
+  h3{ font-size: 1.02rem; line-height: 1.35; margin-bottom: 6px; }
+  .muted{ color: var(--ink-dim); }
+  .small{ font-size: .9rem; }
+
+  /* GRADES E CARDS */
+  .grid{ display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .grid.two{ grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .grid.three{ grid-template-columns: repeat(3, 1fr); }
+  .card{ background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; min-width: 0; }
+  .card p, .card li{ color: var(--ink-dim); font-size: .93rem; }
+  .card ul{ padding-left: 18px; margin-top: 6px; }
+  .card li + li{ margin-top: 4px; }
+  .card .tag{ display: inline-block; font-family: var(--mono); font-size: .72rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-faint); margin-bottom: 8px; }
+  .card .tag.new{ border-color: var(--accent-dim); color: var(--accent); }
+  .card.hl{ border-color: var(--accent-dim); }
+  .split{ display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+  .split > *{ min-width: 0; }
+  .list{ list-style: none; display: grid; gap: 12px; }
+  .list li{ position: relative; padding-left: 20px; color: var(--ink-dim); }
+  .list li::before{ content: ""; position: absolute; left: 2px; top: .62em; width: 7px; height: 7px; border-radius: 50%; background: var(--accent-dim); }
+  .list li b{ color: var(--ink); }
+
+  /* MAQUETE DO TELEGRAM */
+  .phone{ width: 100%; max-width: 370px; margin: 0 auto; background: var(--tg-bg); border: 1px solid var(--line); border-radius: 22px; padding: 12px 12px 16px; box-shadow: 0 18px 50px rgba(0,0,0,.45); font-size: .84rem; line-height: 1.45; }
+  .phone.flat{ box-shadow: none; max-width: 100%; }
+  .tg-top{ display: flex; align-items: center; gap: 10px; padding: 4px 4px 12px; border-bottom: 1px solid var(--line-soft); margin-bottom: 10px; }
+  .tg-ava{ width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #2f7fc1, #3fae8c); display: flex; align-items: center; justify-content: center; flex: none; }
+  .tg-name{ font-weight: 600; font-size: .9rem; }
+  .tg-sub{ color: var(--ink-faint); font-size: .74rem; }
+  .msg{ max-width: 90%; padding: 7px 10px 8px; border-radius: 12px; margin: 6px 0; color: #e9eef3; }
+  .msg.in{ background: var(--tg-in); border-bottom-left-radius: 4px; }
+  .msg.out{ background: var(--tg-out); margin-left: auto; border-bottom-right-radius: 4px; }
+  .msg i{ color: #b7c4d1; }
+  .msg pre{ font-family: var(--mono); font-size: .76rem; background: rgba(0,0,0,.28); border-radius: 6px; padding: 6px 8px; margin: 5px 0; white-space: pre-wrap; word-break: break-word; }
+  .msg .hd{ display: flex; align-items: center; gap: 6px; }
+  .kb{ display: grid; gap: 5px; margin: 2px 0 8px; max-width: 90%; }
+  .kb.two{ grid-template-columns: 1fr 1fr; }
+  .kb.three{ grid-template-columns: 1fr 1fr 1fr; }
+  .kb span{ display: block; background: var(--tg-btn); border-radius: 8px; padding: 7px 6px; text-align: center; font-size: .78rem; color: #d7e3ee; }
+  .kb .ok{ background: var(--tg-ok); color: var(--tg-ok-ink); font-weight: 600; }
+  .kb .no{ background: var(--tg-no); color: var(--tg-no-ink); }
+  .kb .sel{ background: var(--tg-ok); color: var(--tg-ok-ink); }
+  .voice{ display: flex; align-items: center; gap: 9px; }
+  .voice .play{ width: 30px; height: 30px; border-radius: 50%; background: #5aa7e0; display: flex; align-items: center; justify-content: center; flex: none; }
+  .voice .dur{ font-family: var(--mono); font-size: .72rem; color: #b7c4d1; }
+  .doc{ display: flex; align-items: center; gap: 10px; }
+  .doc .ic{ width: 36px; height: 36px; border-radius: 9px; background: #3a6fa0; display: flex; align-items: center; justify-content: center; flex: none; }
+  .tg-note{ text-align: center; color: var(--ink-faint); font-size: .72rem; margin: 10px 0 4px; }
+  .mocks{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: start; }
+  .mocks .phone{ max-width: 100%; }
+  .mock-cap{ color: var(--ink-dim); font-size: .88rem; margin-top: 10px; }
+  .mock-cap b{ display: block; color: var(--ink); margin-bottom: 2px; }
+
+  /* ARQUITETURA (HTML, empilha no celular) */
+  .arch{ display: grid; grid-template-columns: 1fr auto 1.1fr auto 1.4fr; gap: 12px; align-items: center; }
+  .arch > *{ min-width: 0; }
+  .node{ background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; }
+  .node h3{ font-size: .98rem; }
+  .node p{ color: var(--ink-dim); font-size: .88rem; }
+  .node.core{ border-color: var(--accent-dim); }
+  .arrow{ color: var(--accent-dim); display: flex; justify-content: center; }
+  .arrow svg{ width: 34px; height: 20px; }
+  .sessions{ display: grid; gap: 8px; }
+  .sess{ display: flex; align-items: center; gap: 10px; background: var(--bg-card); border: 1px solid var(--line); border-radius: 11px; padding: 10px 14px; font-size: .88rem; }
+  .sess .dot{ width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .sess .dot.on{ background: var(--accent); box-shadow: 0 0 0 4px rgba(110,231,196,.14); }
+  .sess .dot.sleep{ background: var(--ink-faint); }
+  .sess .dot.codex{ background: var(--blue); }
+  .sess .nm{ font-family: var(--mono); color: var(--ink); }
+  .sess .st{ margin-left: auto; color: var(--ink-faint); font-size: .8rem; text-align: right; }
+
+  /* FLUXO (trilho vertical com desvios) */
+  .flow{ position: relative; display: grid; gap: 14px; }
+  .flow::before{ content: ""; position: absolute; left: 17px; top: 18px; bottom: 18px; width: 2px; background: linear-gradient(var(--accent-dim), var(--line)); }
+  .fstep{ position: relative; display: grid; grid-template-columns: 36px 1fr minmax(0, .8fr); gap: 16px; align-items: start; }
+  .fstep > *{ min-width: 0; }
+  .fn{ width: 36px; height: 36px; border-radius: 50%; background: var(--bg-raised); border: 1px solid var(--accent-dim); color: var(--accent); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: .9rem; position: relative; z-index: 1; }
+  .fbody{ background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius); padding: 15px 18px; }
+  .fbody p{ color: var(--ink-dim); font-size: .93rem; }
+  .fside{ border: 1px dashed #5a4a2c; background: rgba(242,184,102,.05); border-radius: var(--radius); padding: 13px 16px; font-size: .88rem; color: var(--ink-dim); }
+  .fside b{ color: var(--warn); display: block; margin-bottom: 3px; font-size: .86rem; }
+  .fside + .fside{ margin-top: 10px; }
+  .fside-wrap{ display: grid; gap: 10px; }
+
+  /* ESCADAS DE ÁUDIO */
+  .ladder{ display: grid; gap: 0; }
+  .rung{ display: grid; grid-template-columns: 30px 1fr; gap: 12px; align-items: start; background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px; padding: 13px 15px; }
+  .rung .rn{ width: 30px; height: 30px; border-radius: 8px; background: var(--bg-raised); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: .82rem; color: var(--accent); }
+  .rung h3{ font-size: .95rem; margin-bottom: 2px; }
+  .rung p{ color: var(--ink-dim); font-size: .86rem; }
+  .rung .cost{ font-family: var(--mono); font-size: .74rem; color: var(--ink-faint); }
+  .fall{ display: flex; align-items: center; gap: 8px; padding: 6px 0 6px 20px; color: var(--ink-faint); font-size: .78rem; font-family: var(--mono); }
+  .fall svg{ width: 14px; height: 14px; flex: none; }
+
+  /* NÍVEIS / PASSOS */
+  .steps4{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; counter-reset: s; }
+  .steps4 > div{ background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; min-width: 0; }
+  .steps4 > div::before{ counter-increment: s; content: counter(s); display: inline-flex; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--accent-dim); color: var(--accent); font-family: var(--mono); font-size: .78rem; align-items: center; justify-content: center; margin-bottom: 8px; }
+  .steps4 p{ color: var(--ink-dim); font-size: .88rem; }
+  .lvl{ font-family: var(--mono); font-size: 1.4rem; color: var(--accent); line-height: 1; margin-bottom: 8px; }
+  .kv{ display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: .85rem; margin-top: 8px; }
+  .kv dt{ color: var(--ink-faint); }
+  .kv dd{ color: var(--ink-dim); }
+
+  /* CÓDIGO */
+  pre.code{ font-family: var(--mono); font-size: .84rem; background: var(--bg-raised); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; color: var(--ink); white-space: pre-wrap; word-break: break-word; line-height: 1.7; }
+  pre.code .c{ color: var(--ink-faint); }
+
+  /* AVISO */
+  .warnbox{ border: 1px solid #5a4a2c; background: rgba(242,184,102,.06); border-radius: var(--radius); padding: 22px 24px; }
+  .warnbox h3{ color: var(--warn); }
+  .warnbox p{ color: var(--ink-dim); }
+  .warnbox p + p{ margin-top: 10px; }
+  .src{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+  .src > div{ background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font-size: .86rem; color: var(--ink-dim); min-width: 0; }
+  .src b{ display: block; color: var(--ink); font-size: .9rem; }
+
+  /* NÃO FAZ */
+  .nope{ list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px 22px; }
+  .nope li{ position: relative; padding-left: 22px; color: var(--ink-dim); font-size: .94rem; }
+  .nope li::before{ content: ""; position: absolute; left: 3px; top: .55em; width: 10px; height: 2px; background: var(--warn); }
+
+  /* STACK */
+  .pills{ display: flex; flex-wrap: wrap; gap: 10px; }
+  .pill{ padding: 5px 11px; border-radius: 999px; font-family: var(--mono); font-size: .8rem; background: var(--bg-raised); border: 1px solid var(--line); color: var(--ink-dim); }
+
+  /* FOOTER */
+  footer{ padding: 44px 0 60px; }
+  .footer-grid{ display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px 24px; }
+  .footer-note{ color: var(--ink-faint); font-size: .86rem; }
+
+  @media (max-width: 900px){
+    .hero{ grid-template-columns: 1fr; gap: 34px; }
+    .arch{ grid-template-columns: 1fr; }
+    .arrow svg{ transform: rotate(90deg); }
+    .mocks{ grid-template-columns: 1fr; max-width: 420px; }
+    .split{ grid-template-columns: 1fr; }
+    .fstep{ grid-template-columns: 36px 1fr; }
+    .fside-wrap, .fstep > .fside{ grid-column: 2; }
+    .steps4{ grid-template-columns: 1fr 1fr; }
+    .src{ grid-template-columns: 1fr; }
+    .grid.three{ grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 600px){
+    .wrap{ padding: 0 16px; }
+    header{ padding: 44px 0 40px; }
+    section{ padding: 46px 0; }
+    .steps4{ grid-template-columns: 1fr; }
+    .fstep{ gap: 12px; }
+    .nope{ grid-template-columns: 1fr; }
+    .grid.two, .grid.three{ grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hero">
+    <div>
+      <div class="kicker">Expert Integrado · ferramenta · v1.2.0</div>
+      <h1>Um bot do Telegram, várias sessões do Claude Code</h1>
+      <p class="lead">O <b>telegram-multi-session</b> transforma um bot do Telegram num painel de abas, como no VS Code: cada sessão é uma conversa isolada do Claude Code rodando no seu servidor. Você cria, troca por botão e fala por texto, áudio, foto ou arquivo.</p>
+      <p class="lead">O plugin oficial de Telegram do Claude Code liga um bot a uma sessão só. Este dá uma sessão por assunto, e quando a conta do Claude bate o limite ele troca de conta e continua a mesma conversa.</p>
+      <div class="chips">
+        <span class="chip">sessões como abas</span>
+        <span class="chip">Claude Code ou Codex</span>
+        <span class="chip">rodízio de contas</span>
+        <span class="chip new">novo: rotinas agendadas</span>
+        <span class="chip new">novo: perguntas com botão</span>
+        <span class="chip new">novo: autorização no chat</span>
+        <span class="chip new">novo: arquivo de volta</span>
+        <span class="chip new">novo: resposta em áudio</span>
+        <span class="chip new">novo: grupo com chamado</span>
+      </div>
+    </div>
+
+    <div class="phone" role="img" aria-label="Maquete do bot no Telegram: painel de sessões com botões, o cartão da sessão escolhida, um áudio enviado e a resposta em texto e em áudio">
+      <div class="tg-top">
+        <div class="tg-ava"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12.5 19.5 5l-2.8 14-5-3.6-2.6 2.4.4-4L17 7.7 8 13.2z" fill="#fff"/></svg></div>
+        <div><div class="tg-name">Seu bot</div><div class="tg-sub">bot</div></div>
+      </div>
+      <div class="msg out">/sessoes</div>
+      <div class="msg in">Sessões</div>
+      <div class="kb">
+        <span class="ok">comercial</span>
+      </div>
+      <div class="kb two" style="margin-top:-3px">
+        <span>financeiro</span><span>site</span>
+        <span>suporte</span><span>propostas</span>
+      </div>
+      <div class="msg in">
+        <div class="hd"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#7cc4ff" stroke-width="2"/><path d="M12 11v6M12 7.5v.5" stroke="#7cc4ff" stroke-width="2" stroke-linecap="round"/></svg><b>comercial</b></div>
+        <i>comercial/pedidos</i><br>Opus 5 · médio · 12/100
+      </div>
+      <div class="msg out">
+        <div class="voice">
+          <div class="play"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 1.5v9l7.5-4.5z" fill="#fff"/></svg></div>
+          <svg width="110" height="22" viewBox="0 0 110 22" aria-hidden="true"><g fill="#9cc7ea"><rect x="0" y="8" width="3" height="6" rx="1.5"/><rect x="6" y="5" width="3" height="12" rx="1.5"/><rect x="12" y="2" width="3" height="18" rx="1.5"/><rect x="18" y="6" width="3" height="10" rx="1.5"/><rect x="24" y="4" width="3" height="14" rx="1.5"/><rect x="30" y="8" width="3" height="6" rx="1.5"/><rect x="36" y="3" width="3" height="16" rx="1.5"/><rect x="42" y="6" width="3" height="10" rx="1.5"/><rect x="48" y="9" width="3" height="4" rx="1.5"/><rect x="54" y="5" width="3" height="12" rx="1.5"/><rect x="60" y="2" width="3" height="18" rx="1.5"/><rect x="66" y="7" width="3" height="8" rx="1.5"/><rect x="72" y="4" width="3" height="14" rx="1.5"/><rect x="78" y="8" width="3" height="6" rx="1.5"/><rect x="84" y="6" width="3" height="10" rx="1.5"/><rect x="90" y="9" width="3" height="4" rx="1.5"/><rect x="96" y="7" width="3" height="8" rx="1.5"/><rect x="102" y="9" width="3" height="4" rx="1.5"/></g></svg>
+          <span class="dur">0:14</span>
+        </div>
+      </div>
+      <div class="msg in"><b>comercial</b><br>Ontem entraram 6 pedidos; 2 esperam aprovação de desconto. Deixei o resumo em pedidos/ontem.md.</div>
+      <div class="msg in">
+        <div class="voice">
+          <div class="play"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 1.5v9l7.5-4.5z" fill="#fff"/></svg></div>
+          <svg width="96" height="22" viewBox="0 0 96 22" aria-hidden="true"><g fill="#6f8aa3"><rect x="0" y="7" width="3" height="8" rx="1.5"/><rect x="6" y="3" width="3" height="16" rx="1.5"/><rect x="12" y="6" width="3" height="10" rx="1.5"/><rect x="18" y="2" width="3" height="18" rx="1.5"/><rect x="24" y="8" width="3" height="6" rx="1.5"/><rect x="30" y="5" width="3" height="12" rx="1.5"/><rect x="36" y="3" width="3" height="16" rx="1.5"/><rect x="42" y="7" width="3" height="8" rx="1.5"/><rect x="48" y="4" width="3" height="14" rx="1.5"/><rect x="54" y="8" width="3" height="6" rx="1.5"/><rect x="60" y="5" width="3" height="12" rx="1.5"/><rect x="66" y="9" width="3" height="4" rx="1.5"/><rect x="72" y="6" width="3" height="10" rx="1.5"/><rect x="78" y="8" width="3" height="6" rx="1.5"/><rect x="84" y="9" width="3" height="4" rx="1.5"/></g></svg>
+          <span class="dur">0:09</span>
+        </div>
+        <div style="margin-top:4px"><b>comercial</b><br>Resposta em áudio (voz gerada por IA).</div>
+      </div>
+      <div class="tg-note">maquete com os textos reais do bot</div>
+    </div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Seções da página">
+  <div class="wrap">
+    <a href="#sessoes">Sessões</a>
+    <a href="#fluxo">Como funciona</a>
+    <a href="#no-meio">Perguntas e autorização</a>
+    <a href="#audio">Áudio</a>
+    <a href="#rotinas">Rotinas</a>
+    <a href="#grupos">Grupos</a>
+    <a href="#pessoas">Pessoas</a>
+    <a href="#varios-bots">Vários bots</a>
+    <a href="#confianca">Confiança</a>
+    <a href="#comecar">Começar</a>
+  </div>
+</nav>
+
+<section id="sessoes">
+  <div class="wrap">
+    <div class="eyebrow">01 · sessões</div>
+    <h2>Uma conversa por assunto, e nenhuma atrapalha a outra</h2>
+    <p class="intro">Cada sessão tem nome, pasta de trabalho, modelo e memória próprios. <code>/sessao pedidos</code> cria ou troca; <code>/sessoes</code> mostra todas em botões, com a ativa em verde no topo. Tudo o que você manda vai para a sessão ativa, e toda resposta chega com o nome da sessão em cima, então dá para deixar uma trabalhando e seguir em outra.</p>
+
+    <div class="arch" role="img" aria-label="Esquema: o Telegram fala com o roteador, que mantém uma sessão do Claude Code ou do Codex por assunto">
+      <div class="node">
+        <h3>Telegram</h3>
+        <p>Texto, áudio, foto e arquivo, do seu celular ou do computador. O painel é o próprio chat.</p>
+      </div>
+      <div class="arrow" aria-hidden="true"><svg viewBox="0 0 34 20" fill="none"><path d="M2 10h26M22 4l7 6-7 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="node core">
+        <h3>Roteador (no seu servidor)</h3>
+        <p>Confere quem está falando, transcreve o áudio, põe o pedido na fila da sessão certa, escolhe a conta e devolve a resposta.</p>
+      </div>
+      <div class="arrow" aria-hidden="true"><svg viewBox="0 0 34 20" fill="none"><path d="M2 10h26M22 4l7 6-7 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="sessions">
+        <div class="sess"><span class="dot on"></span><span class="nm">comercial</span><span class="st">trabalhando</span></div>
+        <div class="sess"><span class="dot on"></span><span class="nm">site</span><span class="st">trabalhando</span></div>
+        <div class="sess"><span class="dot sleep"></span><span class="nm">financeiro</span><span class="st">dormindo, volta de onde parou</span></div>
+        <div class="sess"><span class="dot codex"></span><span class="nm">revisao</span><span class="st">no Codex</span></div>
+      </div>
+    </div>
+
+    <div class="grid three" style="margin-top:22px">
+      <div class="card">
+        <h3>Dorme e volta de onde parou</h3>
+        <p>Cada sessão é um processo do Claude Code que fica vivo enquanto você conversa. Parada por 3 minutos, ela dorme e libera memória; na mensagem seguinte volta com a conversa inteira.</p>
+      </div>
+      <div class="card">
+        <h3>Mensagem no meio do trabalho</h3>
+        <p>Mandou outra mensagem antes do primeiro texto da resposta? Ela entra no mesmo pedido, como no VS Code. Depois disso, vai para o próximo.</p>
+      </div>
+      <div class="card">
+        <h3>Acompanha ao vivo, para quando quiser</h3>
+        <p>Enquanto trabalha, a sessão mostra o andamento num rascunho com botão de parar. <code>/stream</code> escolhe entre desligado, progresso e texto ao vivo.</p>
+      </div>
+      <div class="card">
+        <h3>Claude Code ou Codex</h3>
+        <p><code>/motor</code> troca a sessão para o Codex CLI da OpenAI, com a conta ChatGPT do servidor. Cada motor guarda a própria conversa; voltar retoma cada uma onde parou. Sessão ligada a um agente e rotina rodam só no Claude.</p>
+      </div>
+      <div class="card">
+        <h3>Uma conta ou várias</h3>
+        <p>Com uma conta, funciona sem configurar nada a mais. Com várias, quando uma bate o limite o bot troca de chave e repete o mesmo pedido na mesma conversa, sem perder o contexto.</p>
+      </div>
+      <div class="card">
+        <h3>Volta depois de um reinício</h3>
+        <p>Sessões, fila e conta em uso ficam gravadas em disco e são retomadas quando o bot volta. A mesma mensagem entregue duas vezes pelo Telegram é reconhecida e ignorada.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="fluxo">
+  <div class="wrap">
+    <div class="eyebrow">02 · como funciona</div>
+    <h2>Da mensagem à resposta, em sete passos</h2>
+    <p class="intro">O caminho de cada pedido, na ordem em que o roteador faz. Os quadros tracejados são os desvios: o que acontece quando algo sai do normal.</p>
+
+    <div class="flow">
+      <div class="fstep">
+        <div class="fn">1</div>
+        <div class="fbody"><h3>A mensagem chega</h3><p>Texto, áudio, foto ou arquivo, de uma conversa privada, de um tópico de fórum ou de um grupo. Cada mensagem recebe um número; se o Telegram entregar a mesma duas vezes, a segunda é ignorada.</p></div>
+      </div>
+      <div class="fstep">
+        <div class="fn">2</div>
+        <div class="fbody"><h3>Portão de entrada</h3><p>Só passa quem está na lista e ativo, com papel e área que permitem falar com aquele agente. No grupo comum, só quando o bot é chamado. Cada pedido e cada recusa viram uma linha na trilha de auditoria.</p></div>
+        <div class="fside"><b>Quem não passa</b>Quem não está na lista recebe silêncio: nem fica sabendo que o bot existe, e a tentativa fica registrada para o administrador. Pessoa cadastrada sem acesso àquele agente recebe um aviso de "sem permissão".</div>
+      </div>
+      <div class="fstep">
+        <div class="fn">3</div>
+        <div class="fbody"><h3>Áudio vira texto</h3><p>A mensagem de voz passa pela escada de transcrição (Groq, depois OpenAI, depois o transcritor local) antes de ir para a sessão. Foto e arquivo vão junto, pelo caminho no servidor.</p></div>
+        <div class="fside"><b>Um degrau falhou</b>O próximo assume em até 60 segundos, e os administradores recebem um aviso dizendo quem caiu e por quê.</div>
+      </div>
+      <div class="fstep">
+        <div class="fn">4</div>
+        <div class="fbody"><h3>Fila da sessão</h3><p>O pedido entra na fila da sessão ativa (ou do tópico). Por padrão, até duas sessões trabalham ao mesmo tempo; as outras esperam a vez sem perder nada.</p></div>
+      </div>
+      <div class="fstep">
+        <div class="fn">5</div>
+        <div class="fbody"><h3>O motor trabalha</h3><p>O Claude Code (ou o Codex) roda o pedido na pasta da sessão, com a conta escolhida pelo rodízio. Se a sessão estava dormindo, acorda com a conversa inteira.</p></div>
+        <div class="fside-wrap">
+          <div class="fside"><b>A conta bateu o limite</b>Com rodízio ligado, o bot troca de conta e repete o mesmo pedido na mesma conversa. Todas no limite: avisa quando a próxima libera.</div>
+          <div class="fside"><b>Passou do tempo</b>Sem sinal de vida por muito tempo, ou acima do teto de um pedido: o bot interrompe, guarda o que já foi feito e oferece Continuar (segue de onde parou) ou Descartar. Num grupo, por enquanto, peça por mensagem: "continue de onde parou".</div>
+          <div class="fside"><b>Caiu no meio</b>Queda ou reinício com o pedido em andamento: o bot não repete sozinho. Avisa que a sessão parou no meio e pede para conferir antes de repetir, com os botões Repetir e Descartar.</div>
+        </div>
+      </div>
+      <div class="fstep">
+        <div class="fn">6</div>
+        <div class="fbody"><h3>Conversa no meio do trabalho</h3><p>Quando o agente precisa de você, a pergunta chega com botões; ação que exige confirmação chega com Permitir e Negar; arquivo que ele criou chega no chat. O pedido espera sua resposta até 30 minutos.</p></div>
+        <div class="fside"><b>Ninguém respondeu</b>Pergunta sem resposta em 30 minutos: o agente segue e diz o que assumiu. Autorização sem resposta: a ação não é feita.</div>
+      </div>
+      <div class="fstep">
+        <div class="fn">7</div>
+        <div class="fbody"><h3>A resposta chega</h3><p>Em texto, com o nome da sessão em cima e dividida em partes quando é longa. Se a sessão está configurada para falar, a mesma resposta vem logo depois em áudio.</p></div>
+        <div class="fside"><b>O áudio falhou</b>Fica só o texto, com uma linha no registro. O texto nunca depende do áudio.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="no-meio">
+  <div class="wrap">
+    <div class="eyebrow">03 · novo na v1.2.0</div>
+    <h2>No meio do trabalho, ele pergunta, pede licença e entrega o arquivo</h2>
+    <p class="intro">O mesmo diálogo que o Claude Code tem com você no computador, agora pelo chat. O bot entrega ao Claude Code um canal próprio para isso.</p>
+    <div class="warnbox" style="margin-bottom:26px;padding:16px 20px">
+      <p><b style="color:var(--warn)">Por padrão, o agente age sem pedir licença.</b> Ele só pede autorização nas ações que você marcar para confirmar na configuração do Claude Code (por exemplo: publicar código ou apagar arquivo). Sem essa lista, ele executa direto e só as perguntas passam pelo chat. E a autorização é a confirmação de quem fez o pedido (ou de um administrador), não a aprovação de uma segunda pessoa.</p>
+    </div>
+
+    <div class="mocks">
+      <div>
+        <div class="phone flat" role="img" aria-label="Maquete de pergunta com opções em botões">
+          <div class="msg in"><b>site</b> pergunta:<br><b>Página inicial</b><br>Qual versão eu publico?<br><br>1. <b>A</b> — destaque com vídeo<br>2. <b>B</b> — destaque com depoimentos<br><br><i>Toque numa opção ou escreva a resposta.</i></div>
+          <div class="kb"><span>1. A</span><span>2. B</span></div>
+        </div>
+        <p class="mock-cap"><b>Pergunta com opções</b>Um botão por opção. Tocou, os botões somem e fica só a escolha, em verde. Múltipla escolha tem Confirmar. Responder por escrito ou por áudio também vale.</p>
+      </div>
+      <div>
+        <div class="phone flat" role="img" aria-label="Maquete de pedido de autorização com os botões Permitir e Negar">
+          <div class="msg in"><b>site</b> quer usar <b>Bash</b> e precisa da sua autorização:<pre>git push origin main</pre><i>Toque em Permitir ou Negar (ou escreva o que ela deve fazer no lugar).</i></div>
+          <div class="kb two"><span class="ok">Permitir</span><span class="no">Negar</span></div>
+        </div>
+        <p class="mock-cap"><b>Autorização</b>Vale para o que as regras de confirmação do Claude Code mandam perguntar. "Sim" e "não" por escrito também valem; outro texto nega e vira orientação para o agente.</p>
+      </div>
+      <div>
+        <div class="phone flat" role="img" aria-label="Maquete de arquivo enviado pelo agente no chat">
+          <div class="msg in"><b>comercial</b><br>Montei a proposta com os valores da tabela nova.</div>
+          <div class="msg in">
+            <div class="doc">
+              <div class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 2h8l5 5v15H6z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 2v5h5" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg></div>
+              <div><div>proposta.pdf</div><div class="dur" style="font-family:var(--mono);font-size:.72rem;color:#b7c4d1">240 KB</div></div>
+            </div>
+          </div>
+        </div>
+        <p class="mock-cap"><b>Arquivo de volta</b>PDF, planilha ou imagem criados pelo agente chegam no chat: foto até 10 MB, documento até 50 MB, até 20 por pedido. Arquivo com cara de segredo e pasta do sistema são recusados.</p>
+      </div>
+    </div>
+
+    <ul class="list" style="margin-top:28px">
+      <li><b>Quem responde:</b> quem fez o pedido ou um administrador. O toque de outra pessoa é recusado ("Essa pergunta é pra quem fez o pedido (ou um admin)") e o pedido continua esperando.</li>
+      <li><b>Agente só de leitura</b> nunca recebe autorização: o pedido é negado ali mesmo, sem botão.</li>
+      <li><b><code>/parar</code>, <code>/nova</code> ou um reinício</b> recolhem a pergunta aberta, que fica marcada como cancelada.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="audio">
+  <div class="wrap">
+    <div class="eyebrow">04 · áudio</div>
+    <h2>Ouve seu áudio e, se você quiser, responde falando</h2>
+    <p class="intro">Os dois lados seguem a mesma regra: existe uma opção gratuita que roda no próprio servidor (um serviço que se instala à parte), e colar uma chave é o upgrade. Quando um degrau cai, o próximo assume sem você perceber.</p>
+
+    <div class="split">
+      <div>
+        <h3 style="margin-bottom:12px">Transcrição: o que você fala vira texto</h3>
+        <div class="ladder">
+          <div class="rung"><div class="rn">1</div><div><h3>Groq</h3><p>Primeiro da fila quando a chave existe. Cadastro sem cartão.</p><div class="cost">grátis até 8 h de áudio por dia</div></div></div>
+          <div class="fall"><svg viewBox="0 0 14 14" fill="none"><path d="M7 1v10M3 7l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>falhou ou demorou</div>
+          <div class="rung"><div class="rn">2</div><div><h3>OpenAI</h3><p>Reserva: entra quando o Groq falha, bate o limite ou demora.</p><div class="cost">pago por uso, cerca de US$ 0,18 por hora de áudio</div></div></div>
+          <div class="fall"><svg viewBox="0 0 14 14" fill="none"><path d="M7 1v10M3 7l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>falhou ou demorou</div>
+          <div class="rung"><div class="rn">3</div><div><h3>Transcritor local</h3><p>Roda no próprio servidor, sem internet: o áudio não sai de lá. Precisa do serviço instalado e no ar; sem chave, é o único degrau.</p><div class="cost">custo zero · opcional</div></div></div>
+        </div>
+        <p class="muted small" style="margin-top:12px">Nada configurado: o bot avisa que ainda não ouve áudio e pede o texto. Dá para fixar um degrau só, por exemplo o local, para o áudio nunca sair do servidor.</p>
+      </div>
+
+      <div>
+        <h3 style="margin-bottom:12px">Resposta em áudio <span class="chip new" style="margin-left:6px">novo na v1.2.0</span></h3>
+        <div class="ladder">
+          <div class="rung"><div class="rn">1</div><div><h3>OpenAI</h3><p>Voz natural em português, com a mesma chave da transcrição.</p><div class="cost">pago por uso</div></div></div>
+          <div class="fall"><svg viewBox="0 0 14 14" fill="none"><path d="M7 1v10M3 7l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>falhou ou sem chave</div>
+          <div class="rung"><div class="rn">2</div><div><h3>Voz local</h3><p>Roda no servidor, em container próprio; o texto não sai de lá. Confira a licença da voz antes de usar em produto.</p><div class="cost">custo zero · opcional</div></div></div>
+        </div>
+        <div class="phone flat" style="margin-top:14px" role="img" aria-label="Maquete do comando /voz com os três modos em botões">
+          <div class="msg out">/voz</div>
+          <div class="msg in">Resposta em áudio na sessão comercial: automático (em áudio quando você manda áudio). Voz: OpenAI (marin); se falhar, voz local (Piper).<br>- automático: em áudio quando você manda áudio<br>- sempre: texto e áudio em toda resposta<br>- nunca: só texto</div>
+          <div class="kb three"><span class="sel">automático</span><span>sempre</span><span>nunca</span></div>
+        </div>
+        <ul class="list small" style="margin-top:14px">
+          <li><b>Automático</b> (padrão): responde em áudio quando você manda áudio. <b>Sempre</b>: texto e áudio em toda resposta. <b>Nunca</b>: só texto.</li>
+          <li>O áudio vem depois do texto, como cópia, com a legenda "voz gerada por IA". Link, código e emoji não são lidos em voz alta; respostas longas falam até cerca de 2.500 caracteres e avisam que o resto está no texto.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="rotinas">
+  <div class="wrap">
+    <div class="eyebrow">05 · novo na v1.2.0</div>
+    <h2>Trabalha sozinho no horário marcado</h2>
+    <p class="intro">Peça numa conversa, do jeito que falaria com alguém: "todo dia útil às 8h, me mande o resumo dos pedidos de ontem". O agente monta a rotina e ela só passa a valer depois do seu Permitir.</p>
+
+    <div class="split">
+      <div class="phone flat" role="img" aria-label="Maquete do pedido de agendamento de rotina com os botões Permitir e Negar">
+        <div class="msg out">todo dia útil às 8h, me mande o resumo dos pedidos de ontem; se não houver novidade, não precisa mandar nada</div>
+        <div class="msg in"><b>comercial</b> quer agendar uma rotina:<pre>resumo-pedidos: dias úteis às 08:00
+Próxima: seg 28/09 08:00
+Pedido: me mande o resumo dos pedidos de ontem; se não houver novidade, responda apenas SEM_NOVIDADE</pre><i>Toque em Permitir ou Negar (ou escreva o que ela deve fazer no lugar).</i></div>
+        <div class="kb two"><span class="ok">Permitir</span><span class="no">Negar</span></div>
+      </div>
+
+      <ul class="list">
+        <li><b>Roda numa sessão própria</b> (<code>r-resumo-pedidos</code>), com conversa nova a cada execução. Você continua na sessão em que estava; só a resposta aparece, com o nome dessa sessão em cima.</li>
+        <li><b>Sem novidade, sem mensagem.</b> Se o pedido diz "se não houver novidade, responda apenas SEM_NOVIDADE", a resposta que termina assim não vai para o chat: fica só na auditoria. Erro na execução vai para o chat; execução que nem começa (sessão ainda ocupada, falha ao preparar) aparece no <code>/rotinas</code> como "não rodou", com o motivo.</li>
+        <li><b><code>/rotinas</code></b> lista todas com horário e próxima execução, e cada uma tem Pausar ou Ativar, Rodar agora e Apagar.</li>
+        <li><b>Bot fora do ar no horário:</b> ao voltar, roda a execução perdida uma vez se o atraso foi de até 2 horas; passou disso, pula. Se caiu com a execução já em andamento, não repete sozinho: volta com Repetir e Descartar.</li>
+        <li><b>Horário de Brasília</b> por padrão, em linguagem de agenda: "dias úteis às 08:00", "aos domingos às 18:00", "todo dia 25 do mês às 09:00". Até 20 rotinas por conversa e até 48 execuções por dia em cada uma.</li>
+        <li><b>Rotinas da empresa</b> podem vir prontas num arquivo de configuração, com o agente e a pessoa que recebe. Criar e apagar é para quem opera o bot; leitor só vê.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="grupos">
+  <div class="wrap">
+    <div class="eyebrow">06 · onde ele atende</div>
+    <h2>No privado, num fórum de tópicos ou no grupo da equipe</h2>
+    <p class="intro">O mesmo bot atende os três jeitos ao mesmo tempo. Nenhum grupo entra sem estar na lista de grupos permitidos, e dentro dele só fala quem também está na lista de pessoas. Isso controla quem fala com o bot, não o que o agente alcança: <a href="#confianca">leia Confiança</a> antes de pôr o bot num grupo.</p>
+
+    <div class="grid">
+      <div class="card">
+        <span class="tag">conversa privada</span>
+        <h3>Você e o bot</h3>
+        <p>Sessões por botão ou por <code>/sessao nome</code>. Cada pessoa tem as próprias sessões no privado dela.</p>
+      </div>
+      <div class="card">
+        <span class="tag">supergrupo com tópicos</span>
+        <h3>A sessão é o tópico</h3>
+        <p>Cada tópico nasce com a própria sessão, e todo mundo que escreve ali fala com ela. O agente recebe o nome de quem falou, e tudo volta dentro do tópico. Outra conversa = outro tópico.</p>
+      </div>
+      <div class="card hl">
+        <span class="tag new">grupo comum · novo na v1.2.0</span>
+        <h3>Só trabalha quando é chamado</h3>
+        <p>Com <code>@seu_bot</code>, respondendo a uma mensagem dele ou por um nome combinado (ex.: "Robô"). O resto da conversa fica guardado só na memória (as 30 últimas mensagens) e vai como contexto no próximo chamado.</p>
+      </div>
+    </div>
+
+    <ul class="list" style="margin-top:24px">
+      <li><b>Fica de fora do grupo:</b> mensagem em nome de canal, de administrador anônimo e de outro bot. Mensagem encaminhada vale por quem encaminhou, nunca pela origem.</li>
+      <li><b>Sem código de acesso na sala:</b> cadastro de pessoa nova acontece no privado, com um administrador. Quem não está na lista recebe silêncio, para não expor quem está fora; pessoa cadastrada sem acesso ao agente daquela sala recebe ali mesmo o aviso de "sem permissão".</li>
+      <li><b><code>/mencao sim | nao | auto</code></b> muda a regra do chamado só naquele grupo ou tópico. Para o bot enxergar o <code>@</code> e a conversa, o modo de privacidade do bot precisa estar desligado no BotFather, ou o bot precisa ser administrador do grupo.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="pessoas">
+  <div class="wrap">
+    <div class="eyebrow">07 · pessoas e papéis</div>
+    <h2>Várias pessoas no mesmo bot, cada uma com o seu papel</h2>
+    <p class="intro">Com uma lista de administradores, todos falam com tudo. Para dar poderes diferentes, cada pessoa entra num arquivo simples com papel e áreas, e cada agente declara a área e o perfil dele. A pessoa só fala com o agente quando os três batem.</p>
+
+    <div class="grid">
+      <div class="card">
+        <span class="tag">admin</span>
+        <h3>Administra o bot</h3>
+        <p>Fala com todos os agentes, troca a conta do Claude, aprova pessoas e recebe os avisos do sistema.</p>
+      </div>
+      <div class="card">
+        <span class="tag">operador</span>
+        <h3>Trabalha nas áreas dele</h3>
+        <p>Fala com os agentes das áreas que recebeu, até o perfil de operação. Cria e apaga rotinas e muda os ajustes da sessão.</p>
+      </div>
+      <div class="card">
+        <span class="tag">leitor</span>
+        <h3>Consulta</h3>
+        <p>Fala só com agentes de perfil leitura: sem comandos nem edição de arquivo. Mas o agente lê tudo o que alcança, inclusive configuração e chaves, e as integrações ligadas a ele (CRM, WhatsApp...) funcionam inteiras, inclusive as que gravam e enviam. <a href="#confianca">Veja Confiança.</a></p>
+      </div>
+    </div>
+
+    <h3 style="margin:30px 0 12px">Como uma pessoa nova entra</h3>
+    <div class="steps4">
+      <div><p><b>Ela manda qualquer mensagem.</b> Sem cadastro, o bot não responde; a tentativa fica registrada com o número de usuário dela.</p></div>
+      <div><p><b>O administrador acha o número</b> na lista de quem escreveu e ainda não está cadastrado.</p></div>
+      <div><p><b>Cadastra com papel e áreas</b> por um comando. O bot relê a lista sozinho: vale na próxima mensagem, sem reiniciar.</p></div>
+      <div><p><b>Ela manda de novo</b> e já conversa. Com um agente só disponível, a sessão já nasce ligada a ele.</p></div>
+    </div>
+
+    <ul class="list" style="margin-top:24px">
+      <li><b>Desativar alguém vale a partir da próxima mensagem,</b> inclusive com a sessão aberta: marque a pessoa como inativa no arquivo, que é conferido em cada mensagem e em cada pedido. Isso vale mesmo para quem também está na lista de administradores da configuração; apagar a linha do arquivo só tira o acesso de quem não está nessa lista.</li>
+      <li><b>Trilha de auditoria:</b> cada pedido, recusa, pergunta, arquivo e rotina vira uma linha com quem, quando e o custo do pedido, sem segredo e com o texto cortado.</li>
+      <li><b>Papéis abaixo de admin exigem montar um container por agente:</b> sem isso, o bot nem sobe com operador ou leitor na lista. O template <a href="https://expert-integrado.github.io/vps-inteligente/">VPS Inteligente</a> já monta desse jeito.</li>
+      <li><b>Papel não protege segredo.</b> Ele limita botões e comandos, não o que o agente alcança. <a href="#confianca">Leia Confiança</a> antes de dar acesso a outra pessoa.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="varios-bots">
+  <div class="wrap">
+    <div class="eyebrow">08 · modo empresa</div>
+    <h2>Vários bots na mesma VPS, um por pessoa</h2>
+    <p class="intro">Numa equipe, cada pessoa precisa das próprias pastas, da própria conta do Claude e das próprias sessões. O modo empresa faz isso com a separação mais barata que existe: cada bot no seu container, na mesma máquina.</p>
+
+    <div class="split">
+      <div>
+        <pre class="code"><span class="c"># primeira pessoa: confere a máquina, faz 4 perguntas e sobe o bot</span>
+./instalar.sh
+
+<span class="c"># cada pessoa nova (os bots que já estão de pé não reiniciam)</span>
+./novo-bot.sh vendas
+
+<span class="c"># uma linha por bot: no ar, desde quando, conta, último erro</span>
+./status.sh</pre>
+        <ul class="list small" style="margin-top:16px">
+          <li>As 4 perguntas: nome curto do bot, a chave do bot (do BotFather), a chave do Claude da pessoa e a pasta de trabalho. As chaves não aparecem na tela.</li>
+          <li>O instalador descobre sozinho o número do dono: é só mandar <code>/start</code> para o bot quando ele pedir.</li>
+          <li>Recusa chave de bot repetida e pasta que alcance a de outro bot.</li>
+        </ul>
+      </div>
+      <div class="grid two" style="grid-template-columns:1fr 1fr">
+        <div class="card"><div class="lvl">B0</div><h3>Vários processos</h3><p>Mesmo usuário. Para uma pessoa só com vários agentes.</p></div>
+        <div class="card"><div class="lvl">B1</div><h3>Um usuário por bot</h3><p>Separa arquivos e chaves por permissão, sem Docker.</p></div>
+        <div class="card hl"><div class="lvl">B2</div><h3>Um container por bot</h3><p>O padrão: é o que o instalador monta.</p></div>
+        <div class="card"><div class="lvl">B3</div><h3>Uma VPS por pessoa</h3><p>Sistema operacional próprio para cada um. Se o contrato exigir hardware dedicado, isso é outra contratação.</p></div>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top:22px">
+      <div class="card">
+        <h3>Uma conta do Claude por pessoa</h3>
+        <p>A chave nasce no computador de cada pessoa, logada na conta dela, e fica só no bot dela. A mesma chave em dois bots funciona, mas os dois dividem o mesmo limite.</p>
+      </div>
+      <div class="card">
+        <h3>Memória com teto por bot</h3>
+        <p>2 GB por bot por padrão, ajustável. Processador e disco são da máquina inteira: um agente pesado deixa todos mais lentos.</p>
+      </div>
+      <div class="card">
+        <h3>Não protege de quem é dono da máquina</h3>
+        <p>O modo empresa separa as pessoas que usam os bots, não o administrador do servidor: quem entra como root lê tudo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="confianca">
+  <div class="wrap">
+    <div class="eyebrow">09 · contrato de confiança</div>
+    <h2>Leia antes de dar acesso a outra pessoa</h2>
+    <div class="warnbox">
+      <h3>Quem conversa com o bot manda no agente</h3>
+      <p>Os papéis limitam a <b>interface do bot</b>: quais comandos e botões cada pessoa usa. Eles não limitam o alcance do agente. O agente roda <b>sem pedir permissão</b> (a não ser nas ações que você marcou para confirmar) e alcança o que o usuário do servidor que o roda alcança: configuração, estado, pastas e chaves. Um leitor não aperta o botão de trocar a conta, mas pode pedir em português que o agente leia um arquivo de configuração.</p>
+      <p>Com um container por agente, esse alcance fica restrito ao que existe naquele container, mas a regra é a mesma: o que o agente alcança, quem fala com ele alcança. Por isso, <b>o bot de um grupo é o bot de uma área</b>, com pasta e conta próprias: nunca o bot pessoal de alguém, nem o mesmo bot que atende o seu privado. Para separar de verdade, separe o processo: outro bot, outro usuário, outra pasta, outra chave.</p>
+      <div class="src">
+        <div><b>Regras do usuário</b>O arquivo de instruções global de quem roda o bot. Edita quem tem acesso ao servidor.</div>
+        <div><b>Regras do projeto</b>O arquivo de instruções da pasta de trabalho da sessão. Edita quem grava naquela pasta.</div>
+        <div><b>Regras da pasta do Google Drive</b>Quando a sessão usa uma pasta do Drive, as regras dela são copiadas para o pedido na hora, até 8.000 caracteres; o excedente é cortado e avisado no registro.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="nao-faz">
+  <div class="wrap">
+    <div class="eyebrow">10 · limites</div>
+    <h2>O que ele não faz</h2>
+    <ul class="nope" style="margin-top:18px">
+      <li>Não tem painel web: a interface é o próprio Telegram e, no servidor, o <code>status.sh</code>.</li>
+      <li>Não repete sozinho um pedido interrompido: você confere e decide.</li>
+      <li>Rotina entrega só em conversa privada nesta versão.</li>
+      <li>No Codex ainda não há perguntas, autorização nem arquivo pelo chat, nem rodízio de contas, nem agente remoto. Rotinas rodam sempre no Claude.</li>
+      <li>Áudio acima de 20 MB não chega a ser transcrito (limite do Telegram para bots).</li>
+      <li>Não mede nem cobra consumo por pessoa: cada conta mostra o próprio uso.</li>
+      <li>Não traz cofre de senhas, emissão automática de chaves nem religamento automático do servidor: cada um monta os seus.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="comecar">
+  <div class="wrap">
+    <div class="eyebrow">11 · começar</div>
+    <h2>Pouca peça: Node, o Claude Code e um bot do Telegram</h2>
+    <div class="split">
+      <div>
+        <p class="muted" style="margin-bottom:14px">O código é liberado para os alunos da Mentoria Automações Inteligentes. Para quem já tem acesso: uma pessoa, um bot, uma conta do Claude, 4 valores no arquivo de configuração e pronto.</p>
+        <pre class="code">git clone &lt;o repositório&gt; &amp;&amp; cd telegram-multi-session
+npm install --no-fund --no-audit
+cp env.exemplo .env        <span class="c"># 4 valores no caminho simples</span>
+cp run.exemplo.sh run.sh
+bash boot-router.sh        <span class="c"># fica no ar, com reinício automático</span></pre>
+      </div>
+      <div>
+        <p class="muted" style="margin-bottom:14px">O que precisa estar na máquina:</p>
+        <ul class="list">
+          <li><b>Um servidor Linux</b> (uma VPS serve) com Node 20 ou mais novo e o Claude Code instalado.</li>
+          <li><b>Um bot do Telegram</b> criado no BotFather e o seu número de usuário no Telegram.</li>
+          <li><b>Uma chave por conta do Claude</b> gerada com <code>claude setup-token</code>. Vale um ano; uma conta só já funciona.</li>
+          <li><b>Opcional:</b> chave do Groq ou da OpenAI para áudio, transcritor e voz locais, Codex CLI, Docker para o modo empresa.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin:30px 0 12px">Peças</h3>
+    <div class="pills">
+      <span class="pill">Node.js 20+</span>
+      <span class="pill">grammY</span>
+      <span class="pill">Claude Code CLI</span>
+      <span class="pill">Codex CLI (opcional)</span>
+      <span class="pill">MCP próprio (canal)</span>
+      <span class="pill">tmux ou Docker Compose</span>
+      <span class="pill">faster-whisper (opcional)</span>
+      <span class="pill">Piper (opcional)</span>
+      <span class="pill">Groq / OpenAI (opcional)</span>
+      <span class="pill">491 testes automáticos, sem rede</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap footer-grid">
+    <div class="footer-note">telegram-multi-session · feito na <a href="https://expertintegrado.com.br">Expert Integrado</a>, na Mentoria Automações Inteligentes · em uso num servidor desde setembro de 2026</div>
+    <div class="footer-note">código liberado para alunos da Mentoria Automações Inteligentes · <a href="https://expert-integrado.github.io/">outros projetos</a></div>
+  </div>
+</footer>
+
+</body>
+</html>
