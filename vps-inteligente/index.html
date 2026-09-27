@@ -239,13 +239,13 @@ admin → todos
   <section id="prova">
     <p class="kicker">Nível de prova</p>
     <h2>O que já foi provado e o que ainda não foi</h2>
-    <p class="lead">Primeira instalação real em 20/09/2026 (Hostinger KVM 2, 8 GB, Ubuntu 24.04 virgem). O template ainda não está liberado para cliente ou aluno: dos dez gates de liberação passou meio.</p>
+    <p class="lead">Primeira instalação real em 20/09/2026 (Hostinger KVM 2, 8 GB, Ubuntu 24.04 virgem). Em 27/09/2026, os sete testes de liberação passaram numa VPS de teste, e o template está liberado. Os testes de dois recursos opcionais (cofre com conta de robô e a trilha OpenClaw) rodam na primeira instalação que os usar.</p>
     <div class="grade">
       <div class="card"><span class="tag ok">provado</span><h4>Instalação completa em VPS limpa</h4><ul><li>Fases 0 a 9 em 8 minutos de parede, 3 execuções</li><li>Agente no ar e saudável em menos de 60 s após a credencial</li><li>Segunda execução: 0 mudanças</li></ul></div>
       <div class="card"><span class="tag ok">provado</span><h4>Acesso seguro</h4><ul><li>Root e senha recusados por SSH; admin só por chave</li><li>Firewall com limite de tentativas e fail2ban ativos</li><li>Hardening 35 de 38 itens</li></ul></div>
       <div class="card"><span class="tag ok">provado</span><h4>Versão marcada do router</h4><ul><li>Deploy leva o clone até a versão escolhida</li><li>Skills da área visíveis dentro do container</li></ul></div>
-      <div class="card"><span class="tag pend">pendente</span><h4>Três pessoas, três papéis</h4><p>Leitor barrado em agente de operação, operador barrado fora da área, revogação no meio da conversa. Depende do bot real.</p></div>
-      <div class="card"><span class="tag pend">pendente</span><h4>Backup e restauração do zero</h4><p>Existem no código com testes; nunca rodaram em VPS real com bucket real e cronômetro.</p></div>
+      <div class="card"><span class="tag ok">provado</span><h4>Papéis no Telegram real</h4><ul><li>Leitor barrado no agente de operação; operador barrado fora da área e no agente de administração</li><li>Rebaixar ou remover alguém no meio da conversa vale na hora</li><li>Cada negação no registro de auditoria, com o motivo</li></ul></div>
+      <div class="card"><span class="tag ok">provado</span><h4>Backup e recuperação do zero</h4><ul><li>VPS apagada e recriada: de volta só com o kit de recuperação em 9 min 15 s</li><li>Backup diário num bucket da conta da própria empresa</li><li>Vigia de fora avisa no Telegram quando a VPS some e quando volta</li></ul></div>
       <div class="card"><span class="tag nao">fora por enquanto</span><h4>Rede privada (Tailscale)</h4><p>Instalado, não conectado. A porta 22 fica aberta, só com chave. Decisão de 20/09: sai da frente até virar necessidade.</p></div>
     </div>
   </section>
