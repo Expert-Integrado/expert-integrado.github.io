@@ -263,7 +263,7 @@
 <header>
   <div class="wrap hero">
     <div>
-      <div class="kicker">Expert Integrado · ferramenta · v1.2.0</div>
+      <div class="kicker">Expert Integrado · ferramenta · v1.2.1</div>
       <h1>Um bot do Telegram, várias sessões do Claude Code</h1>
       <p class="lead">O <b>telegram-multi-session</b> transforma um bot do Telegram num painel de abas, como no VS Code: cada sessão é uma conversa isolada do Claude Code rodando no seu servidor. Você cria, troca por botão e fala por texto, áudio, foto ou arquivo.</p>
       <p class="lead">O plugin oficial de Telegram do Claude Code liga um bot a uma sessão só. Este dá uma sessão por assunto, e quando a conta do Claude bate o limite ele troca de conta e continua a mesma conversa.</p>
@@ -370,7 +370,7 @@
       </div>
       <div class="card">
         <h3>Acompanha ao vivo, para quando quiser</h3>
-        <p>Enquanto trabalha, a sessão mostra o andamento num rascunho com botão de parar. <code>/stream</code> escolhe entre desligado, progresso e texto ao vivo.</p>
+        <p>Enquanto trabalha, a sessão mostra o andamento numa mensagem com o botão Parar, e a caixa de mensagem continua livre: dá para trocar de sessão e pedir outra coisa enquanto ela trabalha. <code>/stream</code> escolhe entre desligado, progresso e texto ao vivo.</p>
       </div>
       <div class="card">
         <h3>Claude Code ou Codex</h3>
@@ -504,17 +504,24 @@
       <div>
         <h3 style="margin-bottom:12px">Resposta em áudio <span class="chip new" style="margin-left:6px">novo na v1.2.0</span></h3>
         <div class="ladder">
-          <div class="rung"><div class="rn">1</div><div><h3>OpenAI</h3><p>Voz natural em português, com a mesma chave da transcrição.</p><div class="cost">pago por uso</div></div></div>
+          <div class="rung"><div class="rn">1</div><div><h3>A voz escolhida</h3><p>De fábrica, o <b>Antonio</b>, voz gratuita da Microsoft (a leitura em voz alta do navegador Edge, sem chave; serviço não oficial). Cada conversa pode trocar pela que quiser.</p><div class="cost">gratuita · de fábrica</div></div></div>
+          <div class="fall"><svg viewBox="0 0 14 14" fill="none"><path d="M7 1v10M3 7l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>falhou: grátis antes de pago</div>
+          <div class="rung"><div class="rn">2</div><div><h3>Voz local</h3><p>Roda no servidor, em container próprio; o texto não sai de lá. Confira a licença da voz antes de usar em produto.</p><div class="cost">gratuita · opcional</div></div></div>
+          <div class="fall"><svg viewBox="0 0 14 14" fill="none"><path d="M7 1v10M3 7l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>falhou ou não instalada</div>
+          <div class="rung"><div class="rn">3</div><div><h3>OpenAI</h3><p>13 vozes, com a mesma chave da transcrição.</p><div class="cost">8 centavos por minuto · opcional</div></div></div>
           <div class="fall"><svg viewBox="0 0 14 14" fill="none"><path d="M7 1v10M3 7l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>falhou ou sem chave</div>
-          <div class="rung"><div class="rn">2</div><div><h3>Voz local</h3><p>Roda no servidor, em container próprio; o texto não sai de lá. Confira a licença da voz antes de usar em produto.</p><div class="cost">custo zero · opcional</div></div></div>
+          <div class="rung"><div class="rn">4</div><div><h3>ElevenLabs</h3><p>7 vozes prontas em português, com a chave da ElevenLabs.</p><div class="cost">28 centavos por minuto · opcional</div></div></div>
         </div>
         <div class="phone flat" style="margin-top:14px" role="img" aria-label="Maquete do comando /voz com os três modos em botões">
           <div class="msg out">/voz</div>
-          <div class="msg in">Resposta em áudio na sessão comercial: automático (em áudio quando você manda áudio). Voz: OpenAI (marin); se falhar, voz local (Piper).<br>- automático: em áudio quando você manda áudio<br>- sempre: texto e áudio em toda resposta<br>- nunca: só texto</div>
+          <div class="msg in">Resposta em áudio na sessão comercial: automático (em áudio quando você manda áudio). Isso vale só nesta sessão.<br>Voz: Antonio (gratuita), a mesma em todas as sessões deste chat; se falhar, a voz local (gratuita); depois, Marin (OpenAI - 8 centavos por minuto).<br>- automático: em áudio quando você manda áudio<br>- sempre: texto e áudio em toda resposta<br>- nunca: só texto</div>
           <div class="kb three"><span class="sel">automático</span><span>sempre</span><span>nunca</span></div>
+          <div class="kb" style="margin-top:-3px"><span>Trocar a voz (agora: Antonio, gratuita)</span></div>
         </div>
         <ul class="list small" style="margin-top:14px">
-          <li><b>Automático</b> (padrão): responde em áudio quando você manda áudio. <b>Sempre</b>: texto e áudio em toda resposta. <b>Nunca</b>: só texto.</li>
+          <li><b>Automático</b> (padrão): responde em áudio quando você manda áudio. <b>Sempre</b>: texto e áudio em toda resposta. <b>Nunca</b>: só texto. Vale por sessão.</li>
+          <li><b>Trocar a voz</b> <span class="chip new" style="margin-left:4px">v1.2.1</span>: as vozes em botões, um grupo por fornecedor com o custo no título: <b>Gratuitas - Microsoft</b> (Francisca, Antonio e Thalita), <b>OpenAI - 8 centavos por minuto</b> (13) e <b>ElevenLabs - 28 centavos por minuto</b> (7). Só aparecem as que o bot tem. Cada toque manda uma amostra ("Amostra de voz: Francisca" e, embaixo, "Gratuita") e vale para todas as sessões da conversa.</li>
+          <li><b>Velocidade e jeito de falar</b> <span class="chip new" style="margin-left:4px">v1.2.1</span>: mais devagar, normal ou mais rápido; calmo, normal ou animado. Vale para a conversa toda e cada toque manda uma amostra. Nas vozes gratuitas da Microsoft só a velocidade muda.</li>
           <li>O áudio vem depois do texto, como cópia, com a legenda "voz gerada por IA". Link, código e emoji não são lidos em voz alta; respostas longas falam até cerca de 2.500 caracteres e avisam que o resto está no texto.</li>
         </ul>
       </div>
@@ -540,7 +547,7 @@ Pedido: me mande o resumo dos pedidos de ontem; se não houver novidade, respond
       <ul class="list">
         <li><b>Roda numa sessão própria</b> (<code>r-resumo-pedidos</code>), com conversa nova a cada execução. Você continua na sessão em que estava; só a resposta aparece, com o nome dessa sessão em cima.</li>
         <li><b>Sem novidade, sem mensagem.</b> Se o pedido diz "se não houver novidade, responda apenas SEM_NOVIDADE", a resposta que termina assim não vai para o chat: fica só na auditoria. Erro na execução vai para o chat; execução que nem começa (sessão ainda ocupada, falha ao preparar) aparece no <code>/rotinas</code> como "não rodou", com o motivo.</li>
-        <li><b><code>/rotinas</code></b> lista todas com horário e próxima execução, e cada uma tem Pausar ou Ativar, Rodar agora e Apagar.</li>
+        <li><b><code>/rotinas</code></b> lista cada rotina com o que ela faz (uma frase simples), quando roda e a próxima execução. O toque numa rotina abre o detalhe, com Pausar ou Ativar, Rodar agora e Apagar (a de fábrica só se pausa).</li>
         <li><b>Bot fora do ar no horário:</b> ao voltar, roda a execução perdida uma vez se o atraso foi de até 2 horas; passou disso, pula. Se caiu com a execução já em andamento, não repete sozinho: volta com Repetir e Descartar.</li>
         <li><b>Horário de Brasília</b> por padrão, em linguagem de agenda: "dias úteis às 08:00", "aos domingos às 18:00", "todo dia 25 do mês às 09:00". Até 20 rotinas por conversa e até 48 execuções por dia em cada uma.</li>
         <li><b>Rotinas da empresa</b> podem vir prontas num arquivo de configuração, com o agente e a pessoa que recebe. Criar e apagar é para quem opera o bot; leitor só vê.</li>
@@ -668,7 +675,7 @@ Pedido: me mande o resumo dos pedidos de ontem; se não houver novidade, respond
       <ul class="list" style="margin-top:22px">
         <li><b>A separação é do bot, não do container.</b> O agente é um só e alcança tudo o que está nele: se alguém pedir em português, ele pode abrir o arquivo ou ler a conversa de outra pessoa.</li>
         <li><b>Liberar alguém é um comando e não refaz nada:</b> a pessoa recebe a área do agente (por exemplo, <code>geral</code>) e o que você ligou nele já vale para ela; no chat privado, a sessão dela já nasce ligada ao agente. No grupo, cada tópico escolhe o agente uma vez com <code>/agente</code> e o nome. Agente sem área só atende administrador.</li>
-        <li><b>Um pedido por vez:</b> nesta versão, o agente atende um pedido de cada vez. Se duas pessoas pedirem juntas, a segunda recebe erro em vez de esperar. Enquanto isso não muda, deixe o bot rodando um pedido por vez (<code>ROUTER_MAX_PARALLEL=1</code>): aí quem chega depois espera na fila.</li>
+        <li><b>Um pedido por vez no agente:</b> ele atende uma conversa de cada vez. Se duas pessoas pedirem juntas, a segunda recebe o aviso de que está na fila e a resposta chega logo depois, na ordem de chegada.</li>
         <li><b>Tudo fica numa trilha única do bot,</b> com o nome de quem pediu cada coisa.</li>
         <li>O template <a href="https://expert-integrado.github.io/vps-inteligente/">VPS Inteligente</a> monta este jeito e o próximo.</li>
       </ul>
@@ -706,7 +713,7 @@ Pedido: me mande o resumo dos pedidos de ontem; se não houver novidade, respond
       <ul class="list" style="margin-top:22px">
         <li><b>Dentro de cada área vale o jeito anterior:</b> no chat privado, cada pessoa vê só as próprias conversas, mas tudo o que está no container da área, inclusive o histórico das conversas, fica ao alcance de todos daquela área.</li>
         <li><b>No grupo, a regra decide quem pode pedir, não quem lê:</b> a resposta do agente do financeiro aparece para todos da sala.</li>
-        <li><b>Um pedido por vez em cada agente,</b> como no jeito anterior: com <code>ROUTER_MAX_PARALLEL=1</code> ninguém recebe erro, mas as áreas também passam a esperar umas pelas outras.</li>
+        <li><b>Um pedido por vez em cada agente,</b> como no jeito anterior: quem chega depois espera a vez na fila daquele agente. Agentes de áreas diferentes trabalham ao mesmo tempo, até o limite de conversas simultâneas do bot (<code>ROUTER_MAX_PARALLEL</code>, 2 por padrão).</li>
         <li><b>Um agente por pessoa, no mesmo bot, também é possível</b> (uma área para cada pessoa), mas cada um ocupa um container inteiro. Se a pessoa precisa das próprias ferramentas e da própria conta do Claude, o jeito é o próximo: um bot por pessoa.</li>
         <li>O template <a href="https://expert-integrado.github.io/vps-inteligente/">VPS Inteligente</a> já monta desse jeito.</li>
       </ul>
@@ -812,7 +819,7 @@ bash boot-router.sh        <span class="c"># fica no ar, com reinício automáti
           <li><b>Um servidor Linux</b> (uma VPS serve) com Node 20 ou mais novo e o Claude Code instalado.</li>
           <li><b>Um bot do Telegram</b> criado no BotFather e o seu número de usuário no Telegram.</li>
           <li><b>Uma chave por conta do Claude</b> gerada com <code>claude setup-token</code>. Vale um ano; uma conta só já funciona.</li>
-          <li><b>Opcional:</b> chave do Groq ou da OpenAI para áudio, transcritor e voz locais, Codex CLI, Docker para o modo empresa.</li>
+          <li><b>Opcional:</b> chave do Groq, da OpenAI ou da ElevenLabs para áudio (a voz gratuita já vem ligada), transcritor e voz locais, Codex CLI, Docker para o modo empresa.</li>
         </ul>
       </div>
     </div>
