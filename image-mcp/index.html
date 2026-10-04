@@ -334,13 +334,13 @@
       </p>
       <div class="cta-row">
         <a class="btn btn-primary" href="#instalacao">Instalar em 1 passo</a>
-        <a class="btn btn-ghost" href="https://github.com/Expert-Integrado/image-mcp">Ver no GitHub</a>
+        <a class="btn btn-ghost" href="https://github.com/Expert-Integrado-Alunos/image-mcp">Ver no GitHub</a>
       </div>
       <div class="hero-badges">
         <span class="badge">GPT Image 2 · OpenAI</span>
         <span class="badge">Nano Banana · Google</span>
         <span class="badge">6 ferramentas</span>
-        <span class="badge">npx · sem clone</span>
+        <span class="badge">git clone · node</span>
         <span class="badge">MIT</span>
       </div>
     </div>
@@ -434,7 +434,7 @@
   <div class="section-head reveal">
     <div class="eyebrow">02 · Como funciona</div>
     <h2>Do pedido em português ao PNG na pasta</h2>
-    <p class="section-sub">O servidor roda na sua máquina (via <code>npx</code>, sem instalar nada manualmente) e fala direto com o provedor usando a sua chave — sem intermediário.</p>
+    <p class="section-sub">O servidor roda na sua máquina (a partir da pasta clonada do repositório) e fala direto com o provedor usando a sua chave — sem intermediário.</p>
   </div>
 
   <div class="diagram-wrap reveal">
@@ -459,7 +459,7 @@
       <g>
         <rect x="234" y="118" width="190" height="72" rx="12" fill="#131a22" stroke="#6ee7c4"/>
         <text x="329" y="149" text-anchor="middle" fill="#6ee7c4" font-size="14" font-weight="700" font-family="inherit">image-mcp</text>
-        <text x="329" y="168" text-anchor="middle" fill="#a7b3bf" font-size="11" font-family="inherit">servidor local via npx</text>
+        <text x="329" y="168" text-anchor="middle" fill="#a7b3bf" font-size="11" font-family="inherit">servidor local (node)</text>
       </g>
 
       <!-- ramos para provedores -->
@@ -602,9 +602,15 @@
       </thead>
       <tbody>
         <tr>
-          <td><span class="m">gpt-image-2</span> (padrão)</td>
+          <td><span class="m">gpt-image-2.5-flare</span> (padrão)</td>
           <td>OpenAI</td>
-          <td>Composições complexas, texto dentro da imagem</td>
+          <td>Rápido, uso geral; composições complexas, texto dentro da imagem</td>
+          <td>US$ 0,01–0,25</td>
+        </tr>
+        <tr>
+          <td><span class="m">gpt-image-2.5-sunburst</span> (padrão em edit_image)</td>
+          <td>OpenAI</td>
+          <td>Edição de precisão: manter rosto e identidade, alterar só um elemento</td>
           <td>US$ 0,01–0,25</td>
         </tr>
         <tr>
@@ -622,14 +628,14 @@
       </tbody>
     </table>
   </div>
-  <p class="foot-note reveal">*Valores aproximados — confira as tabelas oficiais de preço da OpenAI e do Google. Também disponíveis: <code>gpt-image-1</code>, <code>gpt-image-1-mini</code> e <code>gemini-2.5-flash-image</code> (legado).</p>
+  <p class="foot-note reveal">*Valores aproximados — confira as tabelas oficiais de preço da OpenAI e do Google. Também disponíveis: <code>gpt-image-2</code>, <code>gpt-image-1</code>, <code>gpt-image-1-mini</code> e <code>gemini-2.5-flash-image</code> (legado).</p>
 </section>
 
 <section id="instalacao" class="wrap">
   <div class="section-head reveal">
     <div class="eyebrow">05 · Instalação guiada</div>
     <h2>Quem instala é o Claude — você só cola um prompt</h2>
-    <p class="section-sub">Não precisa saber programar nem baixar nada: o pacote roda direto do npm via <code>npx</code>.</p>
+    <p class="section-sub">Não precisa saber programar: o Claude baixa o código do repositório (<code>git clone</code>) e configura tudo.</p>
   </div>
 
   <div class="prereq-grid reveal">
@@ -648,7 +654,7 @@
   </div>
 
   <div class="prompt-label reveal">Cole este prompt no Claude Code</div>
-  <div class="prompt-box reveal">Leia a documentação oficial rodando <code>npm view @expertintegrado/image-mcp readme</code> e instale o servidor MCP de imagens da Expert Integrado para mim, seguindo o protocolo de onboarding assistido descrito lá: verifique os pré-requisitos, me pergunte com botões se eu quero que você faça as etapas de navegador por mim (criação das chaves de API), me avise dos custos por imagem, valide as chaves sem custo, registre o MCP e faça o teste final. Me peça o que precisar.</div>
+  <div class="prompt-box reveal">Clone https://github.com/Expert-Integrado-Alunos/image-mcp numa pasta estável, rode npm install, leia o SETUP.md da pasta clonada e instale o servidor MCP de imagens da Expert Integrado para mim, seguindo o protocolo de onboarding assistido descrito lá: verifique os pré-requisitos, me pergunte com botões se eu quero que você faça as etapas de navegador por mim (criação das chaves de API), me avise dos custos por imagem, valide as chaves sem custo, registre o MCP e faça o teste final. Me peça o que precisar.</div>
 
   <div class="assist-grid reveal">
     <div class="assist">
@@ -684,7 +690,7 @@
     <span class="pill">OpenAI Images API</span>
     <span class="pill">Gemini API</span>
     <span class="pill">catbox.moe · litterbox</span>
-    <span class="pill">npm · npx</span>
+    <span class="pill">git clone · node</span>
     <span class="pill">MIT</span>
   </div>
 </section>
@@ -696,8 +702,8 @@
       <div class="footer-note">Feito pela <a href="https://expertintegrado.com.br">Expert Integrado</a> — IA aplicada a negócios.</div>
     </div>
     <div class="footer-links">
-      <a href="https://github.com/Expert-Integrado/image-mcp">Repositório</a>
-      <a href="https://github.com/Expert-Integrado/image-mcp#readme">README</a>
+      <a href="https://github.com/Expert-Integrado-Alunos/image-mcp">Repositório</a>
+      <a href="https://github.com/Expert-Integrado-Alunos/image-mcp#readme">README</a>
     </div>
   </div>
 </footer>

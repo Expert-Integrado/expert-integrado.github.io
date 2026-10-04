@@ -349,7 +349,7 @@
       <a href="#ferramentas">Ferramentas</a>
       <a href="#guardrails">Guardrails</a>
       <a href="#instalacao">Instalação</a>
-      <a href="https://github.com/Expert-Integrado/pipedrive-mcp">GitHub</a>
+      <a href="https://github.com/Expert-Integrado-Alunos/pipedrive-mcp">GitHub</a>
     </div>
   </div>
 </nav>
@@ -362,11 +362,11 @@
       <p class="tagline">Conecta o CRM <strong>Pipedrive</strong> ao <strong>Claude</strong>: você pede em português — criar negócio, agendar ligação, anotar reunião — e ele executa direto no seu funil, com <strong>guardrails</strong> que seguram duplicata e sobrescrita antes de acontecer.</p>
       <div class="cta-row">
         <a class="btn btn-primary" href="#instalacao">Instalar em minutos</a>
-        <a class="btn btn-ghost" href="https://github.com/Expert-Integrado/pipedrive-mcp">Código no GitHub</a>
+        <a class="btn btn-ghost" href="https://github.com/Expert-Integrado-Alunos/pipedrive-mcp">Código no GitHub</a>
       </div>
       <div class="hero-badges">
         <span class="badge">40 ferramentas</span>
-        <span class="badge">npx @expertintegrado/pipedrive-mcp</span>
+        <span class="badge">git clone · Expert-Integrado-Alunos</span>
         <span class="badge">Node 18+</span>
         <span class="badge">MIT</span>
       </div>
@@ -428,7 +428,7 @@
     <div class="section-head">
       <p class="eyebrow">02 · Como funciona</p>
       <h2>Do pedido ao CRM atualizado, com uma checagem no meio.</h2>
-      <p class="section-sub">O MCP roda localmente via <code>npx</code> e conversa com a API oficial do Pipedrive usando o seu token pessoal. Cada etapa abaixo existe no código.</p>
+      <p class="section-sub">O MCP roda localmente, a partir da pasta clonada do repositório, e conversa com a API oficial do Pipedrive usando o seu token pessoal. Cada etapa abaixo existe no código.</p>
     </div>
     <div class="flow">
       <div class="flow-step">
@@ -600,13 +600,13 @@
       </div>
       <div class="install-side">
         <pre><code style="all:unset;font-family:inherit;">
-<span class="hl"># Com o token em mãos, o registro é um comando:</span>
+<span class="hl"># Código clonado (git clone + npm install) e token em mãos, o registro é um comando:</span>
 claude mcp add pipedrive -s user \
   -e PIPEDRIVE_API_KEY=SEU_TOKEN \
   -e PIPEDRIVE_TIMEZONE=America/Sao_Paulo \
-  -- npx -y @expertintegrado/pipedrive-mcp
+  -- node CAMINHO_ABSOLUTO_PARA/pipedrive-mcp/index.js
 </code></pre>
-        <p class="hint">Prompt completo de instalação assistida no <a href="https://github.com/Expert-Integrado/pipedrive-mcp#passo-2--peça-pro-claude-code-instalar">README</a>. Rota 100% manual (Claude Desktop, ZIP, git clone, ambientes offline) no <a href="https://github.com/Expert-Integrado/pipedrive-mcp/blob/main/INSTALL.md">INSTALL.md</a>.</p>
+        <p class="hint">Prompt completo de instalação assistida no <a href="https://github.com/Expert-Integrado-Alunos/pipedrive-mcp#passo-2--peça-pro-claude-code-instalar">README</a>. Rota 100% manual (Claude Desktop, git clone, ZIP) no <a href="https://github.com/Expert-Integrado-Alunos/pipedrive-mcp/blob/main/INSTALL.md">INSTALL.md</a>.</p>
       </div>
     </div>
   </div>
@@ -617,7 +617,7 @@ claude mcp add pipedrive -s user \
     <div class="section-head">
       <p class="eyebrow">06 · Stack</p>
       <h2>Leve de propósito.</h2>
-      <p class="section-sub">Duas dependências, sem build step, roda direto do npm via <code>npx</code>.</p>
+      <p class="section-sub">Duas dependências, sem build step: o <code>index.js</code> roda direto no Node, da pasta clonada.</p>
     </div>
     <div class="pills">
       <span class="pill">Node.js 18+</span>
@@ -625,7 +625,7 @@ claude mcp add pipedrive -s user \
       <span class="pill">Zod</span>
       <span class="pill">API Pipedrive v1</span>
       <span class="pill">ESM, sem build</span>
-      <span class="pill">npm · npx</span>
+      <span class="pill">git clone · node</span>
       <span class="pill">MIT</span>
     </div>
   </div>
@@ -635,8 +635,7 @@ claude mcp add pipedrive -s user \
   <div class="wrap footer-grid">
     <div class="footer-note">Feito pela <a href="https://expertintegrado.com.br">Expert Integrado</a> — IA aplicada a negócios.</div>
     <div class="footer-note">
-      <a href="https://github.com/Expert-Integrado/pipedrive-mcp">GitHub</a> ·
-      <a href="https://www.npmjs.com/package/@expertintegrado/pipedrive-mcp">npm</a>
+      <a href="https://github.com/Expert-Integrado-Alunos/pipedrive-mcp">GitHub</a>
     </div>
   </div>
 </footer>
