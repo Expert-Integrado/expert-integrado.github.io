@@ -2,7 +2,7 @@
 
 Hub de páginas públicas dos projetos da Expert Integrado (GitHub Pages da org).
 
-Open source, criado por **Eric Luciano** na **Mentoria Automações Inteligentes** (Expert Integrado).
+Criado por **Eric Luciano** na **Mentoria Automações Inteligentes** (Expert Integrado).
 
 ## Padrão
 
